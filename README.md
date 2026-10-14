@@ -18,7 +18,7 @@ Built for the Huawei ICT Competition (Innovation Track).
 | Phase | What | State |
 |---|---|---|
 | 0 | Repo, environment, data downloads | done (NL subset pending: 4TU blocking us) |
-| 1 | Classical baseline on OpenMRG | – |
+| 1 | Classical baseline on OpenMRG | done — see [results/phase1_openmrg.md](results/phase1_openmrg.md) |
 | 2 | AI wet/dry + rain-rate models, cross-domain tests | – |
 | 3 | Rain maps + nowcasting | – |
 | 4 | Virtual Algerian network (simulation) | – |
@@ -62,6 +62,7 @@ uv venv --python 3.12 .venv-ms && uv pip install --python .venv-ms/bin/python -r
 
 .venv/bin/python scripts/download_data.py openmrg openrainer netherlands_cml
 .venv/bin/python -m pytest
+.venv/bin/python scripts/phase1_baseline.py   # Phase 1, ~5 min (first run builds a 1-min cache, +6 min)
 ```
 
 Exact versions are in `requirements.lock.txt`. See `docs/ENVIRONMENT.md` for machine-specific notes.
