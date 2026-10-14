@@ -31,5 +31,38 @@
     "md5": "4e4cdf6ced4d45a084c348f245b8d690",
     "verified": true,
     "version": "1.1"
+  },
+  "openrainer/AWS.tar": {
+    "bytes": 22190080,
+    "dataset": "openrainer",
+    "doi": "10.5281/zenodo.10593848",
+    "downloaded": "2026-10-14T13:45:03+00:00",
+    "file": "AWS.tar",
+    "license": "CC-BY-4.0",
+    "md5": "0939289f05dae011379e3968f434c978",
+    "verified": true,
+    "version": "2.0.3"
+  },
+  "openrainer/CML.tar": {
+    "bytes": 107171840,
+    "dataset": "openrainer",
+    "doi": "10.5281/zenodo.10593848",
+    "downloaded": "2026-10-14T13:45:03+00:00",
+    "file": "CML.tar",
+    "license": "CC-BY-4.0",
+    "md5": "c350cfdd0a73227f027598b2ef674480",
+    "verified": true,
+    "version": "2.0.3"
+  },
+  "openrainer/README.txt": {
+    "bytes": 7329,
+    "dataset": "openrainer",
+    "doi": "10.5281/zenodo.10593848",
+    "downloaded": "2026-10-14T13:43:22+00:00",
+    "file": "README.txt",
+    "license": "CC-BY-4.0",
+    "md5": "75ece1e2c185c04aecbb2c1b256c9239",
+    "verified": true,
+    "version": "2.0.3"
   }
 }

@@ -1,3 +1,4 @@
+README.md
 pyproject.toml
 src/targ/__init__.py
 src/targ.egg-info/PKG-INFO

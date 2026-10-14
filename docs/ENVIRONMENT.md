@@ -12,6 +12,10 @@ Checked 2026-10-14 on the lab machine: 24 CPU cores, 125 GB RAM, 2 × RTX 5090 (
   last, so this venv's own packages take precedence. On another machine, install torch normally (see README).
 
 ## MindSpore venv `.venv-ms`
-- mindspore 2.10.0 (PyPI, cp312 manylinux, CPU), kept apart from the main stack.
+- mindspore 2.10.0 (PyPI, cp312 manylinux, CPU), kept apart from the main stack. Versions are in `requirements-mindspore.lock.txt`.
+- **Needs `numpy<2`.** Its C++ core is built against NumPy 1.x, and every op fails with
+  `SystemError: pyboost_* returned a result with an exception set` under NumPy 2.x. With
+  numpy 1.26.4, uv resolves scipy 1.17.1 / pandas 3.0.6 / xarray 2026.9.0. Checked: Conv1d, GRU
+  and an Adam training step on CPU (loss decreases).
 - Locally the MindSpore models run on CPU. They are small 1D models, so this is enough for
   porting and checking that both frameworks give the same results. GPU/Ascend training is meant for ModelArts.

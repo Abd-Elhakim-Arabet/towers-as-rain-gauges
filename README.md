@@ -17,7 +17,7 @@ Built for the Huawei ICT Competition (Innovation Track).
 
 | Phase | What | State |
 |---|---|---|
-| 0 | Repo, environment, data downloads | in progress |
+| 0 | Repo, environment, data downloads | done (NL subset pending: 4TU blocking us) |
 | 1 | Classical baseline on OpenMRG | – |
 | 2 | AI wet/dry + rain-rate models, cross-domain tests | – |
 | 3 | Rain maps + nowcasting | – |

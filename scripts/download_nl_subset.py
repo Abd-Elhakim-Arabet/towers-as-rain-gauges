@@ -36,8 +36,8 @@ class HTTPRangeFile(io.RawIOBase):
         self.url, self.pos = url, 0
         self.cache_start, self.cache = 0, b""
         self.session = requests.Session()
-        head = self.session.get(url, headers={"Range": "bytes=0-0"}, timeout=60)
-        self.size = int(head.headers["Content-Range"].split("/")[-1])
+        self._get(0, 0)
+        self.size = int(self._last.headers["Content-Range"].split("/")[-1])
 
     def seekable(self):
         return True
@@ -66,23 +66,26 @@ class HTTPRangeFile(io.RawIOBase):
             return out
         want = max(n, self.READAHEAD)
         end = min(self.pos + want, self.size) - 1
+        r = self._get(self.pos, end)
+        self.cache_start, self.cache = self.pos, r.content
+        out = r.content[:n]
+        self.pos += len(out)
+        return out
+
+    def _get(self, start: int, end: int) -> requests.Response:
         for attempt in range(8):
             try:
-                r = self.session.get(self.url, headers={"Range": f"bytes={self.pos}-{end}"},
+                r = self.session.get(self.url, headers={"Range": f"bytes={start}-{end}"},
                                      timeout=120)
                 r.raise_for_status()
-                break
+                self._last = r
+                return r
             except requests.RequestException as e:
                 # 4TU refuses connections when hammered; back off exponentially.
                 wait = min(2 ** attempt * 5, 600)
                 print(f"range read failed ({e.__class__.__name__}); retrying in {wait}s")
                 time.sleep(wait)
-        else:
-            raise IOError(f"range read failed at {self.pos}")
-        self.cache_start, self.cache = self.pos, r.content
-        out = r.content[:n]
-        self.pos += len(out)
-        return out
+        raise IOError(f"range read failed at byte {start}")
 
 
 def main() -> None:

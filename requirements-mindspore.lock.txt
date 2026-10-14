@@ -1,0 +1,26 @@
+asttokens==3.0.2
+astunparse==1.6.3
+certifi==2026.7.22
+cftime==1.6.6
+cloudpickle==3.1.2
+dill==0.4.1
+joblib==1.6.0
+mindspore==2.10.0
+narwhals==2.27.1
+netcdf4==1.7.4
+numpy==1.26.4
+packaging==26.3
+pandas==3.0.6
+pillow==12.3.0
+protobuf==7.36.2
+psutil==7.2.2
+python-dateutil==2.9.0.post0
+pyyaml==6.0.3
+safetensors==0.8.0
+scikit-learn==1.9.1
+scipy==1.17.1
+six==1.17.0
+-e file:///home/hakimar/Desktop/towers-as-rain-gauges
+threadpoolctl==3.7.0
+wheel==0.48.0
+xarray==2026.9.0
