@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: targ
+Version: 0.1.0
+Summary: Towers as Rain Gauges: flash-flood early warning from cellular microwave links
+Requires-Python: >=3.10

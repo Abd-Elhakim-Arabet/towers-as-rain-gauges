@@ -1,0 +1,71 @@
+# Dataset registry. scripts/download_data.py reads this file.
+# `auth` = what the user must provide (env var) before the download can run.
+# `phase` = first phase that needs it. Sizes are from the hosting API on 2026-10-14.
+
+openmrg:
+  title: OpenMRG (Gothenburg, Sweden)
+  doi: 10.5281/zenodo.7107689
+  version: "1.1"
+  license: CC-BY-SA-4.0
+  host: zenodo
+  record: 7107689
+  files: [OpenMRG.zip]          # 318 MB
+  phase: 1
+
+openrainer:
+  title: OpenRainER (Emilia-Romagna, Italy)
+  doi: 10.5281/zenodo.10593848   # concept DOI; resolves to latest
+  version: "2.0.3"               # record 22829808, published 2026-09-18
+  license: CC-BY-4.0
+  host: zenodo
+  record: 22829808
+  files: [README.txt, CML.tar, AWS.tar]   # 107 MB + 22 MB
+  optional_files: [RADadj.tar]            # 1.57 GB gauge-adjusted radar (Phase 2c/3)
+  phase: 2
+
+netherlands_cml:
+  title: Four-year commercial microwave link dataset for the Netherlands
+  doi: 10.4121/be252844-b672-471e-8d69-27269a862ec1
+  version: "1"
+  license: CC-BY-4.0
+  host: 4tu
+  files: [README.pdf, RawCML_to_RAINLINKFormat.R]
+  # RawCMLdata.zip is 12.6 GB. We extract only selected months over HTTP range
+  # requests (scripts/download_nl_subset.py) instead of downloading it all.
+  partial_zip: RawCMLdata.zip
+  phase: 2
+
+# ---- Algeria scenario (Phase 4/5) ----
+opencellid:
+  title: OpenCelliD cell towers, MCC 603 (Algeria)
+  license: CC-BY-SA-4.0
+  auth: OPENCELLID_TOKEN        # free key from https://opencellid.org
+  phase: 4
+
+gpm_imerg:
+  title: GPM IMERG Final/Late Run, half-hourly 0.1 deg (V07)
+  license: NASA open data
+  auth: EARTHDATA_TOKEN         # free NASA Earthdata login
+  phase: 4
+
+copernicus_dem:
+  title: Copernicus DEM GLO-30
+  license: Copernicus DEM licence (free, attribution)
+  host: s3://copernicus-dem-30m (public, no auth)
+  phase: 5
+
+esa_worldcover:
+  title: ESA WorldCover 10 m v200 (2021)
+  license: CC-BY-4.0
+  host: s3://esa-worldcover (public, no auth)
+  phase: 5
+
+worldpop:
+  title: WorldPop population counts, Algeria, 100 m
+  license: CC-BY-4.0
+  phase: 5
+
+osm:
+  title: OpenStreetMap extract, Algeria (Geofabrik)
+  license: ODbL-1.0
+  phase: 5

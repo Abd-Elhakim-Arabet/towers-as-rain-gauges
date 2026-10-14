@@ -1,0 +1,26 @@
+# Which implementation each swappable layer uses.
+# Local defaults run on a laptop today. When Huawei Cloud access arrives,
+# flip a value here (or set the env var) — no code changes.
+#
+#   layer      local default   Huawei option       env override
+#   framework  torch           mindspore           TARG_FRAMEWORK
+#   storage    local           obs                 TARG_STORAGE
+#   compute    local           modelarts           TARG_COMPUTE
+framework: torch
+storage: local
+compute: local
+
+local:
+  root: .                 # repo root; data/, runs/ live under it
+
+obs:                      # Huawei Object Storage Service
+  bucket: towers-rain-gauges
+  endpoint: https://obs.ap-southeast-1.myhuaweicloud.com   # CN-Hong Kong
+  # credentials come from env: HUAWEICLOUD_SDK_AK / HUAWEICLOUD_SDK_SK
+
+modelarts:                # Huawei ModelArts training jobs
+  region: ap-southeast-1
+  flavor: modelarts.vm.gpu.t4u8   # small GPU flavor; confirm availability in console
+  image: mindspore_2.x-cuda       # preset MindSpore image; confirm name in console
+  obs_code_dir: obs://towers-rain-gauges/code/
+  obs_output_dir: obs://towers-rain-gauges/runs/

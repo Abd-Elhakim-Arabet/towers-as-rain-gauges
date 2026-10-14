@@ -1,0 +1,10 @@
+# Separate venv (.venv-ms) so MindSpore's protobuf/numpy pins never touch the main stack.
+# Locally this is the CPU build; on ModelArts use the preset MindSpore image instead.
+mindspore==2.10.0
+numpy
+scipy
+pandas
+xarray
+netcdf4
+pyyaml
+scikit-learn

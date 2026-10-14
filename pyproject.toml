@@ -1,0 +1,15 @@
+[project]
+name = "targ"
+version = "0.1.0"
+description = "Towers as Rain Gauges: flash-flood early warning from cellular microwave links"
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

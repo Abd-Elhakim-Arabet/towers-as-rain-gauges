@@ -1,0 +1,10 @@
+pyproject.toml
+src/targ/__init__.py
+src/targ.egg-info/PKG-INFO
+src/targ.egg-info/SOURCES.txt
+src/targ.egg-info/dependency_links.txt
+src/targ.egg-info/top_level.txt
+src/targ/backends/__init__.py
+src/targ/backends/compute.py
+src/targ/backends/storage.py
+tests/test_backends.py

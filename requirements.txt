@@ -1,0 +1,34 @@
+# Core scientific stack
+numpy
+scipy
+pandas
+xarray
+netcdf4
+h5py<=3.14
+matplotlib
+scikit-learn
+lightgbm
+tqdm
+pyyaml
+requests
+# CML processing (OpenSense community tools)
+pycomlink
+poligrain
+# Geo / hydrology
+pyproj
+shapely
+geopandas
+rasterio
+pykrige
+# Nowcasting
+pysteps
+# Dashboard
+fastapi
+uvicorn
+# Dev
+pytest
+ipykernel
+# NOTE: torch is NOT listed on purpose. Locally it is borrowed from an existing
+# venv via a .pth file (see docs/ENVIRONMENT.md); on a fresh machine run
+#   uv pip install torch --index-url https://download.pytorch.org/whl/cu128
+# MindSpore is optional: requirements-mindspore.txt

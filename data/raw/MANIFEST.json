@@ -1,0 +1,35 @@
+{
+  "netherlands_cml/README.pdf": {
+    "bytes": 11412928,
+    "dataset": "netherlands_cml",
+    "doi": "10.4121/be252844-b672-471e-8d69-27269a862ec1",
+    "downloaded": "2026-10-14T13:32:31+00:00",
+    "file": "README.pdf",
+    "license": "CC-BY-4.0",
+    "md5": "b88b01ba8935f16e445a1dbe3bbbd064",
+    "verified": true,
+    "version": "1"
+  },
+  "netherlands_cml/RawCML_to_RAINLINKFormat.R": {
+    "bytes": 10196,
+    "dataset": "netherlands_cml",
+    "doi": "10.4121/be252844-b672-471e-8d69-27269a862ec1",
+    "downloaded": "2026-10-14T13:32:31+00:00",
+    "file": "RawCML_to_RAINLINKFormat.R",
+    "license": "CC-BY-4.0",
+    "md5": "7836268aaaf7c336884ae9ada8075030",
+    "verified": true,
+    "version": "1"
+  },
+  "openmrg/OpenMRG.zip": {
+    "bytes": 317994487,
+    "dataset": "openmrg",
+    "doi": "10.5281/zenodo.7107689",
+    "downloaded": "2026-10-14T13:33:49+00:00",
+    "file": "OpenMRG.zip",
+    "license": "CC-BY-SA-4.0",
+    "md5": "4e4cdf6ced4d45a084c348f245b8d690",
+    "verified": true,
+    "version": "1.1"
+  }
+}
