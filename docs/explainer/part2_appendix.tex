@@ -10,6 +10,7 @@
 \item[Bias (of a neuron)] A fixed number a neuron adds to its weighted sum. Not the same as the \emph{bias} score of Section~\ref{sec:scores}.
 \item[Causal] Using only the present and the past, never the future. Needed for live warnings.
 \item[Convolution] A small set of weights that slides along the signal, producing one new number per position.
+\item[Dry level] What a link's total loss would be if it were dry right now. Ours: the 20th percentile of the previous 3 days.
 \item[Dilation] Spacing the minutes a convolution looks at further apart (1, 2, 4, \ldots), so a few layers can see far back.
 \item[GPU] Graphics card: a chip that performs many multiplications at once, which makes training fast.
 \item[Gauge-adjusted radar] Radar rain maps corrected with many rain gauges; a better reference than radar alone.
@@ -19,6 +20,7 @@
 \item[MindSpore] Huawei's free toolkit for building and training neural networks.
 \item[ModelArts] Huawei Cloud's service for training and running AI models.
 \item[Neural network] A large adjustable formula made of layers of simple calculators (neurons), whose dials are set by learning from examples.
+\item[Percentile] The value a given share of the way up a sorted list. The 20th percentile has 20\% of the values below it; the median is the 50th.
 \item[Overfitting] Doing well on the training examples but badly on new ones: memorising instead of learning.
 \item[Pooled score] A score computed over all links and hours mixed together. Sensitive to a few wild values.
 \item[PyTorch] A widely used free toolkit for neural networks; our local default.
@@ -27,7 +29,7 @@
 \item[Seed] The starting point of the random numbers used in training. Different seeds give slightly different networks.
 \item[Sigmoid] The function $1/(1+e^{-x})$, which turns any number into a probability between 0 and 1.
 \item[TCN] Temporal convolutional network: a network of stacked, dilated, causal convolutions along time.
-\item[Threshold] The probability above which we say ``raining''. Ours is 0.20, chosen on the validation data.
+\item[Threshold] The probability above which we say ``raining''. Ours is 0.25, chosen on the validation data.
 \item[Training / validation / test] The three separate piles of data: to learn from, to choose with, to judge once.
 \item[Weight] One of the network's adjustable numbers (a dial), multiplying one input of a neuron.
 \item[Zero-shot] Using a model on a place or kind of data it never learned from, with no changes.

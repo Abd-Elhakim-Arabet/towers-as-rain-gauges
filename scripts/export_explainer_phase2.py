@@ -34,8 +34,9 @@ def storm():
     dyn = feat.dynamic_features(tl, ds.length.values, ds.frequency.values, ds.polarization.values)
     stat = feat.static_features(ds.length.values, ds.frequency.values, ds.polarization.values)
     phys = feat.physics_params(ds.length.values, ds.frequency.values, ds.polarization.values)
-    m = TCN(4, 3, **v["model_kw"])
-    m.load_state_dict(torch.load(ROOT / "runs" / "phase2" / "physics.pt", map_location="cpu"))
+    m = TCN(len(feat.CHANNELS), 3, **v["model_kw"])
+    m.load_state_dict(torch.load(ROOT / "runs" / "phase2" / "physics_selected.pt", map_location="cpu"))
+    v = {**v, "threshold": json.loads((ROOT / "results" / "phase2_seeds.json").read_text())["selected"]["threshold"]}
     m.eval()
     feats = {}
     m.head.register_forward_hook(lambda mod, i, o: feats.setdefault("out", o))

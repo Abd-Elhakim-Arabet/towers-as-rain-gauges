@@ -41,3 +41,22 @@ def test_dynamic_features_use_only_past():
     tl2[:, 2000:] += 10
     f2 = feat.dynamic_features(tl2, np.ones(3), np.full(3, 38.0), np.array(["vertical"] * 3))
     assert np.allclose(f1[:, :, :2000], f2[:, :, :2000])
+
+
+def test_low_reference_survives_long_rain():
+    """Rain 70% of the last 3 days: the median is fooled, the low percentile is not."""
+    rng = np.random.default_rng(1)
+    T = 6 * 1440
+    tl = 50 + rng.normal(0, 0.1, (1, T))
+    rain = np.zeros(T, bool)
+    minute_of_day = np.arange(T) % 1440
+    rain[3 * 1440:] = minute_of_day[3 * 1440:] < 1010      # last 3 days: rain 70% of each day
+    tl[0, rain] += 6.0
+    ref = feat.low_reference(tl)
+    med = feat.bn.move_median(tl, 1440, axis=-1)
+    assert abs(ref[0, -1] - 50) < 0.5          # still the dry level
+    assert med[0, -1] > 55                     # median now sits on the rain
+    # causal: future changes do not move earlier references
+    tl2 = tl.copy()
+    tl2[0, 4000:] += 20
+    assert np.allclose(feat.low_reference(tl2)[0, :3990], ref[0, :3990], equal_nan=True)

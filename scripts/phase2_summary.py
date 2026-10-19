@@ -48,14 +48,15 @@ def main():
     ms = json.loads((RES / "phase2_mindspore.json").read_text())
 
     # Sweden robust view for the AI (Phase 1 already has it for classical)
-    pred = xr.open_dataset(RUNS / "physics_test_pred.nc")
+    pred = xr.open_dataset(RUNS / "selected_test_pred.nc")
     rad = openmrg.radar_along_cmls(openmrg.load_cml_1min()).sel(
         cml_id=pred.cml_id, time=OPENMRG_SPLITS["test"]).load()
     sweden_ai_median_r = per_link_median_r(hourly(pred.R.load()), hourly(rad))
 
     out = {
         "sweden": {
-            "classical": p2["classical"], "ai": p2["variants"]["physics"],
+            "classical": p2["classical"], "ai": seeds["selected"],
+            "ai_first_run": p2["variants"]["physics"],
             "ablations": {k: p2["variants"][k] for k in ("free", "physics_no_quant")},
             "seeds": seeds["summary"],
             "median_per_link_hourly_r_vs_radar": {
@@ -69,6 +70,9 @@ def main():
                                    for m in ("classical", "ai")},
                         "sweden_minmax_test": nl["sweden_test"], "classical_params": nl["classical"]},
         "mindspore": ms,
+        "long_rain": {"after": json.loads((RES / "phase2_longrain.json").read_text()),
+                      "before": json.loads((RES / "phase2_longrain_before.json").read_text())
+                      if (RES / "phase2_longrain_before.json").exists() else None},
     }
     (RES / "phase2_summary.json").write_text(json.dumps(out, indent=2, default=float))
 
@@ -85,12 +89,12 @@ def main():
                 f"| {h['r']:.2f} / {h['bias_pct']:+.0f}% | {g['r']:.2f} / {g['RMSE']:.2f} / {g['bias_pct']:+.0f}% | {med} |")
     m = S["median_per_link_hourly_r_vs_radar"]
     lines += [srow("classical (Phase 1)", S["classical"]["test"], f"{m['classical']:.2f}"),
-              srow("AI physics (seed 0)", S["ai"]["test"], f"{m['ai']:.2f}"),
+              srow(f"AI physics (selected by validation: seed {S['ai']['seed']})", S["ai"]["test"], f"{m['ai']:.2f}"),
               srow("AI free head (ablation)", S["ablations"]["free"]["test"], "–"),
               srow("AI no 1-dB augmentation (ablation)", S["ablations"]["physics_no_quant"]["test"], "–"),
               srow("classical, data rounded to 1 dB", S["classical"]["test_1dB"], "–"),
               srow("AI physics, data rounded to 1 dB", S["ai"]["test_1dB"], "–"), "",
-              "5 retrainings (seeds 0–4; GPU training is not bit-reproducible, so seed 0 here differs slightly from the row above):", ""]
+              "Ablation rows come from single runs (phase2_openmrg.py). 5 retrainings of the main design (seeds 0–4):", ""]
     for k, v in S["seeds"]["test"].items():
         lines.append(f"- {k}: mean {v['mean']:.3f}, range {v['min']:.3f} – {v['max']:.3f}")
     lines += ["", "## Italy (OpenRainER), May–Sep 2021 and 2022, zero-shot", "",
@@ -113,6 +117,17 @@ def main():
         lines.append(f"| {mth} | {t['wet_dry_vs_radar_hourly']['MCC']:.3f} | {t['rain_vs_radar_hourly']['r']:.2f} / "
                      f"{t['rain_vs_radar_hourly']['RMSE']:.2f} / {t['rain_vs_radar_hourly']['bias_pct']:+.0f}% "
                      f"| {N['robust'][mth]['median_per_link_hourly_r_vs_radar']:.2f} | {N['robust'][mth]['hours_over_100mm_h']} |")
+    LR = out["long_rain"]
+    lines += ["", "## Rain after a mostly rainy day (past 24 h > 50% rainy)", "",
+              "Rain measured as % of the reference total in those steps (before = 24-h median dry level; "
+              "after = 3-day 20th-percentile dry level).", "",
+              "| test | share of rainy steps | classical | AI before | AI after |", "|---|---|---|---|---|"]
+    for k, rows in LR["after"].items():
+        r = rows[-1]
+        rb = LR["before"][k][-1] if LR["before"] else None
+        fmt = lambda v: "–" if v is None else f"{v:.0f}%"
+        lines.append(f"| {k} | {r['share_of_rainy_steps']:.1%} | {fmt(r['classical']['total_pct'])} "
+                     f"| {fmt(rb['ai']['total_pct']) if rb else '–'} | {fmt(r['ai']['total_pct'])} |")
     lines += ["", "## MindSpore", "", f"- {ms['framework']}: PyTorch weights ported, max difference "
               f"{ms['port_check']['max_abs_diff_rain_mm_h']:.1e} mm/h over {ms['port_check']['n_values']} values; "
               f"rain/no-rain agreement {ms['port_check']['rain_no_rain_agreement']:.0%}.",

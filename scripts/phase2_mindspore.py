@@ -52,8 +52,8 @@ def export():
     a, _ = P2.idx(times, OPENMRG_SPLITS["test"])
     sel = np.random.default_rng(0).choice(dyn.shape[0], 64, replace=False)
     x = dyn[sel, :, a + 20 * 1440:a + 23 * 1440]          # 3 days in late August
-    model = TCN(4, 3, **p2["variants"]["physics"]["model_kw"])
-    model.load_state_dict(torch.load(ROOT / "runs" / "phase2" / "physics.pt", map_location="cpu"))
+    model = TCN(len(feat.CHANNELS), 3, **p2["variants"]["physics"]["model_kw"])
+    model.load_state_dict(torch.load(ROOT / "runs" / "phase2" / "physics_selected.pt", map_location="cpu"))
     model.eval()
     with torch.no_grad():
         lg, rt = model(torch.from_numpy(x), torch.from_numpy(stat[sel]), torch.from_numpy(phys[sel]))
@@ -76,7 +76,7 @@ def check():
     kw = json.load(open(DIR / "model_kw.json"))
     b = np.load(DIR / "batch.npz")
     w = dict(np.load(DIR / "weights.npz"))
-    net = TCN(4, 3, **kw)
+    net = TCN(b["x"].shape[1], 3, **kw)
     load_torch_state(net, w)
     net.set_train(False)
     lg, rt = net(ms.Tensor(b["x"]), ms.Tensor(b["stat"]), ms.Tensor(b["phys"]))
@@ -96,7 +96,7 @@ def check():
     dyn, stat, phys, tgt = d["dyn"], d["stat"], d["phys"], d["tgt"]
     ms.set_seed(0)
     rng = np.random.default_rng(0)
-    net2 = TCN(4, 3, **kw)
+    net2 = TCN(b["x"].shape[1], 3, **kw)
     opt = nn.AdamWeightDecay(net2.trainable_params(), learning_rate=2e-3, weight_decay=1e-4)
     crop, warm, batch, steps = 1536, 1024, 16, 300
 

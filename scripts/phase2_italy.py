@@ -2,7 +2,7 @@
 
     python scripts/phase2_italy.py
 
-The AI model trained on Sweden (runs/phase2/physics.pt) and the classical method
+The AI model trained on Sweden (runs/phase2/physics_selected.pt, chosen by validation loss) and the classical method
 with its Sweden-tuned settings are both applied unchanged: no Italian data is used
 for training or tuning. Italy differs in almost everything: ~25 GHz links only,
 up to 25 km long, hills and mountains, 1-dB rounding, different equipment.
@@ -115,12 +115,13 @@ def main():
     p2 = json.loads((OUT / "phase2_openmrg.json").read_text())
     cp = ClassicalParams(**p1["params"])
     v = p2["variants"]["physics"]
-    model = TCN(4, 3, **v["model_kw"]).to(T.device())
-    model.load_state_dict(torch.load(ROOT / "runs" / "phase2" / "physics.pt"))
+    model = TCN(len(feat.CHANNELS), 3, **v["model_kw"]).to(T.device())
+    sel = json.loads((OUT / "phase2_seeds.json").read_text())["selected"]
+    model.load_state_dict(torch.load(ROOT / "runs" / "phase2" / "physics_selected.pt"))
     model.eval()
-    thr = v["threshold"]
+    thr = sel["threshold"]
 
-    res = {"model": "runs/phase2/physics.pt (trained on Sweden only)", "threshold": thr,
+    res = {"model": f"runs/phase2/physics_selected.pt (seed {sel['seed']}, trained on Sweden only)", "threshold": thr,
            "classical_params": p1["params"], "seasons": {}}
     for name, months in SEASONS.items():
         ds, cl, ai_wet, ai_R, radar, g, pairs = run_season(months, model, thr, cp)

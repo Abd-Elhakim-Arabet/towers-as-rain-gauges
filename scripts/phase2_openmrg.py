@@ -128,7 +128,7 @@ def main():
             return float(T.loss_fn(logit, R_t, torch.from_numpy(tgt_v), 0.05))
         return val_fn
 
-    ALL = [0, 1, 2, 3]
+    ALL = list(range(len(feat.CHANNELS)))
     variants = {
         "physics": dict(cols=ALL, dyn=[dyn, dyn_q], head="physics"),
         "free": dict(cols=ALL, dyn=[dyn, dyn_q], head="free"),

@@ -2,8 +2,11 @@
 
     python scripts/phase2_seeds.py
 
-Retrains the main (physics) model with 5 seeds (0 = the reported model) and scores
-each on August exactly like phase2_openmrg.py. Writes results/phase2_seeds.json.
+Retrains the main (physics) model with 5 seeds and scores each on August exactly
+like phase2_openmrg.py. The run with the lowest VALIDATION loss (16-31 July; no test
+data involved) becomes the model used everywhere else:
+runs/phase2/physics_selected.pt (+ its threshold in results/phase2_seeds.json).
+Writes results/phase2_seeds.json.
 """
 
 from __future__ import annotations
@@ -52,11 +55,12 @@ def main():
 
     runs = []
     for seed in range(5):
-        model, _ = T.train([dyn, dyn_q], stat, phys, target, tr, val_fn=val_fn, steps=P2.STEPS,
-                           seed=seed, model_kw=kw, log_every=500)
+        model, hist = T.train([dyn, dyn_q], stat, phys, target, tr, val_fn=val_fn, steps=P2.STEPS,
+                              seed=seed, model_kw=kw, log_every=500)
+        torch.save(model.state_dict(), ROOT / "runs" / "phase2" / f"physics_seed{seed}.pt")
         P, R = T.predict(model, dyn, stat, phys, va)
         thr, _ = P2.best_threshold(P, R, radar_val, ds, *va)
-        out = {"seed": seed, "threshold": thr}
+        out = {"seed": seed, "threshold": thr, "val_loss": float(min(h["val"] for h in hist))}
         for tag, d in (("test", dyn), ("test_1dB", dyn_q)):
             P, R = T.predict(model, d, stat, phys, te)
             out[tag] = P2.scores(P2.as_da((P > thr).astype(float), ds, *te),
@@ -77,7 +81,24 @@ def main():
                                         ("rain_vs_gauges_hourly", "r"), ("rain_vs_gauges_hourly", "RMSE"),
                                         ("rain_vs_gauges_hourly", "bias_pct")]}
                for tag in ("test", "test_1dB")}
-    (ROOT / "results" / "phase2_seeds.json").write_text(json.dumps({"runs": runs, "summary": summary},
+    sel = min(runs, key=lambda r: r["val_loss"])
+    import shutil
+    shutil.copy(ROOT / "runs" / "phase2" / f"physics_seed{sel['seed']}.pt",
+                ROOT / "runs" / "phase2" / "physics_selected.pt")
+    print("selected by validation loss: seed", sel["seed"], flush=True)
+    from targ.models.tcn_torch import TCN
+    m = TCN(dyn.shape[1], stat.shape[1], **kw).to(T.device())
+    m.load_state_dict(torch.load(ROOT / "runs" / "phase2" / "physics_selected.pt"))
+    P, R = T.predict(m, dyn, stat, phys, te)
+    import xarray as xr
+    xr.Dataset({"prob": P2.as_da(P, ds, *te), "rate": P2.as_da(R, ds, *te),
+                "R": P2.as_da(np.where(P > sel["threshold"], R, 0.0), ds, *te)}).to_netcdf(
+        ROOT / "runs" / "phase2" / "selected_test_pred.nc")
+    selected = {"seed": sel["seed"], "threshold": sel["threshold"], "val_loss": sel["val_loss"],
+                "rule": "lowest validation loss (16-31 July 2015) of 5 runs", "test": sel["test"],
+                "test_1dB": sel["test_1dB"]}
+    (ROOT / "results" / "phase2_seeds.json").write_text(json.dumps({"runs": runs, "summary": summary,
+                                                                   "selected": selected},
                                                                   indent=2, default=float))
     print(json.dumps(summary, indent=1))
 

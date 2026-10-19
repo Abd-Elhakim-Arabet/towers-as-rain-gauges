@@ -1,0 +1,234 @@
+{
+  "sweden_aug2015_5min": [
+    {
+      "past24h_wet_from": 0.0,
+      "past24h_wet_to": 0.1,
+      "n": 121321,
+      "share_of_rainy_steps": 0.2907960872764577,
+      "classical": {
+        "caught": 0.41693523792253606,
+        "total_pct": 67.4195321953784
+      },
+      "ai": {
+        "caught": 0.5304687564395282,
+        "total_pct": 60.51148038349953
+      }
+    },
+    {
+      "past24h_wet_from": 0.1,
+      "past24h_wet_to": 0.25,
+      "n": 178985,
+      "share_of_rainy_steps": 0.4290117760418789,
+      "classical": {
+        "caught": 0.5517389725395982,
+        "total_pct": 79.00389141466087
+      },
+      "ai": {
+        "caught": 0.6715534821353745,
+        "total_pct": 68.4496127866137
+      }
+    },
+    {
+      "past24h_wet_from": 0.25,
+      "past24h_wet_to": 0.5,
+      "n": 114095,
+      "share_of_rainy_steps": 0.27347598171633475,
+      "classical": {
+        "caught": 0.6646303518997326,
+        "total_pct": 90.75044576854798
+      },
+      "ai": {
+        "caught": 0.7333099609974144,
+        "total_pct": 82.1319871865169
+      }
+    },
+    {
+      "past24h_wet_from": 0.5,
+      "past24h_wet_to": 1.0,
+      "n": 108,
+      "share_of_rainy_steps": 0.00025886678667219555,
+      "classical": {
+        "caught": 0.6666666666666666,
+        "total_pct": 66.15942548761927
+      },
+      "ai": {
+        "caught": 0.5462962962962963,
+        "total_pct": 34.241863602457805
+      }
+    }
+  ],
+  "italy_2021_hourly": [
+    {
+      "past24h_wet_from": 0.0,
+      "past24h_wet_to": 0.1,
+      "n": 5506,
+      "share_of_rainy_steps": 0.48846699787083037,
+      "classical": {
+        "caught": 0.609698510715583,
+        "total_pct": 82.46527112646437
+      },
+      "ai": {
+        "caught": 0.5662913185615692,
+        "total_pct": 77.14014260790987
+      }
+    },
+    {
+      "past24h_wet_from": 0.1,
+      "past24h_wet_to": 0.25,
+      "n": 3120,
+      "share_of_rainy_steps": 0.276792051100071,
+      "classical": {
+        "caught": 0.7304487179487179,
+        "total_pct": 90.09686843969948
+      },
+      "ai": {
+        "caught": 0.719551282051282,
+        "total_pct": 78.55215721702812
+      }
+    },
+    {
+      "past24h_wet_from": 0.25,
+      "past24h_wet_to": 0.5,
+      "n": 2212,
+      "share_of_rainy_steps": 0.19623846699787084,
+      "classical": {
+        "caught": 0.7106690777576854,
+        "total_pct": 88.57172647813135
+      },
+      "ai": {
+        "caught": 0.6772151898734177,
+        "total_pct": 69.24195695089479
+      }
+    },
+    {
+      "past24h_wet_from": 0.5,
+      "past24h_wet_to": 1.0,
+      "n": 261,
+      "share_of_rainy_steps": 0.02315471965933286,
+      "classical": {
+        "caught": 0.8084291187739464,
+        "total_pct": 98.80271095100098
+      },
+      "ai": {
+        "caught": 0.7126436781609196,
+        "total_pct": 77.34920907823106
+      }
+    }
+  ],
+  "italy_2022_hourly": [
+    {
+      "past24h_wet_from": 0.0,
+      "past24h_wet_to": 0.1,
+      "n": 5383,
+      "share_of_rainy_steps": 0.3954598883338231,
+      "classical": {
+        "caught": 0.5909344231840981,
+        "total_pct": 101.84320117788776
+      },
+      "ai": {
+        "caught": 0.5688277911945012,
+        "total_pct": 83.37577240534063
+      }
+    },
+    {
+      "past24h_wet_from": 0.1,
+      "past24h_wet_to": 0.25,
+      "n": 3178,
+      "share_of_rainy_steps": 0.23347046723479284,
+      "classical": {
+        "caught": 0.6472624292007552,
+        "total_pct": 97.20554783141777
+      },
+      "ai": {
+        "caught": 0.6529263687853997,
+        "total_pct": 86.22296780520385
+      }
+    },
+    {
+      "past24h_wet_from": 0.25,
+      "past24h_wet_to": 0.5,
+      "n": 3171,
+      "share_of_rainy_steps": 0.2329562151043197,
+      "classical": {
+        "caught": 0.6275622831914223,
+        "total_pct": 80.04046560130448
+      },
+      "ai": {
+        "caught": 0.6354462314727215,
+        "total_pct": 71.09951885382769
+      }
+    },
+    {
+      "past24h_wet_from": 0.5,
+      "past24h_wet_to": 1.0,
+      "n": 1446,
+      "share_of_rainy_steps": 0.10622979723773142,
+      "classical": {
+        "caught": 0.5511756569847857,
+        "total_pct": 62.36743614142227
+      },
+      "ai": {
+        "caught": 0.475103734439834,
+        "total_pct": 54.59644857264963
+      }
+    }
+  ],
+  "netherlands_2014_hourly": [
+    {
+      "past24h_wet_from": 0.0,
+      "past24h_wet_to": 0.1,
+      "n": 52491,
+      "share_of_rainy_steps": 0.24061332538791227,
+      "classical": {
+        "caught": 0.5280333771503687,
+        "total_pct": 106.30292799192793
+      },
+      "ai": {
+        "caught": 0.6799070316816216,
+        "total_pct": 100.39153478972987
+      }
+    },
+    {
+      "past24h_wet_from": 0.1,
+      "past24h_wet_to": 0.25,
+      "n": 50712,
+      "share_of_rainy_steps": 0.2324585730329353,
+      "classical": {
+        "caught": 0.6199913235526108,
+        "total_pct": 116.5397879942651
+      },
+      "ai": {
+        "caught": 0.6948454014828838,
+        "total_pct": 101.08130908643658
+      }
+    },
+    {
+      "past24h_wet_from": 0.25,
+      "past24h_wet_to": 0.5,
+      "n": 50865,
+      "share_of_rainy_steps": 0.23315990923884394,
+      "classical": {
+        "caught": 0.6545365182345424,
+        "total_pct": 118.51795198087429
+      },
+      "ai": {
+        "caught": 0.6542809397424555,
+        "total_pct": 90.11478289992296
+      }
+    },
+    {
+      "past24h_wet_from": 0.5,
+      "past24h_wet_to": 1.0,
+      "n": 21230,
+      "share_of_rainy_steps": 0.09731612844078752,
+      "classical": {
+        "caught": 0.5967498822421102,
+        "total_pct": 74.50330858035949
+      },
+      "ai": {
+        "caught": 0.5934997644842205,
+        "total_pct": 68.61223073021931
+      }
+    }
+  ]
+}
