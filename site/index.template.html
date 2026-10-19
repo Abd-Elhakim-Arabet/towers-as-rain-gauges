@@ -182,92 +182,94 @@ footer { padding-block: 2.5rem; border-top: 1px solid var(--rule); color: var(--
 <header>
   <div class="mark">TOWERS AS RAIN GAUGES</div>
   <nav aria-label="Sections">
-    <a href="#replay">Replay</a><a href="#real">Real vs simulated</a><a href="#how">How it works</a>
-    <a href="#network">Network</a><a href="#results">Results</a><a href="#roadmap">Roadmap</a>
+    <a href="#replay">Watch a storm</a><a href="#real">Why Algeria is simulated</a><a href="#how">How it works</a>
+    <a href="#network">The beams</a><a href="#results">How good is it?</a><a href="#roadmap">Progress</a>
   </nav>
 </header>
 
 <div class="hero">
   <div class="eyebrow">Huawei ICT Competition · Innovation Track</div>
-  <h1>Every cell-tower link is already a rain gauge.</h1>
-  <p class="lede">Rain weakens the microwave signal between two towers, and operators already log that signal every few seconds. We turn the loss in decibels into rainfall in mm/h, then into flash-flood alerts for neighbourhoods that have no rain gauge and no radar.</p>
-  <div class="badges"><span class="badge real">Validated on real data: Sweden · Italy · Netherlands</span><span class="badge sim">Algeria demo: simulation on real tower sites</span></div>
+  <h1>Phone towers can measure rain.</h1>
+  <p class="lede">Phone towers talk to each other with invisible radio beams. When it rains, the raindrops make the beam a little weaker. Phone companies already record how strong every beam is, every few seconds. We use those records to work out how much rain is falling, street by street, and to warn people before a flash flood.</p>
+  <div class="badges"><span class="badge real">Tested on real data from Sweden, Italy and the Netherlands</span><span class="badge sim">Algeria: a realistic simulation, not real measurements</span></div>
 </div>
 
 <div class="console" id="replay">
   <div class="console-head">
-    <div><div class="eyebrow">Real data replay · OpenMRG, Gothenburg</div>
-      <h3 id="storm-title">One link through one storm</h3></div>
+    <div><div class="eyebrow">Real data · Gothenburg, Sweden</div>
+      <h3 id="storm-title">Watch one beam during one storm</h3></div>
     <div class="mono muted" id="storm-meta"></div>
   </div>
+  <p class="muted">Press play or drag the slider. When rain falls, the beam gets weaker. From how much weaker it gets, we work out the rain, and you can compare it with a real rain gauge standing right under the beam.</p>
   <div class="scene">
     <div class="towers" aria-hidden="true"><canvas id="scene"></canvas></div>
     <div class="readouts">
-      <div class="readout"><span class="k">Time (UTC)</span><span class="v" id="ro-t">--</span></div>
-      <div class="readout"><span class="k">Signal loss from rain</span><span class="v" id="ro-a">--<small>dB</small></span></div>
-      <div class="readout"><span class="k">Rain from the link</span><span class="v" id="ro-r" style="color:var(--rain)">--<small>mm/h</small></span></div>
-      <div class="readout"><span class="k">Rain gauge below it</span><span class="v" id="ro-g" style="color:var(--s2)">--<small>mm/h</small></span></div>
+      <div class="readout"><span class="k">Time</span><span class="v" id="ro-t">--</span></div>
+      <div class="readout"><span class="k">How much weaker the beam is</span><span class="v" id="ro-a">--<small>dB</small></span></div>
+      <div class="readout"><span class="k">Rain worked out from the beam</span><span class="v" id="ro-r" style="color:var(--rain)">--<small>mm/h</small></span></div>
+      <div class="readout"><span class="k">Rain measured by the gauge</span><span class="v" id="ro-g" style="color:var(--s2)">--<small>mm/h</small></span></div>
     </div>
   </div>
   <div class="controls">
-    <button id="play" type="button">Play the day</button>
-    <label class="mono muted" for="scrub">Scrub</label>
+    <button id="play" type="button">Play the storm</button>
+    <label class="mono muted" for="scrub">Time of day</label>
     <input id="scrub" type="range" min="0" max="1439" value="510">
   </div>
   <div class="chart" id="c-db"></div>
-  <div class="legend"><span><i style="background:var(--rain)"></i>Total loss TSL − RSL</span><span><i class="dash"></i>Dry-weather baseline</span><span><i class="box" style="background:var(--wet)"></i>Flagged as raining</span></div>
+  <div class="legend"><span><i style="background:var(--rain)"></i>Signal loss (higher = weaker beam)</span><span><i class="dash"></i>Normal level on a dry day</span><span><i class="box" style="background:var(--wet)"></i>Times we decided "it is raining"</span></div>
   <div class="chart" id="c-mm"></div>
-  <div class="legend"><span><i style="background:var(--rain)"></i>Rain from the link</span><span><i style="background:var(--s2)"></i>Rain gauge</span><span><i class="dot" style="background:var(--s3)"></i>Weather radar (5-min scans)</span></div>
+  <div class="legend"><span><i style="background:var(--rain)"></i>Rain from the beam (our estimate)</span><span><i style="background:var(--s2)"></i>Rain gauge (the real measurement)</span><span><i class="dot" style="background:var(--s3)"></i>Weather radar (a second check)</span></div>
+  <p class="mono muted">dB = how much weaker the signal is. mm/h = millimetres of rain per hour (5 is moderate rain, 20 is a downpour).</p>
 </div>
 
 <section id="real">
-  <div class="rail"><b>?</b>what is real</div>
+  <div class="rail"><b>?</b>Algeria</div>
   <div class="body">
-    <h2>Why the Algeria part is a simulation</h2>
-    <p>Algeria does have open data on cell towers, but it is the wrong kind of data for measuring rain. OpenCelliD gives us <em>where</em> towers are. Measuring rain needs the <em>signal logs</em> of the microwave links between towers, and those stay inside the operators' network systems.</p>
+    <h2>Why Algeria is a simulation</h2>
+    <p>For Algeria we know where the phone towers are. That comes from a free public map called OpenCelliD. What we do not have is the record of how strong each beam was over time. Phone companies keep that private. Without it we cannot measure real Algerian rain with beams yet.</p>
     <div class="rs">
-      <div class="col have"><h3>Open for Algeria</h3><ul>
-        <li>Tower positions from OpenCelliD (MCC 603: Mobilis, Djezzy, Ooredoo). These are crowdsourced estimates, accurate to tens or hundreds of metres.</li>
-        <li>Satellite rainfall from past storms (GPM IMERG, 10 km, 30 min).</li>
-        <li>Terrain, land cover, population, roads.</li></ul></div>
-      <div class="col miss"><h3>Not open anywhere</h3><ul>
-        <li>Which towers are linked by microwave and which use fibre.</li>
-        <li>Each link's frequency, length and polarisation.</li>
-        <li>The received and transmitted signal levels (RSL/TSL) over time. This is the actual rain signal.</li></ul></div>
-      <div class="col do"><h3>So we</h3><ul>
-        <li>Train and score the AI on real link data from Sweden, Italy and the Netherlands.</li>
-        <li>Draw plausible links between real Algerian tower sites, with lengths and frequencies matching real networks.</li>
-        <li>Feed real storm rainfall through the physics of attenuation, add realistic noise, and run the same pipeline.</li></ul></div>
+      <div class="col have"><h3>What we have for Algeria</h3><ul>
+        <li>Where the towers are (Mobilis, Djezzy, Ooredoo). These positions come from the public, so they can be off by a few hundred metres.</li>
+        <li>Real rainfall from past storms, measured by NASA satellites.</li>
+        <li>Maps of the land: hills, valleys, buildings, roads, where people live.</li></ul></div>
+      <div class="col miss"><h3>What we do not have</h3><ul>
+        <li>Which towers are connected by a radio beam. Some use cables instead.</li>
+        <li>Details of each beam, like its length and frequency.</li>
+        <li>The beam-strength records. These are what actually show the rain.</li></ul></div>
+      <div class="col do"><h3>What we do instead</h3><ul>
+        <li>Teach and test the AI on real beam records from Sweden, Italy and the Netherlands.</li>
+        <li>Draw realistic beams between the real Algerian tower positions.</li>
+        <li>Take a real Algerian storm and calculate how it would have weakened those beams. Then run our system on that.</li></ul></div>
     </div>
-    <p class="callout">The Algeria demo shows how the system would behave on a real network there. It is not evidence of accuracy in Algeria. That needs a pilot with an operator: 50 to 100 links in one flood-prone wilaya, compared against ONM rain gauges.</p>
+    <p class="callout">So the Algeria demo shows how the system would work there. It does not prove how accurate it would be there. To prove that, a phone company would need to share records from 50 to 100 beams in one city for a trial, and we would compare them with the national weather service's rain gauges.</p>
   </div>
 </section>
 
 <section id="how">
-  <div class="rail"><b>dB → mm/h</b>pipeline</div>
+  <div class="rail"><b>beam → rain</b>steps</div>
   <div class="body">
-    <h2>From a signal log to a flood alert</h2>
-    <p>Each step below is the classical method that Phase 1 reproduced. Phase 2 replaces the first and the last of these steps with small neural networks.</p>
+    <h2>How a beam becomes a flood warning</h2>
+    <p>Right now these steps use fixed rules. This is the "simple method" whose scores are shown further down. Next we replace the weakest steps with AI.</p>
     <div class="pipe">
-      <div class="step"><span class="u">RSL, TSL · dBm</span><h3>Signal log</h3><p>Operators record received and transmitted power for every link, every 10 s to 15 min.</p></div>
-      <div class="step"><span class="u">std over 60 min</span><h3>Is it raining?</h3><p>Rain makes the signal jitter. A link is flagged wet when its rolling spread passes a threshold.</p></div>
-      <div class="step"><span class="u">dB</span><h3>Dry baseline</h3><p>The signal level just before rain started is held as the reference. Loss above it is rain.</p></div>
-      <div class="step"><span class="u">dB</span><h3>Wet antenna</h3><p>Water on the antenna covers adds loss that is not rain along the path. It is subtracted.</p></div>
-      <div class="step"><span class="u">A = a·Rᵇ·L</span><h3>Rain rate</h3><p>ITU-R P.838 turns loss per km into mm/h, using the link's frequency and polarisation.</p></div>
+      <div class="step"><span class="u">step 1</span><h3>Read the beam strength</h3><p>The phone company already saves it every few seconds for every beam.</p></div>
+      <div class="step"><span class="u">step 2</span><h3>Is it raining?</h3><p>Rain makes the signal shaky. If it shakes a lot, we say it is raining.</p></div>
+      <div class="step"><span class="u">step 3</span><h3>Find the normal level</h3><p>We remember how strong the beam was just before the rain. Anything weaker than that is caused by rain.</p></div>
+      <div class="step"><span class="u">step 4</span><h3>Ignore wet antennas</h3><p>Water sitting on the antenna also weakens the beam. We subtract that, so we only count rain in the air.</p></div>
+      <div class="step"><span class="u">step 5</span><h3>Turn it into rain</h3><p>A standard formula from the ITU converts "how much weaker" into "how many mm of rain per hour".</p></div>
     </div>
     <div class="after">
-      <div class="step"><span class="u">Phase 3 · mm/h on a 1 km grid</span><h3>Rain map + 1 h nowcast</h3><p>Many links together give a rain map. Optical flow pushes it forward 30 to 60 min.</p></div>
-      <div class="step"><span class="u">Phase 5 · risk level</span><h3>Flood risk</h3><p>Rain is combined with terrain, wadi channels and paved surfaces into a risk score per neighbourhood and road.</p></div>
-      <div class="step"><span class="u">Phase 6 · AR / FR / EN</span><h3>Ranked alerts</h3><p>Alerts are ranked by people and critical sites exposed. No flood depth is predicted.</p></div>
+      <div class="step"><span class="u">later</span><h3>Rain map</h3><p>Many beams together give a map of rain over the whole city, and a forecast for the next hour.</p></div>
+      <div class="step"><span class="u">later</span><h3>Flood risk</h3><p>Rain plus land shape (valleys, dry riverbeds, concrete) tells us which streets will flood first.</p></div>
+      <div class="step"><span class="u">later</span><h3>Warnings</h3><p>Warnings in Arabic, French and English, with the most people at risk listed first.</p></div>
     </div>
   </div>
 </section>
 
 <section id="network">
-  <div class="rail"><b>km</b>network</div>
+  <div class="rail"><b>map</b>beams</div>
   <div class="body">
-    <h2>364 links over Gothenburg, scored one by one</h2>
-    <p>Each line is a sub-link of the Swedish OpenMRG network. Colour shows how well its hourly rain estimate followed the radar in August 2015, the held-out test month. Most links track the radar closely. The red ones were dropped by quality control because their signal claimed rain far more often than it could have rained.</p>
+    <h2>364 beams over Gothenburg, each one checked</h2>
+    <p>Each line is one beam between two towers in Gothenburg, Sweden. The colour shows how well that beam's rain matched the weather radar in August 2015. Dark blue means a very good match, light blue a weaker one. Red dashed lines are broken beams that we removed: they said "rain" almost all the time, even on dry days. Orange dots are rain gauges. Hover over a line for details.</p>
     <div class="panel">
       <div class="chart" id="c-map"></div>
       <div class="legend" id="map-legend"></div>
@@ -276,73 +278,77 @@ footer { padding-block: 2.5rem; border-top: 1px solid var(--rule); color: var(--
 </section>
 
 <section id="results">
-  <div class="rail"><b>r, MCC</b>baseline</div>
+  <div class="rail"><b>score</b>results</div>
   <div class="body">
-    <h2>The classical baseline: what it scored</h2>
-    <p>Tuned on June and July 2015, scored once on August 2015. August was never used for tuning, so these are honest out-of-sample numbers. They are the bar the AI models must clear.</p>
+    <h2>How good is the simple method?</h2>
+    <p>We set it up using June and July 2015, then tested it on August 2015, a month it had never seen. It is like practising on old exams and then sitting a new one. These August scores are the ones our AI has to beat.</p>
     <div class="scores" id="scores"></div>
+    <p class="mono muted">"Match" is a correlation: 0 means no relation, 1 means a perfect match.</p>
     <dl class="explain">
-      <dt>Rain or no rain: MCC 0.58</dt>
-      <dd>MCC runs from 0 (no better than chance) to 1 (perfect). At 0.58, the link catches 71% of the 5-minute periods the radar calls rainy, and wrongly flags rain in under 5% of the dry ones. Most misses are very light rain at the edges of storms, where the signal barely moves.</dd>
-      <dt>How much rain: r 0.81 against gauges</dt>
-      <dd>Hour by hour, link rainfall and gauge rainfall move together closely (r = 1 would be identical). The typical hourly error is about 1 mm, and over the month the links come out 6% below the gauges.</dd>
-      <dt>As good as the radar, at this scale</dt>
-      <dd>The weather radar scored r 0.80 against the same gauges. The links matched it without any radar, using equipment the operator already runs.</dd>
-      <dt>Where it falls short</dt>
-      <dd>At 5-minute resolution the scatter is wide (r 0.58), the rain detector needs 30 minutes of future data, and it relies on two hand-tuned settings. Those three weaknesses are what Phase 2's AI models target.</dd>
+      <dt>It notices most rain</dt>
+      <dd>Out of 100 rainy 5-minute periods, it noticed 71. The ones it missed were mostly light drizzle, which barely changes the beam.</dd>
+      <dt>It rarely gives false alarms</dt>
+      <dd>Out of 100 dry periods, it wrongly said "rain" fewer than 5 times.</dd>
+      <dt>The rain amounts are close</dt>
+      <dd>Hour by hour, beam rain and gauge rain go up and down together (match 0.81). The typical mistake is about 1 mm per hour. Over the whole month the beams measured 6% less rain than the gauges.</dd>
+      <dt>As good as a weather radar</dt>
+      <dd>The weather radar matched the same gauges at 0.80. The beams did as well, with no radar, using equipment that already exists.</dd>
+      <dt>What still needs work</dt>
+      <dd>Three things. Minute-by-minute estimates are noisy. To decide whether it is raining, the method looks 30 minutes into the future, which is too late for live warnings. And two of its settings had to be tuned by hand. The AI is meant to fix all three.</dd>
     </dl>
     <div class="two">
-      <div class="panel"><h3>Choosing the rain detector</h3>
-        <p class="muted">Agreement with radar (MCC) on June–July for each window length and threshold. The best is a 60-min window at 0.35 dB.</p>
+      <div class="panel"><h3>Choosing when to say "it is raining"</h3>
+        <p class="muted">We tried many settings for "how shaky counts as rain" and for how many minutes to look at. Higher on the chart is better. The best setting was 0.35 while looking at 60 minutes.</p>
         <div class="chart" id="c-tune"></div>
-        <div class="legend"><span><i style="background:var(--rain)"></i>15 min</span><span><i style="background:var(--s2)"></i>30 min</span><span><i style="background:var(--s3)"></i>60 min</span></div></div>
-      <div class="panel"><h3>The wet-antenna setting swings the total</h3>
-        <p class="muted">Bias against gauges on June–July for each correction. With no correction, links report 3.5× too much rain. The chosen one is −12% on tuning and −6% on the test month.</p>
+        <div class="legend"><span><i style="background:var(--rain)"></i>looking at 15 min</span><span><i style="background:var(--s2)"></i>30 min</span><span><i style="background:var(--s3)"></i>60 min</span></div></div>
+      <div class="panel"><h3>The wet-antenna correction matters a lot</h3>
+        <p class="muted">Each bar shows how far off the total rain was. 0% is perfect, bars to the right mean too much rain, bars to the left too little. Without any correction, the beams report 3.5 times too much rain. The setting we chose was 12% low in June–July and 6% low in August.</p>
         <div class="chart" id="c-waa"></div></div>
     </div>
-    <div class="panel"><h3>Effect of dropping faulty links</h3>
+    <div class="panel"><h3>Removing broken beams helps a lot</h3>
       <div class="tbl"><table id="t-qc"></table></div>
-      <p class="muted">Pooled scores across all links are dragged down by a few faulty ones. Dropping 45 of 728 sub-links, chosen using June–July only, nearly doubles the 5-minute correlation with radar. The median link was fine either way.</p></div>
+      <p class="muted">A few broken beams spoil the overall numbers. We removed 45 of the 728, choosing them using June–July only. That almost doubles the 5-minute match with the radar.</p></div>
   </div>
 </section>
 
 <section id="data">
-  <div class="rail"><b>GB</b>data</div>
+  <div class="rail"><b>data</b>sources</div>
   <div class="body">
-    <h2>Data in hand</h2>
+    <h2>The data we use</h2>
     <div class="tbl"><table>
-      <thead><tr><th>Dataset</th><th>Role</th><th>What it holds</th><th>Licence</th><th>Status</th></tr></thead>
+      <thead><tr><th>Data</th><th>Used for</th><th>What is inside</th><th>Status</th></tr></thead>
       <tbody>
-        <tr><td>OpenMRG · Sweden</td><td>train, test</td><td>364 links, 10-s signals, 10 gauges, radar · summer 2015</td><td>CC BY-SA 4.0</td><td><span class="pill ok">verified</span></td></tr>
-        <tr><td>OpenRainER · Italy</td><td>cross-country test</td><td>151 links, 1-min signals, 319 gauges, gauge-adjusted radar · 2021–22</td><td>CC BY 4.0</td><td><span class="pill ok">verified</span></td></tr>
-        <tr><td>Netherlands 4-year</td><td>operator-format test</td><td>~1,800 paths, 15-min min/max signal only</td><td>CC BY 4.0</td><td><span class="pill wip">downloading</span></td></tr>
-        <tr><td>OpenCelliD · Algeria</td><td>tower sites</td><td>crowdsourced cell positions, MCC 603</td><td>CC BY-SA 4.0</td><td><span class="pill ok">key works</span></td></tr>
-        <tr><td>GPM IMERG</td><td>real storm rain</td><td>30-min, 0.1° satellite rainfall</td><td>NASA open</td><td><span class="pill ok">key works</span></td></tr>
-        <tr><td>DEM, land cover, population, OSM</td><td>flood layer</td><td>terrain, paved surfaces, people, roads</td><td>various open</td><td><span class="pill next">phase 5</span></td></tr>
+        <tr><td>Sweden (OpenMRG)</td><td>teaching and testing</td><td>364 beams, 10 rain gauges and a radar, summer 2015</td><td><span class="pill ok">ready</span></td></tr>
+        <tr><td>Italy (OpenRainER)</td><td>testing in another country</td><td>151 beams, 319 rain gauges, radar, 2021–2022</td><td><span class="pill ok">ready</span></td></tr>
+        <tr><td>Netherlands</td><td>testing with the data format phone companies actually export</td><td>about 1,800 beams, one reading every 15 minutes</td><td><span class="pill wip">downloading</span></td></tr>
+        <tr><td>Algerian towers (OpenCelliD)</td><td>where to place the simulated beams</td><td>public map of phone towers</td><td><span class="pill ok">access works</span></td></tr>
+        <tr><td>NASA satellite rain (IMERG)</td><td>real rain from past Algerian storms</td><td>rain every 30 minutes, about 10 km detail</td><td><span class="pill ok">access works</span></td></tr>
+        <tr><td>Land maps</td><td>flood risk</td><td>hills, buildings, roads, population</td><td><span class="pill next">later</span></td></tr>
       </tbody></table></div>
+    <p class="muted">All data is free and open. Licences are listed in the project's data notes.</p>
   </div>
 </section>
 
 <section id="roadmap">
-  <div class="rail"><b>0–7</b>phases</div>
+  <div class="rail"><b>0–7</b>progress</div>
   <div class="body">
     <h2>Where the project stands</h2>
     <div class="road">
-      <div class="ph done"><span class="mono">Phase 0</span><div><div class="t">Setup and data</div><div class="d">Repo, downloads with checksums, swappable Huawei backends (MindSpore, OBS, ModelArts).</div></div><span class="pill ok">done</span></div>
-      <div class="ph done"><span class="mono">Phase 1</span><div><div class="t">Classical baseline</div><div class="d">Standard pipeline on OpenMRG, scored on a held-out month.</div></div><span class="pill ok">done</span></div>
-      <div class="ph now"><span class="mono">Phase 2</span><div><div class="t">AI models</div><div class="d">1D-CNN and GRU rain detector, rain-rate network; tested across Sweden, Italy, Netherlands.</div></div><span class="pill wip">next</span></div>
-      <div class="ph"><span class="mono">Phase 3</span><div><div class="t">Rain maps and nowcast</div><div class="d">Links to a 1 km grid, graph network, pysteps optical flow.</div></div><span class="pill next">planned</span></div>
-      <div class="ph"><span class="mono">Phase 4</span><div><div class="t">Virtual Algerian network</div><div class="d">Algiers and Ghardaïa, real tower sites, real storm rainfall, simulated signals.</div></div><span class="pill next">planned</span></div>
-      <div class="ph"><span class="mono">Phase 5</span><div><div class="t">Flood-risk layer</div><div class="d">Flow accumulation, impervious surfaces, susceptibility model, exposure ranking.</div></div><span class="pill next">planned</span></div>
-      <div class="ph"><span class="mono">Phase 6</span><div><div class="t">Dashboard</div><div class="d">Links lighting up as a storm passes, rain map, nowcast, ranked alerts in three languages.</div></div><span class="pill next">planned</span></div>
-      <div class="ph"><span class="mono">Phase 7</span><div><div class="t">Report, pitch, video</div><div class="d">Operator integration plan: no new hardware, 15-min NMS export, pilot with ONM.</div></div><span class="pill next">planned</span></div>
+      <div class="ph done"><span class="mono">Phase 0</span><div><div class="t">Setup and data</div><div class="d">Project folder, data downloaded and checked. Built so Huawei tools (MindSpore, ModelArts) can be switched on later.</div></div><span class="pill ok">done</span></div>
+      <div class="ph done"><span class="mono">Phase 1</span><div><div class="t">Simple method</div><div class="d">The standard rule-based method, tested on a month it had never seen.</div></div><span class="pill ok">done</span></div>
+      <div class="ph now"><span class="mono">Phase 2</span><div><div class="t">AI models</div><div class="d">Small neural networks for "is it raining?" and "how much?", tested in Sweden, Italy and the Netherlands.</div></div><span class="pill wip">next</span></div>
+      <div class="ph"><span class="mono">Phase 3</span><div><div class="t">Rain maps and forecast</div><div class="d">Combine many beams into a city rain map and predict the next hour.</div></div><span class="pill next">planned</span></div>
+      <div class="ph"><span class="mono">Phase 4</span><div><div class="t">Algeria simulation</div><div class="d">Algiers and Ghardaïa: real tower positions, real past storms, simulated beams.</div></div><span class="pill next">planned</span></div>
+      <div class="ph"><span class="mono">Phase 5</span><div><div class="t">Flood risk</div><div class="d">Which streets and neighbourhoods flood first, and how many people are there.</div></div><span class="pill next">planned</span></div>
+      <div class="ph"><span class="mono">Phase 6</span><div><div class="t">Live dashboard</div><div class="d">Beams lighting up as a storm passes, the rain map, and warnings in three languages.</div></div><span class="pill next">planned</span></div>
+      <div class="ph"><span class="mono">Phase 7</span><div><div class="t">Report, pitch, video</div><div class="d">How a phone company could switch this on with no new equipment.</div></div><span class="pill next">planned</span></div>
     </div>
   </div>
 </section>
 
 <footer>
-  <div>Numbers on this page come from <span class="mono">results/phase1_openmrg.json</span> in the project repository, exported by <span class="mono">scripts/export_site_data.py</span>.</div>
-  <div>Data: OpenMRG (Andersson et al., SMHI, CC BY-SA 4.0, doi:10.5281/zenodo.7107689). Radar reference is SMHI reflectivity with Z = 200R^1.5, not gauge-adjusted.</div>
+  <div>Every number on this page comes from the project's own results file, made by the code in the repository.</div>
+  <div>Swedish data: OpenMRG by SMHI (CC BY-SA 4.0, doi:10.5281/zenodo.7107689). The radar used for checking is not perfect either: it is the raw SMHI radar, not corrected with gauges.</div>
 </footer>
 </div>
 
@@ -359,8 +365,8 @@ function tipFor(chart) { let t = chart.querySelector(".tip"); if (!t) { t = docu
 const S = DATA.storm, N = S.tl.length;
 const t0 = new Date(S.t0 + ":00Z");
 const hhmm = i => { const d = new Date(t0.getTime() + i * 60000); return d.toISOString().slice(11, 16); };
-$("#storm-title").textContent = `One link through the storm of ${new Date(S.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`;
-$("#storm-meta").textContent = `sub-link ${S.cml_id} · ${S.km} km · ${S.ghz} GHz · ${S.gauge_distance_m} m from gauge "${S.gauge}"`;
+$("#storm-title").textContent = `Watch one beam during the storm of ${new Date(S.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`;
+$("#storm-meta").textContent = `beam ${S.km} km long · rain gauge ${S.gauge_distance_m} m away`;
 
 /* ---------- replay time-series panels (shared x, separate y: no dual axis) ---------- */
 const cursors = [];
@@ -394,9 +400,9 @@ function series(chartId, { h, yMax, yMin = 0, yLabel, lines, shade, points, tick
 const tlVals = S.tl.filter(v => v != null), tlMin = Math.floor(Math.min(...tlVals)) - 1, tlMax = Math.ceil(Math.max(...tlVals)) + 1;
 const dbTicks = []; for (let v = Math.ceil(tlMin / 2) * 2; v <= tlMax; v += 2) dbTicks.push(v);
 function drawReplay() { cursors.length = 0;
-  series("#c-db", { h: 170, yMin: tlMin, yMax: tlMax, yLabel: "dB", ticks: dbTicks, shade: S.wet,
+  series("#c-db", { h: 170, yMin: tlMin, yMax: tlMax, yLabel: "signal loss (dB)", ticks: dbTicks, shade: S.wet,
     lines: [{ v: S.baseline, c: "--base", w: 1.5, dash: "5 4" }, { v: S.tl, c: "--rain", w: 1.4 }] });
-  series("#c-mm", { h: 190, yMax: 25, yLabel: "mm/h", ticks: [0, 5, 10, 15, 20, 25],
+  series("#c-mm", { h: 190, yMax: 25, yLabel: "rain (mm/h)", ticks: [0, 5, 10, 15, 20, 25],
     lines: [{ v: S.gauge_R, c: "--s2", w: 1.6 }, { v: S.R, c: "--rain", w: 2 }],
     points: { v: S.radar, c: "--s3" } });
   setT(cur); }
@@ -429,8 +435,8 @@ function drawScene(i) {
   cx.strokeStyle = css("--accent"); cx.globalAlpha = strength; cx.lineWidth = 3; cx.setLineDash([10, 6]);
   cx.beginPath(); cx.moveTo(ax + 6, ty); cx.lineTo(bx - 6, ty); cx.stroke(); cx.setLineDash([]); cx.globalAlpha = 1;
   cx.fillStyle = css("--ink-3"); cx.font = "11px " + css("--mono");
-  cx.fillText(`${S.km} km · ${S.ghz} GHz`, (ax + bx) / 2 - 42, ty - 12);
-  cx.fillText(`signal ${A > 0.05 ? "−" + A.toFixed(1) : "−0.0"} dB`, (ax + bx) / 2 - 36, ty + 20);
+  cx.fillText(`radio beam · ${S.km} km`, (ax + bx) / 2 - 40, ty - 12);
+  cx.fillText(A > 0.05 ? `${A.toFixed(1)} dB weaker` : "full strength", (ax + bx) / 2 - 36, ty + 20);
 }
 function animateDrops() { const H = cv.clientHeight, W = cv.clientWidth;
   drops.forEach(d => { d.y += d.s; d.x -= .4; if (d.y > H) { d.y = -8; d.x = Math.random() * W; } }); drawScene(cur); }
@@ -445,7 +451,7 @@ function setT(i) { cur = i; $("#scrub").value = i;
   $("#ro-r").innerHTML = `${fmt(S.R[i])}<small>mm/h</small>`;
   $("#ro-g").innerHTML = `${fmt(S.gauge_R[i])}<small>mm/h</small>`;
   cursors.forEach(f => f(i)); drawScene(i); }
-function stopPlay() { if (playing) { cancelAnimationFrame(playing); playing = null; $("#play").textContent = "Play the day"; } }
+function stopPlay() { if (playing) { cancelAnimationFrame(playing); playing = null; $("#play").textContent = "Play the storm"; } }
 $("#play").addEventListener("click", () => { if (playing) return stopPlay();
   $("#play").textContent = "Pause"; let i = cur >= N - 2 ? 0 : cur, last = 0;
   const step = ts => { if (ts - last > 16) { i = Math.min(N - 1, i + 2); setT(i); last = ts; }
@@ -479,22 +485,22 @@ function drawMap() {
   const kmPerDegLon = 111.32 * k, bar = 5 / kmPerDegLon * k * sx;
   el("line", { x1: pad, x2: pad + bar, y1: H - 8, y2: H - 8, stroke: css("--ink-2"), "stroke-width": 2 }, svg);
   el("text", { x: pad + bar + 6, y: H - 4 }, svg).textContent = "5 km";
-  el("text", { x: W - pad, y: pad - 6, "text-anchor": "end", class: "lbl" }, svg).textContent = "N ↑   Gothenburg, Sweden";
+  el("text", { x: W - pad, y: pad - 6, "text-anchor": "end", class: "lbl" }, svg).textContent = "north ↑   Gothenburg, Sweden";
   // hit layer
   const hits = el("g", {}, svg);
   L.forEach(l => { const h = el("line", { x1: X(l.a[0]), y1: Y(l.a[1]), x2: X(l.b[0]), y2: Y(l.b[1]), stroke: "transparent", "stroke-width": 12 }, hits);
     h.addEventListener("pointerenter", ev => { const r = host.getBoundingClientRect();
-      tip.innerHTML = `<b>link ${l.link} ${l.dir}</b> · ${l.km} km · ${l.ghz} GHz<br>${l.qc ? `hourly r vs radar <b>${fmt(l.r, 2)}</b>` : `<b style="color:var(--bad)">dropped by QC</b>`}<br>August: link ${fmt(l.cml_mm, 0)} mm · radar ${fmt(l.radar_mm, 0)} mm`;
+      tip.innerHTML = `<b>beam ${l.link}</b> · ${l.km} km long<br>${l.qc ? `match with radar: <b>${fmt(l.r, 2)}</b> (1 = perfect)` : `<b style="color:var(--bad)">broken, removed</b>`}<br>August rain: beam ${fmt(l.cml_mm, 0)} mm · radar ${fmt(l.radar_mm, 0)} mm`;
       tip.style.left = (ev.clientX - r.left) + "px"; tip.style.top = (ev.clientY - r.top) + "px"; tip.hidden = false; });
     h.addEventListener("pointerleave", () => tip.hidden = true); });
   DATA.gauges.forEach(g => { const c = el("circle", { cx: X(g.lon), cy: Y(g.lat), r: 10, fill: "transparent" }, hits);
-    c.addEventListener("pointerenter", ev => { const r = host.getBoundingClientRect(); tip.innerHTML = `<b>gauge ${g.id}</b> · ${g.type.toLowerCase()}`;
+    c.addEventListener("pointerenter", ev => { const r = host.getBoundingClientRect(); tip.innerHTML = `<b>rain gauge "${g.id}"</b>`;
       tip.style.left = (ev.clientX - r.left) + "px"; tip.style.top = (ev.clientY - r.top) + "px"; tip.hidden = false; });
     c.addEventListener("pointerleave", () => tip.hidden = true); });
   const nq = L.filter(l => !l.qc).length;
-  $("#map-legend").innerHTML = `<span><i style="width:90px;height:8px;background:linear-gradient(90deg,${lo},${hi})"></i>hourly r vs radar, 0.5 → 1.0</span>
-    <span><i style="background:repeating-linear-gradient(90deg,var(--bad) 0 4px,transparent 4px 7px);height:3px"></i>dropped by QC (${nq} sub-links)</span>
-    <span><i class="dot" style="background:var(--s2)"></i>city rain gauge (10)</span>`;
+  $("#map-legend").innerHTML = `<span><i style="width:90px;height:8px;background:linear-gradient(90deg,${lo},${hi})"></i>match with radar: weaker → very good</span>
+    <span><i style="background:repeating-linear-gradient(90deg,var(--bad) 0 4px,transparent 4px 7px);height:3px"></i>broken beams removed (${nq})</span>
+    <span><i class="dot" style="background:var(--s2)"></i>rain gauge (10)</span>`;
 }
 
 /* ---------- tuning curves ---------- */
@@ -506,21 +512,21 @@ function drawTune() {
   const g = el("g", { class: "grid" }, svg);
   [0.2, 0.3, 0.4, 0.5].forEach(v => { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v) }, g); el("text", { x: m.l - 6, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = v.toFixed(1); });
   [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4].forEach(v => el("text", { x: x(v), y: H - 16, "text-anchor": "middle" }, svg).textContent = v.toFixed(1));
-  el("text", { x: (m.l + W - m.r) / 2, y: H - 2, "text-anchor": "middle", class: "lbl" }, svg).textContent = "threshold on rolling std (dB)";
-  el("text", { x: m.l, y: m.t - 3, class: "lbl" }, svg).textContent = "MCC";
+  el("text", { x: (m.l + W - m.r) / 2, y: H - 2, "text-anchor": "middle", class: "lbl" }, svg).textContent = "how shaky counts as rain (dB)";
+  el("text", { x: W - m.r, y: m.t - 3, "text-anchor": "end", class: "lbl" }, svg).textContent = "score (higher is better)";
   const cols = { "15": "--rain", "30": "--s2", "60": "--s3" };
   Object.entries(DATA.tuning).forEach(([w, pts]) => { const d = pts.map((p, i) => (i ? "L" : "M") + x(p[0]).toFixed(1) + "," + y(Math.max(.2, p[1])).toFixed(1)).join("");
     el("path", { d, fill: "none", stroke: css(cols[w]), "stroke-width": 2 }, svg);
-    const last = pts[pts.length - 1]; el("text", { x: x(last[0]) - 2, y: y(last[1]) - 6, "text-anchor": "end", class: "lbl" }, svg).textContent = w + " min"; });
+    const last = pts[pts.length - 1], dy = w === "60" ? -7 : 13; el("text", { x: x(last[0]) - 2, y: y(last[1]) + dy, "text-anchor": "end", class: "lbl" }, svg).textContent = w + " min"; });
   const b = DATA.results.calibration.wet_dry_best;
   el("circle", { cx: x(b.threshold_db), cy: y(b.MCC), r: 5, fill: css("--s3"), stroke: css("--sheet"), "stroke-width": 2 }, svg);
-  el("text", { x: x(b.threshold_db) + 8, y: y(b.MCC) - 6, class: "lbl" }, svg).textContent = `best ${b.threshold_db} dB · MCC ${fmt(b.MCC, 2)}`;
+  el("text", { x: x(b.threshold_db) + 10, y: y(b.MCC) + 16, class: "lbl" }, svg).textContent = `best: ${b.threshold_db}`;
   const tip = tipFor(host), cl = el("line", { y1: m.t, y2: H - m.b, stroke: css("--ink-3"), "stroke-dasharray": "3 3", visibility: "hidden" }, svg);
   const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent" }, svg);
   hit.addEventListener("pointermove", ev => { const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * W;
     const pts = DATA.tuning["60"]; let j = 0; pts.forEach((p, k) => { if (Math.abs(x(p[0]) - px) < Math.abs(x(pts[j][0]) - px)) j = k; });
     const thr = pts[j][0]; cl.setAttribute("x1", x(thr)); cl.setAttribute("x2", x(thr)); cl.setAttribute("visibility", "visible");
-    tip.innerHTML = `<b>${thr.toFixed(2)} dB</b><br>` + Object.entries(DATA.tuning).map(([w, p]) => `<span class="sw" style="background:${css(cols[w])}"></span>${w} min · MCC ${fmt(p[j][1], 3)}`).join("<br>");
+    tip.innerHTML = `<b>setting ${thr.toFixed(2)}</b><br>` + Object.entries(DATA.tuning).map(([w, p]) => `<span class="sw" style="background:${css(cols[w])}"></span>looking at ${w} min · score ${fmt(p[j][1], 2)}`).join("<br>");
     const hr = host.getBoundingClientRect(); tip.style.left = (ev.clientX - hr.left) + "px"; tip.style.top = (ev.clientY - hr.top) + "px"; tip.hidden = false; });
   hit.addEventListener("pointerleave", () => { tip.hidden = true; cl.setAttribute("visibility", "hidden"); });
 }
@@ -529,7 +535,7 @@ function drawTune() {
 function drawWaa() {
   const host = $("#c-waa"); host.innerHTML = "";
   const rows = DATA.results.calibration.waa_choice.map(r => ({ ...r,
-    name: r.waa === "none" ? "no correction" : r.waa === "schleiss" ? `Schleiss, max ${r.waa_max_db} dB` : `Pastorek, A_max ${r.pastorek_A_max} dB` }));
+    name: r.waa === "none" ? "no correction" : r.waa === "schleiss" ? `method A, size ${r.waa_max_db}` : `method B, size ${r.pastorek_A_max}` }));
   const p = DATA.results.params;
   const chosen = r => r.waa === p.waa && (r.waa !== "pastorek" || r.pastorek_A_max === p.pastorek_A_max) && (r.waa !== "schleiss" || r.waa_max_db === p.waa_max_db);
   const W = 440, rowH = 24, m = { l: 150, r: 56, t: 8, b: 26 }, H = m.t + m.b + rows.length * rowH;
@@ -537,7 +543,7 @@ function drawWaa() {
   const lo = -50, hiV = 250, x = v => m.l + (v - lo) / (hiV - lo) * (W - m.l - m.r);
   const g = el("g", { class: "grid" }, svg);
   [-50, 0, 50, 100, 150, 200, 250].forEach(v => { el("line", { x1: x(v), x2: x(v), y1: m.t, y2: H - m.b }, g);
-    el("text", { x: x(v), y: H - 8, "text-anchor": "middle" }, svg).textContent = (v > 0 ? "+" : "") + v + "%"; });
+    el("text", { x: x(v), y: H - 8, "text-anchor": "middle" }, svg).textContent = v === 0 ? "0%" : (v > 0 ? "+" : "") + v + "%"; });
   el("line", { x1: x(0), x2: x(0), y1: m.t, y2: H - m.b, stroke: css("--ink-2"), "stroke-width": 1.2 }, svg);
   const tip = tipFor(host);
   rows.forEach((r, i) => { const yy = m.t + i * rowH + 4, h = rowH - 8, b = r.bias_pct, x0 = x(Math.min(0, b)), w = Math.abs(x(b) - x(0));
@@ -546,7 +552,7 @@ function drawWaa() {
     el("text", { x: b >= 0 ? x(b) + 5 : x(0) + 5, y: yy + h - 4, class: "lbl" }, svg).textContent = (b > 0 ? "+" : "") + b.toFixed(0) + "%" + (chosen(r) ? "  chosen" : "");
     const hb = el("rect", { x: 0, y: yy - 3, width: W, height: rowH, fill: "transparent" }, svg);
     hb.addEventListener("pointerenter", ev => { const hr = host.getBoundingClientRect();
-      tip.innerHTML = `<b>${r.name}</b><br>bias ${(b > 0 ? "+" : "") + b.toFixed(1)}% · r ${fmt(r.r, 2)} · RMSE ${fmt(r.RMSE, 2)} mm/h`;
+      tip.innerHTML = `<b>${r.name}</b><br>total rain ${b > 0 ? b.toFixed(0) + "% too much" : (-b).toFixed(0) + "% too little"}<br>match with gauges ${fmt(r.r, 2)} · typical error ${fmt(r.RMSE, 1)} mm/h`;
       tip.style.left = (ev.clientX - hr.left) + "px"; tip.style.top = (ev.clientY - hr.top) + "px"; tip.hidden = false; });
     hb.addEventListener("pointerleave", () => tip.hidden = true); });
 }
@@ -555,13 +561,13 @@ function drawWaa() {
 function drawScores() {
   const t = DATA.results.test, wd = t.wet_dry_vs_radar_5min, g = t.rain_vs_gauges_hourly, rq = t.radar_vs_gauges_hourly;
   $("#scores").innerHTML = [
-    [fmt(wd.MCC, 2), "Rain or no rain", "MCC vs radar, 5-min"],
-    [Math.round(wd.TPR * 100) + "%", "Rainy periods caught", `${(wd.FPR * 100).toFixed(1)}% false alarms`],
-    [fmt(g.r, 2), "Hourly rain vs gauges", `RMSE ${fmt(g.RMSE, 2)} mm/h · bias ${g.bias_pct.toFixed(0)}%`],
-    [fmt(rq.r, 2), "Radar vs the same gauges", "the bar the links matched"],
+    [(wd.FPR * 100).toFixed(1) + "%", "of dry moments it wrongly called rainy", "false alarms"],
+    [Math.round(wd.TPR * 100) + "%", "of rainy moments it noticed", "checked against radar, every 5 min"],
+    [fmt(g.r, 2), "match with rain gauges", `hourly · typical error ${fmt(g.RMSE, 1)} mm/h`],
+    [fmt(rq.r, 2), "weather radar's match with the same gauges", "for comparison"],
   ].map(([v, k, s]) => `<div class="score"><span class="v">${v}</span><span class="k">${k}</span><span class="s">${s}</span></div>`).join("");
-  const R = DATA.results, row = (name, x) => `<tr><td>${name}</td><td class="n">${fmt(x.wet_dry_vs_radar_5min.MCC, 2)}</td><td class="n">${fmt(x.rain_vs_radar_5min.r, 2)}</td><td class="n">${fmt(x.rain_vs_radar_5min.RMSE, 2)}</td><td class="n">${fmt(x.rain_vs_radar_hourly.r, 2)}</td><td class="n">${fmt(x.per_link_hourly_r_vs_radar_median, 2)}</td><td class="n">${fmt(x.rain_vs_gauges_hourly.r, 2)}</td></tr>`;
-  $("#t-qc").innerHTML = `<thead><tr><th>Sub-links used</th><th class="n">MCC</th><th class="n">r, 5-min radar</th><th class="n">RMSE mm/h</th><th class="n">r, hourly radar</th><th class="n">median link r</th><th class="n">r, hourly gauges</th></tr></thead><tbody>${row(`after QC (${R.n_sublinks_qc})`, R.test)}${row(`all (${R.n_sublinks})`, R.test_no_qc)}</tbody>`;
+  const R = DATA.results, row = (name, x) => `<tr><td>${name}</td><td class="n">${fmt(x.wet_dry_vs_radar_5min.MCC, 2)}</td><td class="n">${fmt(x.rain_vs_radar_5min.r, 2)}</td><td class="n">${fmt(x.rain_vs_radar_hourly.r, 2)}</td><td class="n">${fmt(x.rain_vs_gauges_hourly.r, 2)}</td></tr>`;
+  $("#t-qc").innerHTML = `<thead><tr><th>Beams used</th><th class="n">Rain / no-rain score</th><th class="n">Match with radar, every 5 min</th><th class="n">Match with radar, every hour</th><th class="n">Match with gauges, every hour</th></tr></thead><tbody>${row(`without broken beams (${R.n_sublinks_qc})`, R.test)}${row(`all beams (${R.n_sublinks})`, R.test_no_qc)}</tbody>`;
 }
 
 function drawAll() { sizeScene(); drawReplay(); drawMap(); drawTune(); drawWaa(); }
