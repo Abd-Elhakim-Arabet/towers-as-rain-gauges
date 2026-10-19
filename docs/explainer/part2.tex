@@ -549,7 +549,9 @@ estimates; ``end'' fits clearly better (correlation 0.25 against 0.18), and we u
 we applied the same quality-control rule as in Sweden (drop a sub-link if it has less than half its data or is flagged
 ``wet'' more than 30\% of the time by the classical detector). With 1-dB readings the classical detector flags many
 links as almost always wet, so only 81 of 302 sub-links (2021) and 72 of 302 (2022) survived. Both methods are scored
-on exactly the same surviving links, but a rule that does not depend on the classical detector would keep many more.
+on exactly the same surviving links, but the rule judges links with one of the two methods being compared.
+Section~\ref{sec:neighbours} tries the fairer alternative: keep every link that has data, and let a neighbour check
+catch the bad ones.
 \end{careful}
 
 \begin{center}\footnotesize
@@ -621,8 +623,9 @@ two apart.
 \end{axis}
 \end{tikzpicture}
 \caption{A short cloudburst in Italy (sub-link 154, 2.1\,km, 24.6\,GHz). This storm was picked by a fixed rule (the
-closest link--gauge pair that saw more than 20\,mm/h), not because it looks good. Storm totals: gauge 11.0\,mm, AI
-6.9\,mm, classical 6.5\,mm, radar 4.4\,mm. A storm lasting half an hour over a few square kilometres is exactly the kind
+closest link--gauge pair that saw more than 20\,mm/h), not because it looks good. Both link methods are shown after the
+neighbour check of Section~\ref{sec:neighbours}. Storm totals: gauge 11.0\,mm, AI 6.8\,mm, classical 6.2\,mm, radar
+4.4\,mm. A storm lasting half an hour over a few square kilometres is exactly the kind
 radar smooths away and flash floods come from.}
 \label{fig:italy}
 \end{figure}
@@ -661,7 +664,8 @@ For comparison we built a classical min/max method in the style of \textbf{RAINL
 meteorological institute (KNMI) and Wageningen University for this kind of data: call it rain if the weakest level falls more than 1.75\,dB below the
 24-hour reference, subtract a fixed 2.3\,dB for wet antennas, and mix the rain from the weakest and strongest readings
 as $0.33\times$ (from weakest) $+ 0.67\times$ (from strongest). The 1.75\,dB and the 2.3\,dB were chosen on Swedish June--July
-data. (Real RAINLINK also compares each link with its neighbours to throw out links that drop alone; ours does not.)
+data. (Real RAINLINK also compares each link with its neighbours to throw out links that drop alone; we test our own
+version of that, for both methods, in Section~\ref{sec:neighbours}.)
 
 \subsection{The test}
 We then ran both, unchanged, on the Netherlands from 1 June to 22 August 2014: 1{,}081 sub-links (after the same quality
@@ -702,9 +706,10 @@ Nokia links (1-dB readings, bias $+10\%$) than on NEC links (0.1-dB readings, $+
   \addlegendentry{AI min/max}
 \end{axis}
 \end{tikzpicture}
-\caption{Daily rain averaged over all 1{,}081 Dutch links. Day to day both methods follow the radar well
-(correlation 0.88 classical, 0.92 AI). Over the whole summer the classical method adds up to 152\% of the radar's rain
-and the AI to 115\%.}
+\caption{Daily rain averaged over every Dutch link with enough data (1{,}908 sub-links), after the neighbour check of
+Section~\ref{sec:neighbours}. Day to day both methods follow the radar well (correlation 0.90 classical, 0.94 AI). Over the
+whole summer the classical method adds up to 223\% of the radar's rain and the AI to 132\%: with every link included,
+both measure too much, the classical method far more.}
 \label{fig:nl}
 \end{figure}
 
@@ -712,6 +717,108 @@ and the AI to 115\%.}
 Trained only in Sweden, the AI ran in Italy and the Netherlands with no retraining; the typical link worked in both
 countries, the AI made no absurd readings in Italy and far fewer than the classical method in the Netherlands, where a guard
 against misbehaving links is still needed.
+\end{oneline}
+
+%==========================================================
+\section{Catching misbehaving links: the neighbour check}
+\label{sec:neighbours}
+%==========================================================
+
+So far, a small number of links that misbehave, for example a signal that suddenly drops because of the equipment, have
+spoiled the averages in Italy and the Netherlands. And in Italy we kept only the links the classical detector liked. Both
+problems have the same natural fix, used by the Dutch RAINLINK method: \textbf{ask the neighbours}.
+
+\subsection{The idea}
+Rain falls from clouds that are kilometres wide. If it really rains on one link, other links close by almost always feel it
+too, within minutes. A link that claims a storm while every link around it stays dry is far more likely broken than wet.
+
+Our rule, applied in exactly the same way to the classical method and to the AI:
+\begin{enumerate}
+\item \textbf{Neighbours} of a link are the other links whose middle point is within \textbf{10\,km} of its own. (The two
+directions of one physical link do not count as each other's neighbours: they share the same equipment and the same air,
+so they would fail together.)
+\item A link's rain counts only if at least \textbf{one neighbour also reports rain} (0.1\,mm/h or more) within
+\textbf{15 minutes before or after}. Otherwise it is set to zero.
+\item If \emph{no} neighbour has any data at that moment, the link cannot be checked and is left alone.
+\end{enumerate}
+We fixed 10\,km and 15 minutes from the size and speed of storms (a storm moving at 40\,km/h crosses 10\,km in 15 minutes),
+before looking at any results. The price is a delay: a warning may need up to 15 minutes to be confirmed by a neighbour.
+
+\begin{example}[: three links, one storm, one fault]
+Links A and B are 4\,km apart; link C is 6\,km from both. At 14:00 link A reports 12\,mm/h. Link B reports rain from 14:10.
+Link A's rain counts: B confirms it within 15 minutes. At 20:00 link C reports 40\,mm/h for an hour while A and B, both
+working, report nothing from 19:45 to 21:15. C's rain is set to zero: no neighbour confirms it.
+\end{example}
+
+\subsection{Results on the same links as before}
+First on exactly the links of the previous sections, to see what the check alone does. ``Impossible hours'' are hours with
+more than 100\,mm/h, as in Section~\ref{sec:italy}.
+\begin{center}\footnotesize
+\begin{tabular}{llccc}
+\toprule
+Test (links) & Method & MCC & impossible hours & bias vs gauges / radar\\
+\midrule
+Sweden (683) & classical & 0.578 $\to$ 0.581 & 0 $\to$ 0 & $-6\%$ $\to$ $-6\%$\\
+             & AI        & 0.617 $\to$ 0.622 & 0 $\to$ 0 & $-19\%$ $\to$ $-19\%$\\
+Italy 2021 (81) & classical & 0.251 $\to$ 0.254 & 35 $\to$ 26 & $+39\%$ $\to$ $+28\%$\\
+                & AI        & 0.509 $\to$ 0.518 & 0 $\to$ 0 & $-3\%$ $\to$ $-7\%$\\
+Italy 2022 (72) & classical & 0.269 $\to$ 0.271 & 124 $\to$ 77 & $+64\%$ $\to$ $+36\%$\\
+                & AI        & 0.502 $\to$ 0.506 & 0 $\to$ 0 & $-10\%$ $\to$ $-14\%$\\
+Netherlands (1{,}081) & classical & 0.626 $\to$ 0.632 & 219 $\to$ 163 & $+54\%$ $\to$ $+43\%$\\
+                      & AI        & 0.547 $\to$ 0.562 & 26 $\to$ 16 & $+16\%$ $\to$ $+12\%$\\
+\bottomrule
+\end{tabular}
+\end{center}
+(Bias is against gauges for Sweden and Italy, against radar for the Netherlands. The AI's Swedish MCC is 0.617 here rather
+than 0.615 because it is scored only where the link has data, like the classical method.)
+
+The check helps both methods everywhere, a little: rain detection never gets worse, and impossible hours drop by a quarter
+to a half. It does not remove them all. A broken classical link is often ``confirmed'' by a neighbour that is itself
+raising a false alarm, which happens easily when the classical detector raises false alarms on one dry period in six. In
+Sweden, where links are dense (a typical link has 192 neighbours) and well behaved, the check removes under 2\% of rainy
+minutes and changes almost nothing. In Italy, where a typical link has only 6--7 neighbours, it removes about a fifth of the
+rainy minutes; the AI's amounts drop by only about 5\%, so most of what it removed was little or no rain, but some real rain
+went too.
+
+\subsection{Keeping every link}
+Now the fairer filter: keep \textbf{every link that has data at least half of the time}, and let the neighbour check do the
+cleaning. In Italy that means 281 and 267 sub-links instead of 81 and 72; in the Netherlands 1{,}908 instead of 1{,}081
+(still dropping links below 10\,GHz).
+\begin{center}\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llcccc}
+\toprule
+Test (links) & Method, with neighbour check & MCC & impossible hours & $r$ vs gauges & bias vs gauges\\
+\midrule
+Italy 2021 (281) & classical & 0.158 & 43 & 0.45 & $+76\%$\\
+                 & AI        & \textbf{0.449} & \textbf{0} & \textbf{0.72} & $\mathbf{+3\%}$\\
+Italy 2022 (267) & classical & 0.168 & 106 & 0.38 & $+49\%$\\
+                 & AI        & \textbf{0.443} & \textbf{5} & \textbf{0.69} & $-16\%$\\
+\midrule
+& & & & $r$ vs radar & bias vs radar\\
+\midrule
+Netherlands (1{,}908) & classical & 0.463 & 199 & 0.19 & $+128\%$\\
+                      & AI        & \textbf{0.484} & \textbf{19} & \textbf{0.52} & $\mathbf{+34\%}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Two things stand out:
+\begin{itemize}
+\item \textbf{The extra links are worse links.} With every link included, both methods score lower than on the hand-picked
+set (Italian rain detection 0.45 instead of 0.52 for the AI; Dutch 0.48 instead of 0.56). The old filter was unfair, but it
+was throwing out links that deserved it. The neighbour check alone does not replace it.
+\item \textbf{The AI copes much better with bad links.} On every link, it still detects rain about three times better than
+the classical method in Italy, has almost no impossible hours, and stays within 3--16\% of the Italian gauges, while the
+classical method measures half to three-quarters too much. In the Netherlands the AI now also beats the classical method at
+detecting rain (0.48 against 0.46).
+\end{itemize}
+For a real operator network, where nobody hand-picks the links, this second table is the honest picture. What it calls for
+is a better way to judge each link's reliability from its own behaviour, for example how often its rain goes unconfirmed by
+its neighbours, instead of throwing out links with the classical detector.
+
+\begin{oneline}
+Checking each link's rain against its neighbours helps both methods and never hurts rain detection; keeping every link
+instead of hand-picked ones lowers all scores, and the AI stays far ahead of the classical method on the unpicked links.
 \end{oneline}
 
 %==========================================================
@@ -757,13 +864,16 @@ under-measurement after rainy days in the Netherlands, but not in Italy, for rea
 design, a network that outputs mm/h directly does about as well in Sweden; we have not tested it abroad.
 \item \textbf{The typical link works across countries.} In Italy and the Netherlands, a typical link's hourly rain followed the
 radar with correlation 0.76--0.84, close to Sweden's 0.88. The weak point is a minority of misbehaving links and hours.
+\item \textbf{Neighbours help, link choice matters more.} Checking each link against its neighbours trims impossible hours
+by a quarter to a half for both methods. Keeping every link instead of a hand-picked set costs more than the check gives
+back; the AI handles the unpicked links far better than the classical method.
 \end{itemize}
 
 \textbf{Next, in order:}
 \begin{enumerate}
-\item A neighbour check, as real RAINLINK does: a link that reports a storm that none of its neighbours sees is probably
-broken, not wet. This attacks the impossible hours directly, and it is also what the rain maps of Phase~3 need.
-\item A quality rule that does not depend on the classical detector, so Italy keeps more of its links.
+\item A reliability score for each link from its own behaviour (for example, how often its rain is not confirmed by its
+neighbours), to replace the hand-picking rule fairly. Done: the neighbour check itself and the detector-free filter
+(Section~\ref{sec:neighbours}).
 \item Finding out why the AI still under-measures after rainy days in Italy, and why training runs differ so much in
 amounts (more varied training data should help both).
 \item Training on more varied data (several countries at once, then testing on one left out) to improve the amounts.
