@@ -63,6 +63,7 @@ uv venv --python 3.12 .venv-ms && uv pip install --python .venv-ms/bin/python -r
 .venv/bin/python scripts/download_data.py openmrg openrainer netherlands_cml
 .venv/bin/python -m pytest
 .venv/bin/python scripts/phase1_baseline.py   # Phase 1, ~5 min (first run builds a 1-min cache, +6 min)
+.venv/bin/python scripts/serve_site.py       # website on http://localhost:8000
 ```
 
 Exact versions are in `requirements.lock.txt`. See `docs/ENVIRONMENT.md` for machine-specific notes.
