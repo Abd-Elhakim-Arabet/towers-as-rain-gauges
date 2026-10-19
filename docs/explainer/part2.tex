@@ -265,6 +265,103 @@ Sections~\ref{sec:italy} and~\ref{sec:nl} matter: nothing was changed after seei
 \end{careful}
 
 %==========================================================
+\section{Before the results: exactly how we score}
+\label{sec:scoring_rules}
+%==========================================================
+
+Section~\ref{sec:scores} introduced the scores. Before using them on three countries, here are the exact rules, because
+small choices in how scores are counted can make a method look better or worse than it is. Both methods, classical and AI,
+are always scored with the same rules, on the same links and the same hours.
+
+\subsection{Two separate exams}
+Every test has two parts, and they answer different questions:
+\begin{itemize}
+\item \textbf{Rain or no rain?} Only the yes/no answer is checked, not the amount. Scores: MCC, share of rain caught,
+share of false alarms.
+\item \textbf{How much rain?} The method's millimetres per hour are compared with the measured millimetres per hour. Scores:
+correlation $r$, typical error (RMSE) and bias.
+\end{itemize}
+A method can pass one and fail the other. A detector that always says ``raining'' during storms but gets the amount
+wrong by half would score well on the first and badly on the second.
+
+\subsection{Rule 1: what counts as ``rain''}
+A time step counts as \textbf{rainy} if the reference measured \textbf{at least 0.1\,mm/h} there. Less than that is
+too little to matter and is often just noise in the reference itself.
+
+Our methods give an answer every minute, but the references come every 5, 15 or 60 minutes. So for the yes/no exam we
+look at the minutes inside each reference period and call the period rainy for the method if \textbf{more than half}
+of those minutes were rainy.
+
+\subsection{Rule 2: dry moments are left out of the amount scores}
+For the amounts, a time step is only scored if \textbf{the reference or the method} shows at least 0.1\,mm/h. Moments
+where both agree it was dry are skipped. Why? Most hours are dry. Every dry hour where both say 0 is a ``perfect''
+answer that has nothing to do with measuring rain, and thousands of them would make the typical error look tiny.
+
+\begin{example}[: why dry hours are skipped]
+Five hours, reference against method (mm/h):
+\begin{center}\small
+\begin{tabular}{lccccc}
+\toprule
+Hour & 1 & 2 & 3 & 4 & 5\\
+\midrule
+Reference & 0 & 0 & 2.0 & 8.0 & 0.05\\
+Method & 0 & 0.3 & 1.5 & 6.0 & 0\\
+\midrule
+Scored? & no (both dry) & yes (method $\geq$ 0.1) & yes & yes & no (both below 0.1)\\
+\bottomrule
+\end{tabular}
+\end{center}
+The three scored mistakes are $+0.3$, $-0.5$ and $-2.0$\,mm/h. Then
+\[
+\text{RMSE} = \sqrt{\frac{0.3^2 + 0.5^2 + 2.0^2}{3}} = \sqrt{\frac{0.09+0.25+4}{3}} = 1.20\ \text{mm/h},
+\]
+\[
+\text{bias} = \frac{(0.3+1.5+6.0)-(0+2.0+8.0)}{0+2.0+8.0} = -22\%.
+\]
+Had we scored all five hours, the RMSE would have dropped to 0.93\,mm/h, only because of the two dry hours, though the
+method measured the rain no better.
+\end{example}
+
+Notice that hour 2 \emph{is} scored: when the method claims rain the reference did not see, that false rain counts as a
+mistake. A method cannot hide its false alarms by skipping them.
+
+\subsection{Rule 3: which reference, and how often}
+\begin{center}\small
+\begin{tabular}{p{2.3cm}p{7.4cm}p{3.9cm}}
+\toprule
+Where & Reference & Compared every\\
+\midrule
+Sweden & weather radar, averaged along the link & 5 minutes and 1 hour\\
+       & rain gauges within 1\,km of the link & 1 hour\\
+Italy & gauge-adjusted radar, averaged along the link & 15 minutes and 1 hour\\
+      & rain gauges within 1\,km of the link & 1 hour\\
+Netherlands & gauge-adjusted radar, averaged along the link & 1 hour\\
+\bottomrule
+\end{tabular}
+\end{center}
+``Averaged along the link'' means: take every radar square the beam crosses and average them, giving more weight to the
+squares where the beam travels a longer distance. That is the same thing the link itself measures.
+
+\subsection{No reference is the true rain}
+It is tempting to call the gauge ``the truth''. It is not, for this job:
+\begin{itemize}
+\item \textbf{A gauge measures one spot}, the size of a bucket. The link measures the average along a line that can be
+several kilometres long. A storm cell 2\,km wide can soak the gauge and only half the link, or the other way round. So
+even a perfect link and a perfect gauge disagree. That is why we only pair a link with gauges within 1\,km of it, and why
+we compare hours rather than minutes (over an hour, a passing storm crosses both).
+\item \textbf{Radar sees the whole line} but measures echoes high in the air and converts them to rain with a formula of
+its own. Plain radar (Sweden) can be off by tens of percent; gauge-adjusted radar (Italy, the Netherlands) has been
+corrected with gauges and is better, but still averages over 1\,km squares.
+\end{itemize}
+So a correlation of 1 is impossible even for a perfect method. As a yardstick: in Sweden, the radar itself agrees with the
+gauges at $r = 0.80$ (hourly). A link method scoring around 0.8 against gauges is as close as the radar gets.
+
+\begin{oneline}
+We score two things separately (rain or not, and how much), count rain from 0.1\,mm/h, leave out moments where everyone
+agrees it was dry, and compare with references that are good but not perfect.
+\end{oneline}
+
+%==========================================================
 \section{Results in Sweden}
 \label{sec:se_results}
 %==========================================================
