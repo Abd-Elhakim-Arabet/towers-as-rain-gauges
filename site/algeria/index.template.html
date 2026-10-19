@@ -1,0 +1,234 @@
+<title>Algeria Cell Towers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: map first, a narrow side column for counts and controls, plain-language notes below.
+   Same visual family as the project site (link-sheet: mono units, one cobalt accent). */
+:root {
+  --paper: #f5f7f8; --sheet: #ffffff; --ink: #102029; --ink-2: #4b5b64; --ink-3: #7b8a92;
+  --rule: #dbe2e6; --land: #eef2f4; --border: #b9c6cd; --accent: #1d5fa8;
+  --op1: #2a78d6; --op2: #eb6834; --op3: #1baf7a; --swept: rgba(29,95,168,.08);
+  --warn-bg: #fff4dc; --warn-ink: #6b4a00;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0f171c; --sheet: #16212a; --ink: #e8eef1; --ink-2: #b2c0c8; --ink-3: #82939c;
+  --rule: #26343e; --land: #1b2730; --border: #3c4d58; --accent: #6aa6ee;
+  --op1: #3987e5; --op2: #d95926; --op3: #199e70; --swept: rgba(106,166,238,.10);
+  --warn-bg: #2f2510; --warn-ink: #f2cf83; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0f171c; --sheet: #16212a; --ink: #e8eef1; --ink-2: #b2c0c8; --ink-3: #82939c;
+  --rule: #26343e; --land: #1b2730; --border: #3c4d58; --accent: #6aa6ee;
+  --op1: #3987e5; --op2: #d95926; --op3: #199e70; --swept: rgba(106,166,238,.10);
+  --warn-bg: #2f2510; --warn-ink: #f2cf83; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--ink); font: 400 15px/1.55 var(--body) }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 1.4rem 2.5rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 1.2rem }
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.1; text-wrap: balance }
+h1 { font-size: clamp(2rem, 4.6vw, 3rem); font-weight: 800; font-stretch: 75% }
+h2 { font-size: 1.35rem; font-weight: 750; font-stretch: 85% }
+h3 { font-size: 1rem; font-weight: 700; font-stretch: 90% }
+p { margin: 0; max-width: 70ch }
+.eyebrow { font: 500 .74rem var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--ink-3) }
+.lede { color: var(--ink-2); font-size: 1.05rem }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 1rem; align-items: start }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr) } }
+.mapbox { position: relative; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden;
+  height: min(72vh, 680px); min-height: 380px; touch-action: none; cursor: grab }
+.mapbox.drag { cursor: grabbing }
+.mapbox canvas { position: absolute; inset: 0; width: 100%; height: 100% }
+.views { position: absolute; top: 10px; left: 10px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 80px) }
+.views button, .zoom button { font: 500 .8rem var(--body); background: var(--sheet); color: var(--ink); border: 1px solid var(--rule);
+  border-radius: 4px; padding: .3rem .65rem; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.08) }
+.views button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent) }
+.zoom { position: absolute; top: 10px; right: 10px; display: grid; gap: 4px }
+.zoom button { width: 32px; padding: .2rem 0; font-size: 1rem }
+.scale { position: absolute; left: 12px; bottom: 10px; font: 11px var(--mono); color: var(--ink-2) }
+.scale i { display: block; height: 3px; background: var(--ink-2); margin-bottom: 3px }
+.tip { position: absolute; pointer-events: none; background: var(--sheet); color: var(--ink); border: 1px solid var(--rule);
+  box-shadow: 0 4px 16px rgba(0,0,0,.14); border-radius: 4px; padding: .45rem .6rem; font: 12px/1.45 var(--mono);
+  white-space: nowrap; z-index: 5; transform: translate(-50%, calc(-100% - 12px)) }
+.side { display: grid; gap: .9rem }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: .9rem 1rem; display: grid; gap: .6rem; align-content: start }
+.big { font: 800 2.1rem/1 var(--display); font-stretch: 80%; font-variant-numeric: tabular-nums }
+.row { display: flex; justify-content: space-between; gap: .6rem; font-size: .9rem; align-items: center }
+.row .n { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2) }
+label.op { display: flex; align-items: center; gap: .5rem; cursor: pointer; font-size: .92rem }
+label.op input { accent-color: var(--accent) }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50% }
+.muted { color: var(--ink-2); font-size: .88rem }
+.callout { background: var(--warn-bg); color: var(--warn-ink); border-radius: 4px; padding: .8rem 1rem; font-size: .93rem }
+.notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem }
+@media (max-width: 900px) { .notes { grid-template-columns: minmax(0, 1fr) } }
+.notes .card p { font-size: .9rem; color: var(--ink-2) }
+footer { color: var(--ink-3); font-size: .82rem; display: grid; gap: .3rem; border-top: 1px solid var(--rule); padding-top: 1rem }
+</style>
+
+<div class="wrap">
+  <div style="display:grid;gap:.5rem">
+    <div class="eyebrow">Towers as Rain Gauges · real tower positions, no simulation</div>
+    <h1>Where Algeria's phone towers are</h1>
+    <p class="lede">Each dot is an estimated tower site for Mobilis, Djezzy or Ooredoo, from the public OpenCelliD database. These are the places where, one day, radio beams between towers could measure rain. Drag to move, scroll or use + and − to zoom, and hover over a dot for details.</p>
+  </div>
+
+  <div class="main">
+    <div class="mapbox" id="mapbox">
+      <canvas id="map" aria-label="Map of estimated phone tower sites in Algeria"></canvas>
+      <div class="views" role="group" aria-label="Jump to">
+        <button type="button" data-view="dz">All Algeria</button>
+        <button type="button" data-view="north">North</button>
+        <button type="button" data-view="algiers">Algiers</button>
+        <button type="button" data-view="ghardaia">Ghardaïa</button>
+        <button type="button" data-view="annaba">Annaba</button>
+      </div>
+      <div class="zoom"><button type="button" id="zin" aria-label="Zoom in">+</button><button type="button" id="zout" aria-label="Zoom out">−</button></div>
+      <div class="scale" id="scale"></div>
+    </div>
+
+    <div class="side">
+      <div class="card">
+        <div class="eyebrow">On the map</div>
+        <div><div class="big" id="n-sites">–</div><div class="muted">estimated tower sites</div></div>
+        <div class="muted" id="n-cells"></div>
+      </div>
+      <div class="card">
+        <h3>Operators</h3>
+        <label class="op"><input type="checkbox" id="op1" checked><span class="sw" style="background:var(--op1)"></span>Mobilis <span class="n" id="c1" style="margin-left:auto;font-family:var(--mono);color:var(--ink-2)"></span></label>
+        <label class="op"><input type="checkbox" id="op2" checked><span class="sw" style="background:var(--op2)"></span>Djezzy <span class="n" id="c2" style="margin-left:auto;font-family:var(--mono);color:var(--ink-2)"></span></label>
+        <label class="op"><input type="checkbox" id="op3" checked><span class="sw" style="background:var(--op3)"></span>Ooredoo <span class="n" id="c3" style="margin-left:auto;font-family:var(--mono);color:var(--ink-2)"></span></label>
+      </div>
+      <div class="card">
+        <h3>Phone generation</h3>
+        <label class="op"><input type="checkbox" id="r1" checked>2G (GSM) <span class="n" id="cr1" style="margin-left:auto;font-family:var(--mono);color:var(--ink-2)"></span></label>
+        <label class="op"><input type="checkbox" id="r2" checked>3G (UMTS) <span class="n" id="cr2" style="margin-left:auto;font-family:var(--mono);color:var(--ink-2)"></span></label>
+        <label class="op"><input type="checkbox" id="r4" checked>4G (LTE) <span class="n" id="cr4" style="margin-left:auto;font-family:var(--mono);color:var(--ink-2)"></span></label>
+        <p class="muted">A site shows if it has any cell of a ticked generation.</p>
+      </div>
+      <div class="card">
+        <label class="op"><input type="checkbox" id="showswept" checked><span class="sw" style="background:var(--swept);border:1px solid var(--accent);border-radius:2px"></span>Show areas searched in full</label>
+        <p class="muted">Shaded squares were searched tile by tile. Outside them, the map shows only part of what exists (see the warning below).</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="callout" id="gap-note"></p>
+
+  <div class="notes">
+    <div class="card"><h3>Where the dots come from</h3><p>OpenCelliD is a free map built by volunteers. Their phones note which cell they are connected to and where the phone is (from GPS), and upload it. From many such reports, OpenCelliD estimates where each cell is. A real tower usually carries several cells (different operators, generations and directions), so we grouped cells of the same operator that are less than 150 m apart into one site.</p></div>
+    <div class="card"><h3>How accurate it is</h3><p>Positions are estimates from phones, not from the operators. They can be off by tens to a few hundred metres, and two nearby towers can be merged into one dot. Busy areas with many volunteers are well covered; quiet areas can be empty even if towers exist there. The long lines of dots along highways (for example Algiers–Sétif–Constantine) are where volunteers drove with the app switched on, not a sign that towers only stand along roads.</p></div>
+    <div class="card"><h3>What the map does not show</h3><p>Which towers are connected to each other by microwave beams, and how strong those beams are over time. That is exactly what measuring rain needs, and only the operators have it. This map shows where beams could exist, not where they do.</p></div>
+  </div>
+
+  <footer>
+    <div>Tower data: OpenCelliD (CC BY-SA 4.0), downloaded 19 October 2026. Borders: geoBoundaries / OpenStreetMap (ODbL), 48 wilayas as of 2017; Algeria has had 58 wilayas since 2019–2021, so the newer southern ones are not drawn.</div>
+    <div>Built by <span style="font-family:var(--mono)">scripts/build_algeria_towers.py</span> in the project repository.</div>
+  </footer>
+</div>
+
+<script>
+const D = /*DATA*/null;
+const $ = s => document.querySelector(s);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const box = $("#mapbox"), cv = $("#map"), cx = cv.getContext("2d");
+const VIEWS = { dz: [-8.8, 18.9, 12.1, 37.3], north: [-2.4, 34.3, 9.0, 37.2], algiers: [2.88, 36.62, 3.32, 36.83],
+  ghardaia: [3.58, 32.38, 3.80, 32.57], annaba: [7.6, 36.78, 7.86, 36.96] };
+const S = D.summary, sites = D.sites;
+const opOn = { 1: true, 2: true, 3: true }; let radioMask = 1 | 2 | 4 | 8, showSwept = true;
+let view = { lon: 0, lat: 0, ppd: 1 };   // centre and pixels per degree of latitude
+
+function fit(name) { const [x0, y0, x1, y1] = VIEWS[name], W = box.clientWidth, H = box.clientHeight;
+  const k = Math.cos((y0 + y1) / 2 * Math.PI / 180);
+  view = { lon: (x0 + x1) / 2, lat: (y0 + y1) / 2, ppd: Math.min(W / ((x1 - x0) * k), H / (y1 - y0)) * 0.94 };
+  document.querySelectorAll(".views button").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === name));
+  draw(); }
+const kLat = () => Math.cos(view.lat * Math.PI / 180);
+const X = lon => box.clientWidth / 2 + (lon - view.lon) * view.ppd * kLat();
+const Y = lat => box.clientHeight / 2 - (lat - view.lat) * view.ppd;
+const invX = px => view.lon + (px - box.clientWidth / 2) / (view.ppd * kLat());
+const invY = py => view.lat - (py - box.clientHeight / 2) / view.ppd;
+
+function size() { const d = devicePixelRatio || 1; cv.width = box.clientWidth * d; cv.height = box.clientHeight * d; cx.setTransform(d, 0, 0, d, 0, 0); }
+const visible = s => opOn[s[2]] && (s[4] & radioMask);
+
+function draw() {
+  const W = box.clientWidth, H = box.clientHeight; cx.clearRect(0, 0, W, H);
+  cx.fillStyle = css("--sheet"); cx.fillRect(0, 0, W, H);
+  // land + wilaya borders
+  cx.lineJoin = "round"; cx.fillStyle = css("--land"); cx.strokeStyle = css("--border"); cx.lineWidth = 0.8;
+  for (const f of D.borders) for (const ring of f.rings) { cx.beginPath();
+    ring.forEach(([lo, la], i) => i ? cx.lineTo(X(lo), Y(la)) : cx.moveTo(X(lo), Y(la))); cx.closePath(); cx.fill(); cx.stroke(); }
+  // swept areas
+  if (showSwept) { cx.fillStyle = css("--swept"); cx.strokeStyle = css("--accent"); cx.globalAlpha = 1; cx.lineWidth = 0.5;
+    for (const boxes of Object.values(D.coverage)) for (const [la0, lo0, la1, lo1] of boxes) {
+      const x = X(lo0), y = Y(la1), w = X(lo1) - x, h = Y(la0) - y; cx.fillRect(x, y, w, h); if (view.ppd > 200) cx.strokeRect(x, y, w, h); } }
+  // sites
+  const cols = { 1: css("--op1"), 2: css("--op2"), 3: css("--op3") };
+  const r0 = view.ppd < 60 ? 1.1 : view.ppd < 400 ? 1.8 : 2.6;
+  let n = 0, cells = 0;
+  const vis = [];
+  for (const s of sites) { if (!visible(s)) continue; const x = X(s[0]), y = Y(s[1]);
+    if (x < -5 || y < -5 || x > W + 5 || y > H + 5) continue; vis.push([x, y, s]); n++; cells += s[3]; }
+  cx.globalAlpha = view.ppd < 60 ? 0.55 : 0.85;
+  for (const [x, y, s] of vis) { const r = view.ppd > 400 ? r0 + Math.min(4, Math.sqrt(s[3]) - 1) : r0;
+    cx.fillStyle = cols[s[2]]; cx.beginPath(); cx.arc(x, y, r, 0, 6.2832); cx.fill(); }
+  cx.globalAlpha = 1;
+  // city labels
+  cx.font = "500 11px " + css("--mono"); cx.fillStyle = css("--ink"); cx.strokeStyle = css("--sheet"); cx.lineWidth = 3;
+  [["Algiers", 3.06, 36.75], ["Oran", -0.63, 35.70], ["Constantine", 6.61, 36.37], ["Annaba", 7.75, 36.90], ["Ghardaïa", 3.67, 32.49],
+   ["Sétif", 5.41, 36.19], ["Batna", 6.17, 35.56], ["Biskra", 5.73, 34.85], ["Tamanrasset", 5.52, 22.79], ["Ouargla", 5.33, 31.95], ["Béchar", -2.22, 31.62], ["Tlemcen", -1.32, 34.88]]
+    .forEach(([t, lo, la]) => { const x = X(lo), y = Y(la); if (x < 0 || x > W || y < 0 || y > H) return;
+      cx.strokeText(t, x + 5, y - 5); cx.fillText(t, x + 5, y - 5); cx.beginPath(); cx.arc(x, y, 2, 0, 6.2832); cx.fill(); });
+  // scale bar
+  const kmPerPx = 111.32 / view.ppd, nice = [0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500].find(v => v / kmPerPx > 70) || 500;
+  $("#scale").innerHTML = `<i style="width:${nice / kmPerPx}px"></i>${nice} km`;
+  $("#n-sites").textContent = n.toLocaleString("en");
+  $("#n-cells").textContent = `${cells.toLocaleString("en")} cells in this view`;
+  window._vis = vis;
+}
+
+// counts per operator / radio (whole dataset)
+const cnt = { 1: 0, 2: 0, 3: 0 }; sites.forEach(s => cnt[s[2]]++);
+[1, 2, 3].forEach(k => $("#c" + k).textContent = cnt[k].toLocaleString("en"));
+const rc = { 1: 0, 2: 0, 4: 0 }; sites.forEach(s => [1, 2, 4].forEach(b => { if (s[4] & b) rc[b]++; }));
+[1, 2, 4].forEach(b => $("#cr" + b).textContent = rc[b].toLocaleString("en"));
+$("#gap-note").innerHTML = `<b>Warning about gaps.</b> OpenCelliD's downloadable Algeria file turned out to hold only a small part of its data: in one 2 km² test square in central Algiers it had 32 cells, while the live service had 745, and it had none at all in Ghardaïa. So we searched the live service square by square. Ghardaïa is complete (${S.api_by_area["api:ghardaia"] ?? 0} cells). Algiers is partly done (${(S.api_by_area["api:algiers"] ?? 0).toLocaleString("en")} cells so far) because the free account allows about 360 searches a day; the rest will be added over the next days. Everywhere else, empty areas may simply be unsearched, not tower-free.`;
+
+// interaction
+[1, 2, 3].forEach(k => $("#op" + k).addEventListener("change", e => { opOn[k] = e.target.checked; draw(); }));
+const updRadio = () => { radioMask = ($("#r1").checked ? 1 : 0) | ($("#r2").checked ? 2 : 0) | ($("#r4").checked ? 4 | 8 : 0); draw(); };
+["#r1", "#r2", "#r4"].forEach(id => $(id).addEventListener("change", updRadio));
+$("#showswept").addEventListener("change", e => { showSwept = e.target.checked; draw(); });
+document.querySelectorAll(".views button").forEach(b => b.addEventListener("click", () => fit(b.dataset.view)));
+function zoomAt(f, px, py) { const lo = invX(px), la = invY(py); view.ppd = Math.max(15, Math.min(60000, view.ppd * f));
+  view.lon = lo - (px - box.clientWidth / 2) / (view.ppd * kLat()); view.lat = la + (py - box.clientHeight / 2) / view.ppd;
+  document.querySelectorAll(".views button").forEach(b => b.setAttribute("aria-pressed", "false")); draw(); }
+$("#zin").addEventListener("click", () => zoomAt(1.6, box.clientWidth / 2, box.clientHeight / 2));
+$("#zout").addEventListener("click", () => zoomAt(1 / 1.6, box.clientWidth / 2, box.clientHeight / 2));
+box.addEventListener("wheel", e => { e.preventDefault(); const r = box.getBoundingClientRect();
+  zoomAt(e.deltaY < 0 ? 1.25 : 0.8, e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+let drag = null;
+box.addEventListener("pointerdown", e => { if (e.target.closest("button")) return; drag = { x: e.clientX, y: e.clientY, lon: view.lon, lat: view.lat }; box.classList.add("drag"); box.setPointerCapture(e.pointerId); });
+box.addEventListener("pointerup", () => { drag = null; box.classList.remove("drag"); });
+const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+const OPN = { 1: "Mobilis", 2: "Djezzy", 3: "Ooredoo" };
+box.addEventListener("pointermove", e => {
+  const r = box.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+  if (drag) { view.lon = drag.lon - (e.clientX - drag.x) / (view.ppd * kLat()); view.lat = drag.lat + (e.clientY - drag.y) / view.ppd;
+    document.querySelectorAll(".views button").forEach(b => b.setAttribute("aria-pressed", "false")); tip.hidden = true; draw(); return; }
+  let best = null, bd = 81; for (const v of window._vis || []) { const d = (v[0] - px) ** 2 + (v[1] - py) ** 2; if (d < bd) { bd = d; best = v; } }
+  if (!best || view.ppd < 60) { tip.hidden = true; return; }
+  const s = best[2], gens = [[1, "2G"], [2, "3G"], [4, "4G"], [8, "5G"]].filter(([b]) => s[4] & b).map(([, t]) => t).join(" + ");
+  tip.innerHTML = `<b>${OPN[s[2]]}</b> · estimated site<br>${s[3]} cell${s[3] > 1 ? "s" : ""} · ${gens}<br>${s[1].toFixed(4)}°N, ${s[0].toFixed(4)}°E`;
+  tip.style.left = best[0] + "px"; tip.style.top = best[1] + "px"; tip.hidden = false; });
+box.addEventListener("pointerleave", () => tip.hidden = true);
+addEventListener("resize", () => { size(); draw(); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+size(); fit("north");
+</script>

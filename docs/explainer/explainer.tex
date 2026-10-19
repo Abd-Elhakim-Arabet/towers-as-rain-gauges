@@ -1,0 +1,913 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,decorations.pathmorphing,calc,positioning,shapes.geometric}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepgfplotslibrary{groupplots}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+
+\definecolor{beam}{HTML}{1D5FA8}
+\definecolor{rainc}{HTML}{2A78D6}
+\definecolor{gaugec}{HTML}{EB6834}
+\definecolor{radarc}{HTML}{1BAF7A}
+\definecolor{inkc}{HTML}{102029}
+\definecolor{softc}{HTML}{EEF3F7}
+\definecolor{warnc}{HTML}{FFF4DC}
+
+\newtcolorbox{oneline}{colback=softc,colframe=softc,arc=2pt,boxrule=0pt,left=8pt,right=8pt,top=5pt,bottom=5pt,
+  fontupper=\small, before upper={\textbf{In one sentence:\ }}}
+\newtcolorbox{example}[1][]{colback=white,colframe=beam!60,arc=2pt,boxrule=0.6pt,left=8pt,right=8pt,
+  title={\small\textbf{Worked example#1}},coltitle=inkc,colbacktitle=beam!10,breakable}
+\newtcolorbox{careful}{colback=warnc,colframe=warnc,arc=2pt,boxrule=0pt,left=8pt,right=8pt,top=5pt,bottom=5pt,
+  fontupper=\small, before upper={\textbf{Be careful:\ }}}
+
+\setlength{\parskip}{0.55em}
+\setlength{\parindent}{0pt}
+\setlist{itemsep=0.2em,topsep=0.3em}
+
+\title{\textbf{How Phone Towers Can Measure Rain}\\[0.4em]
+\large Radio beams, decibels, raindrops and the maths in between, explained from the ground up}
+\author{Towers as Rain Gauges project\\\small Huawei ICT Competition, Innovation Track}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\begin{minipage}{0.86\textwidth}
+\small
+\textbf{How to read this.} This document assumes no background in radio, physics or meteorology.
+Every technical word is explained the first time it appears, and a glossary at the end collects them.
+Equations are always followed by what they mean in words, and every important formula has a worked
+example with real numbers. Most numbers come from our own project data: a real radio link in
+Gothenburg, Sweden, during a storm on 25 August 2015.
+\end{minipage}
+\end{center}
+
+\tableofcontents
+\newpage
+
+%==========================================================
+\section{The whole idea on one page}
+%==========================================================
+
+Mobile phone towers need to send huge amounts of data to each other and back to the rest of
+the internet. In cities, many towers do this with cables. But very often, especially where
+digging is expensive, two towers talk to each other through the air: a small dish on one tower
+sends a narrow radio beam to a dish on another tower, a few hundred metres to a few tens of
+kilometres away. These tower-to-tower connections are called \textbf{microwave links}.
+
+The receiving dish measures how strong the incoming beam is, all the time, because the phone
+company needs to know if the connection is healthy. That measurement is stored by the company's
+network-monitoring computers.
+
+Here is the key fact: \textbf{rain weakens the beam}. Raindrops in the path absorb a little of the
+radio energy and knock some of it off course. The heavier the rain, the weaker the beam
+arrives. So if we look at how much weaker the beam became, we can work backwards to how much rain
+fell along the path.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % ground
+  \draw[inkc!40] (-0.5,0) -- (12.5,0);
+  % towers
+  \foreach \x in {0,12} {
+    \draw[inkc,thick] (\x-0.35,0) -- (\x,3.2) -- (\x+0.35,0);
+    \draw[inkc] (\x-0.22,1.1) -- (\x+0.22,1.1);
+    \draw[inkc] (\x-0.12,2.1) -- (\x+0.12,2.1);
+  }
+  \fill[inkc] (0.05,3.0) rectangle (0.35,3.4);
+  \fill[inkc] (11.65,3.0) rectangle (11.95,3.4);
+  \node[font=\small,anchor=north] at (0,-0.1) {Tower A (transmitter)};
+  \node[font=\small,anchor=north] at (12,-0.1) {Tower B (receiver)};
+  % beam
+  \draw[beam,line width=2.2pt,-{Stealth[length=3mm]}] (0.4,3.2) -- (11.6,3.2);
+  \node[font=\small,beam,anchor=south,fill=white,inner sep=1.5pt] at (6,3.4) {radio beam, a few km long};
+  % rain
+  \foreach \i in {1,...,70} {
+    \pgfmathsetmacro{\rx}{3.2+rnd*5.6}
+    \pgfmathsetmacro{\ry}{0.5+rnd*2.3}
+    \draw[rainc!70] (\rx,\ry) -- ++(-0.08,-0.28);
+  }
+  \node[font=\small,anchor=west,rainc] at (8.9,1.2) {rain shower};
+  \node[draw=inkc!50,rounded corners,font=\footnotesize,align=left,fill=white] at (12.2,1.9)
+     {receiver logs\\ signal strength};
+\end{tikzpicture}
+\caption{The idea. Tower A sends a radio beam to tower B. Rain between them weakens the beam.
+Tower B records how strong the beam arrives. The drop in strength tells us how much it rained
+along the path.}
+\label{fig:idea}
+\end{figure}
+
+Why is this useful? Rain gauges (buckets that measure rain) cover only the spot where they stand,
+and Algeria has few of them. Weather radars see wide areas but are expensive and rare. Satellites
+see everything but only coarsely: one value per 10\,km square, every 30 minutes. Flash floods,
+like Bab El Oued in 2001 or Ghardaïa in 2008, come from short, intense, very local storms that
+these tools can miss. Phone networks, on the other hand, already have thousands of links,
+densest exactly where people live. Using them costs no new hardware.
+
+\begin{oneline}
+Every microwave link between two phone towers is an accidental rain gauge, because rain weakens
+the beam, and phone companies already record how strong the beam is.
+\end{oneline}
+
+The rest of this document explains each piece in detail: what a radio wave is
+(Section~\ref{sec:waves}), how signal strength is measured with decibels (Section~\ref{sec:db}),
+how a link works on a dry day (Sections~\ref{sec:network}--\ref{sec:dry}), how rain weakens it
+(Section~\ref{sec:rain}), what else can fool us (Section~\ref{sec:fakes}), how we work backwards
+from the signal to the rain (Section~\ref{sec:inverse}), and how we check if we got it right
+(Section~\ref{sec:scores}).
+
+%==========================================================
+\section{Radio waves}
+\label{sec:waves}
+%==========================================================
+
+\subsection{What a wave is}
+
+Drop a stone in a pond. Ripples spread out: the water goes up and down, and the pattern of ups and
+downs travels outwards. That travelling pattern is a \textbf{wave}. The water itself does not travel
+far; it just bobs. What travels is the pattern, and with it, energy.
+
+Light is also a wave, but not of water. It is a wave of \emph{electric and magnetic fields}: invisible
+forces that push on electric charges. Such a wave is called an \textbf{electromagnetic wave}. It
+needs no water or air to travel through; it crosses empty space, which is how sunlight reaches us.
+
+Radio waves are exactly the same kind of thing as light. The only difference is how fast they
+wiggle. Our eyes happen to detect waves that wiggle about 500 trillion times per second (we call
+them light). Waves that wiggle much more slowly are invisible to us and we call them radio waves.
+All electromagnetic waves travel at the \textbf{speed of light}:
+\[
+c \approx 300\,000\ \text{km per second} = 3\times10^{8}\ \text{metres per second}.
+\]
+At that speed a radio signal crosses a 5\,km link in about 17 millionths of a second.
+
+\subsection{Frequency and wavelength}
+
+Two numbers describe how a wave wiggles.
+
+\textbf{Frequency} is how many full wiggles (up, down, back to the start) pass a fixed point each
+second. Its unit is the \textbf{hertz} (Hz): 1\,Hz means one wiggle per second. Radio frequencies are
+huge, so we use bigger units:
+\begin{itemize}
+  \item 1 kilohertz (kHz) = 1\,000 Hz,
+  \item 1 megahertz (MHz) = 1\,000\,000 Hz (FM radio is around 100\,MHz),
+  \item 1 gigahertz (GHz) = 1\,000\,000\,000 Hz (Wi-Fi is 2.4 or 5\,GHz).
+\end{itemize}
+Microwave links between towers use roughly \textbf{6 to 80\,GHz}. In our Swedish data (Gothenburg)
+most links use between 28 and 39\,GHz.
+
+\textbf{Wavelength} is the distance from one crest of the wave to the next, written
+$\lambda$ (the Greek letter ``lambda''). Frequency and wavelength are tied together by the speed of light:
+\begin{equation}
+\lambda = \frac{c}{f}
+\label{eq:lambda}
+\end{equation}
+In words: \emph{wavelength equals the speed of light divided by the frequency}. The faster it wiggles,
+the shorter the distance between crests.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[xscale=1.1,yscale=0.8]
+  \draw[->,inkc!50] (0,0) -- (10.3,0) node[right,font=\small] {distance};
+  \draw[beam,thick,domain=0:10,samples=200,smooth] plot (\x,{sin(\x*180/2.5*2)*1.0});
+  \draw[<->,inkc] (0.625,1.35) -- (3.125,1.35) node[midway,above,font=\small] {wavelength $\lambda$};
+  \draw[dashed,inkc!40] (0.625,1.0) -- (0.625,1.35);
+  \draw[dashed,inkc!40] (3.125,1.0) -- (3.125,1.35);
+\end{tikzpicture}
+\caption{A wave. The wavelength is the distance between two crests.}
+\end{figure}
+
+\begin{example}[: the wavelength of a 38 GHz link]
+$f = 38\,\text{GHz} = 38\times10^{9}$ wiggles per second. Then
+\[
+\lambda = \frac{3\times10^{8}\ \text{m/s}}{38\times10^{9}\ \text{/s}} = 0.0079\ \text{m} \approx 7.9\ \text{mm}.
+\]
+So the wave crests are about 8 millimetres apart. That is about the size of a large raindrop. This
+coincidence matters a lot, as we will see in Section~\ref{sec:rain}.
+\end{example}
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{rrl}
+\toprule
+Frequency & Wavelength & Typical use on phone networks \\
+\midrule
+7 GHz & 43 mm & long links, 20--50 km, in the countryside \\
+15 GHz & 20 mm & medium links, 5--20 km \\
+23 GHz & 13 mm & links of a few km \\
+38 GHz & 7.9 mm & short city links, under 3 km \\
+80 GHz & 3.7 mm & very short links, under 1--2 km \\
+\bottomrule
+\end{tabular}
+\caption{Common link frequencies and their wavelengths (from Equation~\ref{eq:lambda}). The
+pairing of frequency with link length is typical, not a rule.}
+\label{tab:freq}
+\end{table}
+
+Why do short links use high frequencies? Because rain and the air weaken high frequencies more (we
+will see why), so a high-frequency beam cannot go very far reliably. On the other hand high
+frequencies can carry more data and use smaller dishes. So engineers choose a low frequency for long
+links and a high one for short links. For us that is good news: short city links are both the most
+common and the most sensitive to rain.
+
+\subsection{Polarisation: which way the wave wiggles}
+
+A wave on a rope can wiggle up-and-down or side-to-side. A radio wave can too. The direction in
+which its electric field wiggles is called its \textbf{polarisation}. If it wiggles up and down,
+the link is \textbf{vertically polarised}; side to side, \textbf{horizontally polarised}. The
+transmitting dish decides this. It matters for rain because, as we will see, falling raindrops are
+not round: they are flattened, so they are wider than they are tall, and a side-to-side wiggle
+``feels'' more water than an up-and-down one.
+
+\subsection{Power}
+
+A transmitter pushes energy into the beam continuously. The amount of energy per second is the
+\textbf{power}, measured in \textbf{watts} (W). A microwave link transmitter uses very little: typically
+between 0.01\,W and 1\,W, less than a small light bulb. We often use the \textbf{milliwatt}
+(mW), one thousandth of a watt.
+
+As the beam travels, its power spreads out and gets absorbed, so the power that reaches the
+receiving dish is tiny: often around a millionth of a milliwatt. Numbers this small are awkward,
+which is why engineers use decibels.
+
+%==========================================================
+\section{Decibels: the language of signal strength}
+\label{sec:db}
+%==========================================================
+
+This section is the most important tool in the whole document. Take it slowly.
+
+\subsection{The problem decibels solve}
+
+Signal powers span enormous ranges. A transmitter might send 0.1\,W and the receiver might get
+0.000\,000\,01\,W. Multiplying and dividing such numbers is clumsy. Decibels turn
+\emph{multiplying} into \emph{adding}, and they make huge ranges fit into small numbers.
+
+\subsection{Logarithms, briefly}
+
+The \textbf{logarithm} (base 10) of a number answers the question: \emph{``10 to the power of what
+gives this number?''} We write it $\log_{10}$.
+\begin{itemize}
+  \item $\log_{10}(10) = 1$, because $10^1 = 10$.
+  \item $\log_{10}(100) = 2$, because $10^2 = 100$.
+  \item $\log_{10}(1000) = 3$.
+  \item $\log_{10}(1) = 0$, because $10^0 = 1$.
+  \item $\log_{10}(0.01) = -2$, because $10^{-2} = 0.01$.
+  \item $\log_{10}(2) \approx 0.301$, because $10^{0.301} \approx 2$.
+\end{itemize}
+The useful property is that the logarithm of a product is the sum of logarithms:
+$\log_{10}(a\times b) = \log_{10}(a) + \log_{10}(b)$. That is how decibels turn multiplication into addition.
+
+\subsection{The decibel}
+
+A \textbf{decibel} (dB) describes the \emph{ratio} between two powers $P_1$ and $P_2$:
+\begin{equation}
+\text{ratio in dB} = 10 \times \log_{10}\!\left(\frac{P_2}{P_1}\right)
+\label{eq:db}
+\end{equation}
+In words: \emph{divide one power by the other, take the logarithm, multiply by ten}.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{rl}
+\toprule
+Change in dB & What happens to the power \\
+\midrule
+$+10$ dB & multiplied by 10 \\
+$+3$ dB & roughly doubled \\
+$0$ dB & unchanged \\
+$-3$ dB & roughly halved \\
+$-10$ dB & divided by 10 (90\% lost) \\
+$-20$ dB & divided by 100 (99\% lost) \\
+$-30$ dB & divided by 1\,000 \\
+\bottomrule
+\end{tabular}
+\caption{Decibels you can do in your head.}
+\label{tab:db}
+\end{table}
+
+\begin{example}[: what does ``the signal dropped by 9.5 dB'' mean?]
+During the storm in our Gothenburg data, the beam on one link arrived 9.5\,dB weaker than on a dry
+day. Using Equation~\ref{eq:db} backwards: the power was divided by
+$10^{9.5/10} = 10^{0.95} \approx 8.9$. So only about $1/8.9 \approx 11\%$ of the usual power arrived:
+rain (and water on the antennas) removed about 89\% of it over a distance of just 1.07\,km.
+\end{example}
+
+Because decibels are logarithms, losses \emph{add up}. If the beam loses 3\,dB in one part of the path
+and 7\,dB in another, the total loss is 10\,dB, meaning the power was divided by 2 and then by 5,
+so by 10 in total. This is why engineers write everything in dB: a whole link becomes a simple
+sum of gains and losses.
+
+\subsection{dBm: decibels compared with one milliwatt}
+
+Plain dB describes a \emph{change}. To describe an \emph{amount} of power, we compare it with a fixed
+reference of one milliwatt. That unit is the \textbf{dBm}:
+\begin{equation}
+P \text{ in dBm} = 10 \times \log_{10}\!\left(\frac{P}{1\ \text{mW}}\right)
+\end{equation}
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{rl}
+\toprule
+Power in dBm & Power in milliwatts \\
+\midrule
+$+20$ dBm & 100 mW \\
+$+10$ dBm & 10 mW (a typical transmitter in our Swedish data) \\
+$0$ dBm & 1 mW \\
+$-30$ dBm & 0.001 mW \\
+$-45$ dBm & 0.000\,03 mW (a typical received signal in our data) \\
+$-60$ dBm & 0.000\,001 mW \\
+$-80$ dBm & 0.000\,000\,01 mW (near the limit: the link starts to fail) \\
+\bottomrule
+\end{tabular}
+\caption{dBm values. Negative dBm means less than one milliwatt. Every $-10$\,dBm step divides the power by 10.}
+\end{table}
+
+Phone companies record two numbers for every link:
+\begin{itemize}
+\item the \textbf{transmitted signal level} (TSL): how much power the sending dish puts out, in dBm;
+\item the \textbf{received signal level} (RSL): how much power arrives at the receiving dish, in dBm.
+\end{itemize}
+The difference between them, TSL $-$ RSL, is the \textbf{total loss} of the link in dB. Everything in
+this project starts from that difference.
+
+%==========================================================
+\section{How a phone network uses microwave links}
+\label{sec:network}
+%==========================================================
+
+\subsection{Two kinds of connection}
+
+When you make a call, your phone talks by radio to the nearest tower. That is the
+\textbf{access} part of the network, and it is not what we use. The tower then has to pass your data
+on, towards the operator's central computers and the internet. That tower-to-tower and
+tower-to-centre part is called \textbf{backhaul}. Backhaul uses either buried fibre-optic cables or
+microwave links. Microwave links are cheaper and faster to install, so they are very common,
+especially in growing cities and rural areas.
+
+\subsection{What a link looks like}
+
+A microwave link is a pair of dish antennas, usually 20\,cm to 1\,m across, mounted high on two
+towers or rooftops and pointed exactly at each other. The dishes are usually covered by a flat
+plastic or fabric lid called a \textbf{radome} that keeps rain and birds out. (Remember the
+radome; it will cause trouble in Section~\ref{sec:fakes}.)
+
+The two dishes must \textbf{see each other}: there must be a clear, straight line between them with no
+building or hill in the way. Engineers call this \textbf{line of sight}.
+
+Most links talk in \textbf{both directions} at once, using two slightly different frequencies. So one
+physical link gives us two separate measurements: A$\to$B and B$\to$A. In our data each direction is
+called a \textbf{sub-link}. Gothenburg's network has 364 links, so 728 sub-links. Their lengths range
+from 0.14\,km to 15\,km, with a typical (median) length of 2.3\,km.
+
+\subsection{What the operator records}
+
+The operator's \textbf{network management system} (a central computer program that watches every
+piece of equipment) asks each radio, regularly, for its current transmitted and received levels.
+How often depends on the operator:
+\begin{itemize}
+\item In our Swedish data, one reading every \textbf{10 seconds}.
+\item In our Italian data, one reading every \textbf{minute}.
+\item In our Dutch data, the system keeps only the \textbf{lowest and highest} received level in each
+\textbf{15-minute} window. This is the most common format operators can export, and the hardest one
+for us.
+\end{itemize}
+The readings are rounded. Some radios report in steps of 0.1\,dB, others only in whole decibels
+(steps of 1\,dB). This rounding is called \textbf{quantisation}, and it limits how little rain we
+can notice (Section~\ref{sec:inverse}).
+
+%==========================================================
+\section{A link on a dry day}
+\label{sec:dry}
+%==========================================================
+
+Even without rain, the received power is far smaller than the transmitted power. Engineers add up
+every gain and loss along the way in a \textbf{link budget}. Because everything is in decibels, the
+budget is a simple sum.
+
+\subsection{Spreading: the free-space loss}
+
+Even a narrow beam spreads out like the light from a torch. The further it travels, the larger the
+area it covers, so the less of it lands on the receiving dish. This loss happens even in perfectly
+empty space, so it is called \textbf{free-space path loss}. A standard formula gives it in dB:
+\begin{equation}
+L_\text{free} = 20\log_{10}(d) + 20\log_{10}(f) + 92.45
+\label{eq:fspl}
+\end{equation}
+where $d$ is the distance in kilometres and $f$ the frequency in GHz. In words: \emph{the loss grows with
+distance and with frequency}. Doubling the distance adds $20\log_{10}(2) \approx 6$\,dB of loss.
+
+\begin{example}[: free-space loss of a 1 km link at 38 GHz]
+$L_\text{free} = 20\log_{10}(1) + 20\log_{10}(38) + 92.45 = 0 + 31.6 + 92.45 \approx 124$\,dB.
+That means the power is divided by $10^{12.4}$, about 2.5 trillion. It sounds hopeless, but the dishes
+fix most of it.
+\end{example}
+
+\subsection{Focusing: the antenna gain}
+
+A dish does not spray power in all directions; it focuses it into a narrow beam, like a torch
+compared with a bare bulb. Compared with spraying evenly in all directions, a dish delivers far more
+power in its pointing direction. This advantage is the \textbf{antenna gain}, in dB. A typical dish of
+30--60\,cm at these frequencies has a gain of roughly 35--45\,dB. The receiving dish has a gain too,
+because it collects power over its whole surface.
+
+\subsection{The budget}
+
+\begin{equation}
+\text{RSL} = \text{TSL} + G_\text{transmit} + G_\text{receive} - L_\text{free} - L_\text{other}
+\label{eq:budget}
+\end{equation}
+In words: \emph{the received level equals the transmitted level, plus the boost from both dishes,
+minus the spreading loss and any other losses}. ``Other losses'' include cables and connectors, and,
+importantly for us, rain.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[yscale=0.055,xscale=1.15]
+  \draw[->,inkc!60] (0,-92) -- (0,62) node[above,font=\small] {dBm};
+  \foreach \y in {-80,-60,-40,-20,0,20,40} \draw[inkc!20] (0,\y) -- (10.2,\y) node[right,font=\scriptsize,inkc!70]{\y};
+  \draw[beam,line width=1.6pt] (0.3,10) -- (1.8,10) -- (1.8,48) -- (3.6,48) -- (3.6,-76) -- (5.4,-76) -- (5.4,-38) -- (7.2,-38) -- (7.2,-47.5) -- (9.6,-47.5);
+  \node[font=\scriptsize,align=center,anchor=south] at (1.05,11) {transmit\\$+10$};
+  \node[font=\scriptsize,align=center,anchor=south] at (2.7,49) {dish A\\$+38$};
+  \node[font=\scriptsize,align=center,anchor=north] at (4.5,-77) {free space\\$-124$};
+  \node[font=\scriptsize,align=center,anchor=south] at (6.3,-37) {dish B\\$+38$};
+  \node[font=\scriptsize,align=center,anchor=north] at (8.4,-48.5) {rain $-9.5$};
+  \draw[dashed,inkc!50] (7.2,-38) -- (9.6,-38) node[right,font=\scriptsize]{dry day};
+\end{tikzpicture}
+\caption{A link budget as a staircase (illustrative values for a 1\,km, 38\,GHz link). The signal
+starts at the transmitter, is boosted by dish A, loses 124\,dB crossing 1\,km of space, is boosted by
+dish B, and arrives around $-38$\,dBm on a dry day. In a storm, rain removes several more dB.}
+\end{figure}
+
+\subsection{The beam is fatter than a line}
+
+The beam is not an infinitely thin line. Radio energy travels through a cigar-shaped region around
+the straight line between the dishes. Physicists call it the \textbf{Fresnel zone} (pronounced
+``freh-nel''). Its radius in the middle of the link is about
+\begin{equation}
+r \approx 17.32\sqrt{\frac{d}{4f}} \ \text{metres}
+\end{equation}
+with $d$ in km and $f$ in GHz. For a 1\,km link at 38\,GHz, $r \approx 1.4$\,m; for a 10\,km link at
+15\,GHz, $r \approx 7$\,m. So a link ``sees'' the rain inside a long, thin tube, a few metres wide, between
+the two dishes.
+
+\subsection{The dry-day signal is not perfectly steady}
+
+Even with no rain, the received level wobbles a little:
+\begin{itemize}
+\item \textbf{Water vapour and oxygen} in the air absorb a little energy. This changes slowly with
+humidity and temperature, and amounts to a fraction of a dB per km.
+\item \textbf{Temperature} affects the electronics slightly, causing slow daily ups and downs.
+\item On long links, layers of warm and cool air can bend the beam, or make part of it bounce off
+the ground or water and arrive slightly late, partly cancelling the main beam. This is called
+\textbf{multipath fading} and can cause sudden dips, especially at night.
+\item Some links automatically turn up their transmit power when the signal gets weak. This is called
+\textbf{automatic transmit power control}. It is why we need the transmitted level as well as the received one: if
+TSL goes up by 5\,dB and RSL stays the same, the path loss actually grew by 5\,dB.
+\end{itemize}
+The normal dry-weather level of TSL $-$ RSL is called the \textbf{baseline}. Rain shows up as loss
+\emph{above} the baseline.
+
+%==========================================================
+\section{How rain weakens the beam}
+\label{sec:rain}
+%==========================================================
+
+\subsection{What a raindrop is like}
+
+Raindrops range from about 0.1\,mm (drizzle) to about 6\,mm across; bigger ones break apart while falling.
+Small drops are round. Large drops are not tear-shaped, as cartoons show: air pushes up on their
+bottom as they fall, so they flatten into a shape like a hamburger bun, wider than tall.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \fill[rainc!60] (0,0) circle (0.12);
+  \node[font=\scriptsize,below] at (0,-0.35) {0.5 mm, round};
+  \fill[rainc!60] (2.2,0) circle (0.45);
+  \node[font=\scriptsize,below] at (2.2,-0.6) {2 mm, nearly round};
+  \fill[rainc!60] (5,0.05) ellipse (0.95 and 0.65);
+  \fill[white] (5,-0.6) ellipse (0.7 and 0.12);
+  \node[font=\scriptsize,below] at (5,-0.75) {5 mm, flattened};
+  \draw[->,inkc!60] (7.0,0.6) -- (7.0,-0.6) node[midway,right,font=\scriptsize]{falling};
+\end{tikzpicture}
+\caption{Raindrop shapes (not to scale with each other). Large drops are flattened by the air they fall through.}
+\end{figure}
+
+How much rain is falling is measured as a \textbf{rain rate}, in \textbf{millimetres per hour}
+(mm/h): if the rain kept falling at this intensity for one hour and none of it drained away, it
+would form a layer this many millimetres deep. As a rough feel:
+\begin{center}\small
+\begin{tabular}{rl}
+\toprule
+Rain rate & What it feels like \\
+\midrule
+0.1--1 mm/h & drizzle, light rain \\
+around 5 mm/h & moderate rain, umbrella needed \\
+around 20 mm/h & heavy downpour, streets start to stream \\
+50--100+ mm/h & violent rain, typical of flash-flood storms (for minutes, not hours) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Two ways a drop takes energy from the beam}
+
+When the radio wave passes a raindrop, its electric field pushes the water molecules back and forth
+(water molecules are slightly charged at each end, so they respond strongly to electric fields).
+This does two things:
+\begin{enumerate}
+\item \textbf{Absorption.} The jostled molecules turn some of the wave's energy into heat, warming the drop
+by an immeasurably tiny amount. This is the same physics as a microwave oven, at a far lower power.
+\item \textbf{Scattering.} The drop re-radiates part of the energy in other directions, like a tiny
+antenna of its own. That energy leaves the beam and never reaches the receiver.
+\end{enumerate}
+Both remove power from the beam. Together they are called \textbf{attenuation}: the weakening of the
+signal, measured in dB.
+
+\subsection{Why frequency matters so much}
+
+A drop affects the wave most strongly when its size is comparable to the wavelength. At 7\,GHz the
+wavelength (43\,mm) is far bigger than any raindrop, and the drops barely disturb it. At 38\,GHz the
+wavelength (8\,mm) is comparable to big drops, and the effect is strong. That is why short city
+links at high frequencies are the most useful rain sensors, and why long rural links at low
+frequencies only notice heavy rain.
+
+\subsection{The power law: from rain rate to loss per kilometre}
+
+Scientists and engineers have measured and calculated how much loss rain causes at each frequency.
+The international reference is a recommendation from the International Telecommunication Union
+(ITU), a United Nations agency that sets radio standards. It is called \textbf{ITU-R P.838}
+(version 3, 2005). It says that the loss per kilometre of rain follows a simple formula:
+\begin{equation}
+k = a \, R^{\,b}
+\label{eq:kR}
+\end{equation}
+where
+\begin{itemize}
+\item $R$ is the rain rate in mm/h,
+\item $k$ is the \textbf{specific attenuation}: the loss in dB for each kilometre of rainy path,
+\item $a$ and $b$ are two numbers that depend on the frequency and polarisation, published in tables by the ITU.
+\end{itemize}
+In words: \emph{the loss per kilometre equals a frequency-dependent number $a$, times the rain rate raised to
+a frequency-dependent power $b$}. ``Raised to the power $b$'' means: if $b=1$, then $R^b = R$ and the loss is
+simply proportional to the rain (twice the rain, twice the loss). If $b$ is bigger than 1, the loss grows
+faster than the rain; if smaller, slower.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{rcccc}
+\toprule
+& \multicolumn{2}{c}{Vertical polarisation} & \multicolumn{2}{c}{Horizontal polarisation} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Frequency & $a$ & $b$ & $a$ & $b$ \\
+\midrule
+7 GHz  & 0.00142 & 1.475 & 0.00192 & 1.481 \\
+15 GHz & 0.0501 & 1.044 & 0.0448 & 1.123 \\
+23 GHz & 0.128 & 0.963 & 0.129 & 1.021 \\
+38 GHz & 0.384 & 0.855 & 0.400 & 0.882 \\
+80 GHz & 1.167 & 0.702 & 1.170 & 0.712 \\
+\bottomrule
+\end{tabular}
+\caption{ITU-R P.838-3 coefficients, as computed by the open-source pycomlink library we use.}
+\label{tab:ab}
+\end{table}
+
+\begin{example}[: how much does 20 mm/h of rain weaken a 38 GHz beam?]
+For 38\,GHz, vertical: $a = 0.384$, $b = 0.855$. With $R = 20$\,mm/h:
+\[
+k = 0.384 \times 20^{0.855}.
+\]
+First $20^{0.855}$: that is $10^{0.855\times\log_{10}20} = 10^{0.855\times1.301} = 10^{1.112} \approx 12.9$.
+So $k \approx 0.384\times12.9 \approx 5.0$\,dB per km. Over a 1\,km link that is 5\,dB: the received power
+drops to about a third. At 7\,GHz the same rain gives only $0.00142\times20^{1.475}\approx0.12$\,dB per km,
+forty times less.
+\end{example}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.78\textwidth,height=6.2cm,xlabel={rain rate $R$ (mm/h)},ylabel={loss $k$ (dB per km)},
+  xmin=0,xmax=100,ymin=0,ymax=21,grid=major,grid style={inkc!12},legend pos=north west,
+  legend style={font=\small,draw=none,fill=white,fill opacity=0.8,text opacity=1},tick label style={font=\small},label style={font=\small}]
+  \addplot[domain=0:100,samples=120,thick,color=rainc] {0.3844*x^0.8552}; \addlegendentry{38 GHz}
+  \addplot[domain=0:100,samples=120,thick,color=gaugec] {0.1284*x^0.963}; \addlegendentry{23 GHz}
+  \addplot[domain=0:100,samples=120,thick,color=radarc] {0.05008*x^1.044}; \addlegendentry{15 GHz}
+  \addplot[domain=0:100,samples=120,thick,color=inkc!60] {0.00142*x^1.4745}; \addlegendentry{7 GHz}
+\end{axis}
+\end{tikzpicture}
+\caption{Loss per kilometre against rain rate for four frequencies (vertical polarisation,
+Equation~\ref{eq:kR}). Higher frequencies are far more sensitive. Around 20--30\,GHz the curves are
+almost straight lines ($b \approx 1$), which makes the measurement especially convenient.}
+\label{fig:kR}
+\end{figure}
+
+Notice in Table~\ref{tab:ab} that horizontal polarisation has slightly larger $a$ or $b$ than vertical.
+That is the flattened drops at work: a side-to-side wiggle travels through more water.
+
+\subsection{From loss per kilometre to the whole link}
+
+Rain is rarely the same along the whole link. The total rain loss is the sum of the losses on each
+little piece of the path. If we split the link into many short pieces, each of length $\Delta x$ with
+its own rain rate, then
+\begin{equation}
+A = \sum_\text{pieces} k(\text{rain on that piece}) \times \Delta x
+\end{equation}
+($A$ for attenuation, in dB). With infinitely small pieces, mathematicians write this sum as an integral,
+$A = \int_0^L k(x)\,dx$, which means the same thing: add up loss per km times km, all along the path of
+length $L$.
+
+If the rain is the same everywhere along the link, this becomes simply
+\begin{equation}
+A = k \times L = a R^{\,b} L
+\label{eq:A}
+\end{equation}
+In practice we use Equation~\ref{eq:A} and interpret the $R$ we get as a kind of \textbf{average rain along the
+link}. Each link therefore measures a \emph{line} of rain, not a point like a gauge. For links of a few km,
+that is exactly the scale at which flash floods start in a city.
+
+%==========================================================
+\section{Things that look like rain but are not}
+\label{sec:fakes}
+%==========================================================
+
+A drop in signal does not always mean rain in the air. These are the main impostors.
+
+\subsection{The wet antenna}
+
+When it rains, water also lands on the radomes, the plastic lids over the dishes. A thin film of
+water sits right in front of the antenna, and the beam must pass through it. That film weakens the
+signal too, sometimes by several dB, and it has nothing to do with how much rain falls between the
+towers. This is called \textbf{wet antenna attenuation}.
+
+It is large. In our worked example (Section~\ref{sec:inverse}), the model we use estimates that 4.1 of the
+9.5\,dB lost at the peak of the storm came from wet antennas, not from rain in the air. Without correcting for it,
+our links reported 3.5 times too much rain over June and July 2015. Different correction methods exist; we tested
+several and chose the one that matched the rain gauges best during our tuning months.
+
+The film also lingers after the rain stops, while the radome dries, so the signal recovers slowly.
+
+\subsection{Other impostors}
+\begin{itemize}
+\item \textbf{Wet snow and melting snow} weaken the beam much more than rain for the same amount of water.
+In Algeria's coastal cities this is rare.
+\item \textbf{Dew and fog} can wet the radomes without any rain.
+\item \textbf{Multipath fading} (Section~\ref{sec:dry}) causes sudden dips on long links, often at night.
+\item \textbf{Equipment changes}: a technician re-aligns a dish or replaces a radio, and the baseline jumps.
+\item \textbf{Dust and sand}. Dry dust weakens these beams much less than rain does, but there is almost no
+published data from real phone links during sand storms. For Algeria this is an open question. We say so
+honestly and plan to model it as an uncertain extra term in our simulation.
+\item \textbf{Faulty links}. Some links in our data report wild swings all the time. Our quality check removed
+45 of the 728 Swedish sub-links because they claimed rain more than 30\% of the time, when the radar showed it
+never rained on any path more than 9.4\% of the time.
+\end{itemize}
+
+%==========================================================
+\section{Working backwards: from the signal to the rain}
+\label{sec:inverse}
+%==========================================================
+
+Now we put everything together. This is the classical method (no AI) that our project reproduced as
+its baseline. We follow one real link through one real storm.
+
+\begin{center}\small
+Link: sub-link 718, Gothenburg. Length $L = 1.07$\,km. Frequency $f = 37.32$\,GHz, vertical polarisation.\\
+A rain gauge stands 4\,m from the beam's path. Date: 25 August 2015.
+\end{center}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=1 by 2,vertical sep=0.9cm,xlabels at=edge bottom},
+  width=0.95\textwidth,height=4.8cm,xmin=4,xmax=24,xtick={4,6,...,24},grid=major,grid style={inkc!12},
+  tick label style={font=\small},label style={font=\small},legend style={font=\scriptsize,draw=none,fill=white,fill opacity=0.85,text opacity=1}]
+\nextgroupplot[ylabel={total loss (dB)},ymin=47.5,ymax=59,legend pos=north east]
+  \addplot[very thin,color=rainc,forget plot] table[x=hour,y=tl] {storm.dat};
+  \addplot[thick,dashed,color=inkc!60,forget plot] table[x=hour,y=base] {storm.dat};
+  \addlegendimage{thick,color=rainc} \addlegendentry{total loss, TSL $-$ RSL}
+  \addlegendimage{thick,dashed,color=inkc!60} \addlegendentry{dry-weather baseline}
+\nextgroupplot[ylabel={rain (mm/h)},xlabel={hour of the day (UTC), 25 August 2015},ymin=0,ymax=24,legend pos=north east]
+  \addplot[thick,color=gaugec,forget plot] table[x=hour,y=gauge] {storm.dat};
+  \addplot[thick,color=rainc,forget plot] table[x=hour,y=R] {storm.dat};
+  \addplot[only marks,mark=*,mark size=1.2pt,color=radarc,forget plot] table[x=hour,y=R] {radar.dat};
+  \addlegendimage{thick,color=gaugec} \addlegendentry{rain gauge (5-min average)}
+  \addlegendimage{thick,color=rainc} \addlegendentry{link estimate (5-min average)}
+  \addlegendimage{only marks,mark=*,mark size=1.6pt,color=radarc} \addlegendentry{weather radar}
+\end{groupplot}
+\end{tikzpicture}
+\caption{Real data. Top: the total loss of the link through the day, and the dry-weather baseline the
+method estimated. Bottom: the rain worked out from the link, compared with the rain gauge next to it and with
+the weather radar. Times before 04:00 were dry and are cut off.}
+\label{fig:storm}
+\end{figure}
+
+\subsection*{Step 1: total loss}
+For every minute, compute TSL $-$ RSL in dB. On this link it sits around 48.7\,dB on a dry day, and climbs to
+58.2\,dB at 08:30, the peak of the storm (Figure~\ref{fig:storm}, top).
+
+\subsection*{Step 2: is it raining?}
+Rain does not just lower the signal; it makes it \emph{jumpy}, because rain cells come and go. Dry-day signals are
+calm. So we measure how jumpy the signal is with the \textbf{standard deviation}: a number that says how far, on
+average, values stray from their own average. For each minute we take the 60 minutes centred on it, compute
+their standard deviation, and call the minute \textbf{wet} if it is above a threshold. We tried thresholds from 0.1
+to 1.5\,dB and window lengths of 15, 30 and 60 minutes on June and July data, and kept the best: \textbf{60
+minutes and 0.35\,dB}.
+
+One honest weakness: a window centred on the current minute uses the next 30 minutes too. For a live warning
+system that is too late. The AI models in the next phase will only look at the past.
+
+\subsection*{Step 3: the baseline}
+When a wet period starts, we freeze the baseline at the average of the last 5 dry minutes before it, and hold
+it until the rain ends. Any loss above the baseline counts as caused by rain. At 08:30 the baseline was 48.71\,dB, so
+\[
+A_\text{observed} = 58.18 - 48.71 = 9.47\ \text{dB}.
+\]
+
+\subsection*{Step 4: remove the wet antenna}
+The wet-antenna model we use (from Pastorek and colleagues, as implemented in pycomlink) estimates
+4.10\,dB of antenna loss here, leaving
+\[
+A_\text{rain} = 9.47 - 4.10 = 5.37\ \text{dB}
+\]
+caused by rain in the air.
+
+\subsection*{Step 5: turn loss into rain}
+Solve Equation~\ref{eq:A} for $R$. Dividing both sides by $aL$ and taking the $b$-th root:
+\begin{equation}
+R = \left(\frac{A}{a\,L}\right)^{1/b}
+\label{eq:inverse}
+\end{equation}
+In words: \emph{loss divided by (coefficient times length), raised to the power one-over-$b$}.
+
+\begin{example}[: the rain at 08:30]
+At 37.32\,GHz vertical, the ITU coefficients are $a = 0.370$ and $b = 0.860$. Then
+\[
+\frac{A}{aL} = \frac{5.37}{0.370\times1.07} = 13.6, \qquad
+R = 13.6^{1/0.860} = 13.6^{1.163} \approx 20.7\ \text{mm/h}.
+\]
+Without the wet-antenna correction we would have used $A = 9.47$ and obtained about 40\,mm/h, twice as much.
+Averaged over the 5 minutes around 08:30, the link says 17.3\,mm/h and the gauge says 14.4\,mm/h.
+\end{example}
+
+\subsection*{How little rain can a link notice?}
+Because readings are rounded (quantisation), the smallest change a link can report is 0.1\,dB or 1\,dB. Using
+Equation~\ref{eq:inverse}, here is how much rain that smallest step represents:
+\begin{center}\small
+\begin{tabular}{lcc}
+\toprule
+Link & rain equal to a 0.1 dB step & rain equal to a 1 dB step \\
+\midrule
+38 GHz, 1 km & 0.2 mm/h & 3.1 mm/h \\
+23 GHz, 3 km & 0.25 mm/h & 2.7 mm/h \\
+15 GHz, 8 km & 0.26 mm/h & 2.4 mm/h \\
+7 GHz, 20 km & 2.3 mm/h & 11 mm/h \\
+\bottomrule
+\end{tabular}
+\end{center}
+So a well-chosen link with fine rounding notices light rain, while a long low-frequency link with coarse rounding
+only notices heavy rain. For flash floods, heavy rain is exactly what matters.
+
+%==========================================================
+\section{How we check if we got it right}
+\label{sec:scores}
+%==========================================================
+
+To judge the method, we compare it with two references. \textbf{Rain gauges} measure rain directly but only at one
+spot. The \textbf{weather radar} sees the whole area but estimates rain indirectly from echoes, so it has errors of
+its own. Neither is perfect, so we use both.
+
+We tuned everything on June and July 2015 and tested once on August 2015, a month the method had never seen. This
+separation matters: testing on the tuning data would make any method look better than it really is.
+
+\subsection{Rain or no rain}
+For each 5-minute period we compare the method's ``wet/dry'' with the radar's. Four outcomes are possible:
+\begin{center}\small
+\begin{tabular}{lcc}
+\toprule
+& radar says rain & radar says dry \\
+\midrule
+method says rain & correct alarm (TP) & false alarm (FP) \\
+method says dry & miss (FN) & correct quiet (TN) \\
+\bottomrule
+\end{tabular}
+\end{center}
+From these counts:
+\begin{itemize}
+\item \textbf{True positive rate} $=\text{TP}/(\text{TP}+\text{FN})$: of the rainy periods, what share did we catch? Ours: \textbf{71\%}.
+\item \textbf{False positive rate} $=\text{FP}/(\text{FP}+\text{TN})$: of the dry periods, what share did we wrongly call rainy? Ours: \textbf{4.6\%}.
+\item \textbf{Matthews correlation coefficient} (MCC) summarises both in one number:
+\[
+\text{MCC} = \frac{\text{TP}\cdot\text{TN} - \text{FP}\cdot\text{FN}}
+{\sqrt{(\text{TP}+\text{FP})(\text{TP}+\text{FN})(\text{TN}+\text{FP})(\text{TN}+\text{FN})}}
+\]
+It is 1 for a perfect detector, 0 for random guessing. It is fairer than ``percent correct'' when, as here,
+dry periods vastly outnumber rainy ones (a detector that always says ``dry'' would be 90\% correct but useless).
+Ours: \textbf{0.58}.
+\end{itemize}
+
+\subsection{How much rain}
+For amounts we compare hourly rain from links with hourly rain from the gauges near them:
+\begin{itemize}
+\item \textbf{Correlation} $r$: do the two go up and down together? 1 means perfectly in step, 0 means no relation.
+Ours: \textbf{0.81}. For comparison, the weather radar against the same gauges: 0.80.
+\item \textbf{Root mean square error} (RMSE): the typical size of a mistake, in mm/h. Square every error, average them,
+take the square root. Squaring makes large mistakes count more. Ours: \textbf{1.04\,mm/h}.
+\item \textbf{Bias}: does the method measure too much or too little overall, as a percentage of the total? Ours: \textbf{$-6\%$}
+(slightly too little).
+\end{itemize}
+
+In short, on a month it had never seen, the classical method measured hourly rain about as well as the weather radar,
+using only equipment that already exists. Its weaknesses are noisy 5-minute values, the need to look 30 minutes into
+the future, and two settings tuned by hand. Those are what the AI is meant to improve.
+
+%==========================================================
+\section{Where AI comes in, and what comes after}
+%==========================================================
+
+The steps in Section~\ref{sec:inverse} are fixed rules chosen by people. Two of them are the weakest: deciding whether it
+rains (Step~2) and turning the signal into rain while accounting for wet antennas and noise (Steps~4--5). A
+\textbf{neural network} is a program that learns such rules from examples instead of being told them. We will show it
+months of signal recordings together with what the radar and gauges measured at the same time, and let it learn the
+patterns, including subtle ones a human would not write down (for example, the shape of a wet antenna drying). We will
+use small networks that look only at the past, so they can run live. The test is the same August month, and the bar to
+beat is the set of numbers above.
+
+Then:
+\begin{itemize}
+\item \textbf{Rain maps.} Hundreds of links crossing a city each give a line-average of rain. Combining them gives a map
+of rain over the whole city every few minutes. Pushing that map forward in the direction the storm moves gives a forecast
+for the next 30--60 minutes.
+\item \textbf{Flood risk.} Rain only floods a street if the water collects there. Combining the rain map with the shape of the
+land (valleys, dry riverbeds called \emph{wadis}, slopes) and with how much ground is covered by concrete and asphalt tells us
+which neighbourhoods and roads are most at risk in the next hour.
+\item \textbf{Algeria.} Real link records from Algerian operators are not public. We know where Algerian towers are (from
+OpenCelliD, a public map built from phones that report which tower they see and where they are), but not which towers are
+joined by microwave links, nor their signal records. So for Algeria we will build \emph{simulated} links between real tower
+positions, and feed them real storms measured by NASA satellites. That demonstrates the system; it does not prove its accuracy
+there. Proving it needs a pilot with an operator and the national weather service.
+\end{itemize}
+
+%==========================================================
+\appendix
+\section{Glossary}
+%==========================================================
+\small
+\begin{description}[leftmargin=3.2cm,style=nextline,itemsep=0.25em]
+\item[Attenuation] Weakening of a signal, measured in dB.
+\item[Backhaul] The part of a phone network that connects towers to each other and to the core network.
+\item[Baseline] The normal, dry-weather level of a link's total loss.
+\item[dB (decibel)] Ten times the base-10 logarithm of a power ratio. $+3$\,dB $\approx$ double, $-10$\,dB = one tenth.
+\item[dBm] Power compared with 1 milliwatt, in decibels. 0\,dBm = 1\,mW.
+\item[Electromagnetic wave] A travelling pattern of electric and magnetic fields. Light and radio are both examples.
+\item[Free-space path loss] The weakening of a beam caused only by spreading out over distance.
+\item[Frequency] Number of wiggles per second, in hertz (Hz). 1\,GHz = one billion per second.
+\item[Fresnel zone] The cigar-shaped region around the straight line between two dishes where the radio energy travels.
+\item[Gain (antenna)] How much a dish concentrates power in its pointing direction, in dB.
+\item[ITU-R P.838] The international standard that gives the $a$ and $b$ coefficients linking rain rate and loss.
+\item[Line of sight] A clear straight path between two antennas.
+\item[MCC] Matthews correlation coefficient. A score for yes/no detection; 1 is perfect, 0 is random.
+\item[Microwave link] A pair of dish antennas exchanging a radio beam between two towers.
+\item[mm/h] Millimetres of rain per hour: the depth of water a rain intensity would leave after one hour.
+\item[Multipath fading] Signal dips when parts of the beam take slightly different paths and partly cancel.
+\item[Polarisation] The direction in which the wave's electric field wiggles: vertical or horizontal.
+\item[Quantisation] Rounding of the recorded signal to fixed steps (e.g.\ 0.1\,dB or 1\,dB).
+\item[Radome] The protective plastic or fabric cover over a dish antenna.
+\item[RMSE] Root mean square error: the typical size of a mistake, with large mistakes weighted more.
+\item[RSL] Received signal level: power arriving at the receiving dish, in dBm.
+\item[Specific attenuation $k$] Loss per kilometre of rainy path, in dB/km.
+\item[Standard deviation] How far values typically stray from their average; used here to measure how jumpy a signal is.
+\item[Sub-link] One direction of a two-way link.
+\item[TSL] Transmitted signal level: power sent by the transmitting dish, in dBm.
+\item[Wavelength] Distance between two wave crests. Equals the speed of light divided by the frequency.
+\item[Wet antenna attenuation] Extra loss caused by a film of water on the radome, not by rain along the path.
+\end{description}
+\normalsize
+
+\section{Sources}
+\small
+\begin{itemize}
+\item ITU-R Recommendation P.838-3 (2005), \emph{Specific attenuation model for rain for use in prediction methods}. International Telecommunication Union.
+\item H. Messer, A. Zinevich, P. Alpert (2006), \emph{Environmental monitoring by wireless communication networks}, Science 312, 713. The first paper to propose this idea.
+\item A. Overeem, H. Leijnse, R. Uijlenhoet (2013), \emph{Country-wide rainfall maps from cellular communication networks}, PNAS 110, 2741--2745. Rain maps for the whole Netherlands from phone links.
+\item M. Schleiss, A. Berne (2010), \emph{Identification of dry and rainy periods using telecommunication microwave links}, IEEE Geoscience and Remote Sensing Letters 7, 611--615. The ``jumpy signal'' wet/dry method of Step~2.
+\item J. Andersson et al. (2022), \emph{OpenMRG: Open data from Microwave links, Radar, and Gauges for rainfall quantification in Gothenburg, Sweden}, Earth System Science Data 14, 5411--5426. Dataset: doi:10.5281/zenodo.7107689 (CC BY-SA 4.0).
+\item pycomlink, open-source Python library for microwave-link rain retrieval (version 0.6.0), \url{https://github.com/pycomlink/pycomlink}. Source of the ITU coefficients and the wet-antenna model used here.
+\end{itemize}
+All project results quoted here are in \texttt{results/phase1\_openmrg.md} of the project repository.
+
+\end{document}

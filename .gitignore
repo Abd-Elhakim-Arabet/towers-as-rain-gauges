@@ -11,3 +11,7 @@ runs/
 *.log
 .env
 src/*.egg-info/
+docs/explainer/*.aux
+docs/explainer/*.log
+docs/explainer/*.toc
+docs/explainer/*.out
