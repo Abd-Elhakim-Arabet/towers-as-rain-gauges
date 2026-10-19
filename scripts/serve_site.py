@@ -4,9 +4,9 @@
     python scripts/serve_site.py --port 8080
 
 Pages:
-  /               project overview (storm replay, beam map, results)
-  /algeria/       Algeria tower map
+  /               opens the explainer PDF (the project write-up)
   /explainer.pdf  the ground-up explainer
+  /algeria/       Algeria tower map
 
 Listens on 127.0.0.1 only, so other machines on the lab network cannot open it.
 """
@@ -29,9 +29,8 @@ NAV = """<nav style="position:sticky;top:0;z-index:50;display:flex;gap:1.2rem;fl
 padding:.55rem max(16px,env(safe-area-inset-left,0px));background:#102029;color:#e8eef1;
 font:500 14px/1.4 'IBM Plex Sans',system-ui,sans-serif">
 <strong style="letter-spacing:.04em">TOWERS AS RAIN GAUGES</strong>
-<a href="/" style="color:#cde2fb">Project</a>
-<a href="/algeria/" style="color:#cde2fb">Algeria towers</a>
 <a href="/explainer.pdf" style="color:#cde2fb">Explainer (PDF)</a>
+<a href="/algeria/" style="color:#cde2fb">Algeria towers</a>
 </nav>"""
 
 
@@ -47,7 +46,9 @@ def build() -> None:
     if OUT.exists():
         shutil.rmtree(OUT)
     (OUT / "algeria").mkdir(parents=True)
-    (OUT / "index.html").write_text(wrap((SITE / "index.html").read_text()))
+    (OUT / "index.html").write_text('<!doctype html><meta charset="utf-8">'
+                                    '<meta http-equiv="refresh" content="0; url=/explainer.pdf">'
+                                    '<a href="/explainer.pdf">Explainer (PDF)</a>\n')
     (OUT / "algeria" / "index.html").write_text(wrap((SITE / "algeria" / "index.html").read_text()))
     pdf = ROOT / "docs" / "explainer" / "explainer.pdf"
     if pdf.exists():

@@ -69,7 +69,7 @@ uv venv --python 3.12 .venv-ms && uv pip install --python .venv-ms/bin/python -r
 .venv/bin/python scripts/phase2_netherlands.py # Phase 2: min/max model, zero-shot test on the Netherlands
 .venv/bin/python scripts/phase2_mindspore.py export && .venv-ms/bin/python scripts/phase2_mindspore.py check
 .venv/bin/python scripts/phase2_summary.py     # results/phase2.md
-.venv/bin/python scripts/serve_site.py       # website on http://localhost:8000
+.venv/bin/python scripts/serve_site.py       # explainer PDF + Algeria map on http://localhost:8000
 ```
 
 Exact versions are in `requirements.lock.txt`. See `docs/ENVIRONMENT.md` for machine-specific notes.
