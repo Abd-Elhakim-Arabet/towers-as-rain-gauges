@@ -60,3 +60,26 @@ def test_low_reference_survives_long_rain():
     tl2 = tl.copy()
     tl2[0, 4000:] += 20
     assert np.allclose(feat.low_reference(tl2)[0, :3990], ref[0, :3990], equal_nan=True)
+
+
+def test_neighbour_check_removes_lonely_rain_only():
+    from targ.neighbours import neighbour_check, neighbour_matrix
+    # three paths ~2 km apart, one far away (50 km); path 1 has two directions
+    lat0 = np.array([45.00, 45.00, 45.02, 45.04, 45.50])
+    lon0 = np.array([9.00, 9.01, 9.00, 9.00, 9.00])
+    lat1 = np.array([45.00, 45.00, 45.02, 45.04, 45.50])
+    lon1 = np.array([9.01, 9.00, 9.01, 9.01, 9.01])
+    A = neighbour_matrix(lat0, lon0, lat1, lon1)
+    assert A[0, 1] == 0 and A[0, 2] == 1 and A[0, 4] == 0      # same path / neighbour / far
+    R = np.zeros((5, 120))
+    R[0, 10:20] = 5.0          # path 0 alone (its other direction does not count)
+    R[1, 10:20] = 5.0
+    R[0, 60:70] = 5.0          # path 0 with support from path 2, 10 min later
+    R[2, 70:75] = 2.0
+    R[4, 30:40] = 9.0          # far link: no neighbour with data -> cannot be checked
+    R[3, :] = np.nan
+    R[2, :5] = np.nan
+    out, info = neighbour_check(R, A, step_min=1)
+    assert (out[0, 10:20] == 0).all() and (out[1, 10:20] == 0).all()
+    assert (out[0, 60:70] == 5).all() and (out[2, 70:75] == 2).all()
+    assert (out[4, 30:40] == 9).all()

@@ -24,6 +24,7 @@ Writes results/phase2_netherlands.json and runs/phase2/minmax_physics.pt.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -31,6 +32,7 @@ import torch
 import xarray as xr
 
 from targ import features as feat
+from targ import neighbours as nb
 from targ import train_torch as T
 from targ.data import netherlands, openmrg
 from targ.evaluation import OPENMRG_SPLITS, rain_scores, wet_dry_scores
@@ -105,10 +107,20 @@ def main():
         logit = torch.logit(torch.from_numpy(P).clamp(1e-6, 1 - 1e-6))
         return float(T.loss_fn(logit, torch.from_numpy(R), torch.from_numpy(target[:, va[0]:va[1]]), 0.05))
 
-    print("== training min/max model on Sweden", flush=True)
-    model, hist = T.train([dyn, dyn_q], stat, phys, target, tr, val_fn=val_fn, steps=STEPS,
-                          crop=768, warm=256, batch=128, model_kw=MODEL_KW, seed=0, log_every=500)
-    torch.save(model.state_dict(), RUNS / "minmax_physics.pt")
+    prev = OUT / "phase2_netherlands.json"
+    if (RUNS / "minmax_physics.pt").exists() and prev.exists() and not os.environ.get("RETRAIN"):
+        # reuse the trained min/max model (GPU training is not bit-reproducible, so
+        # retraining would move every number); set RETRAIN=1 to train again
+        print("== reusing runs/phase2/minmax_physics.pt", flush=True)
+        model = TCN(dyn.shape[1], stat.shape[1], **MODEL_KW).to(T.device())
+        model.load_state_dict(torch.load(RUNS / "minmax_physics.pt"))
+        model.eval()
+        hist = json.loads(prev.read_text()).get("history", [])
+    else:
+        print("== training min/max model on Sweden", flush=True)
+        model, hist = T.train([dyn, dyn_q], stat, phys, target, tr, val_fn=val_fn, steps=STEPS,
+                              crop=768, warm=256, batch=128, model_kw=MODEL_KW, seed=0, log_every=500)
+        torch.save(model.state_dict(), RUNS / "minmax_physics.pt")
 
     def ai_out(model, d, s, ph, t_range=None):
         P, R = T.predict(model, d, s, ph, t_range, context=256)
@@ -170,9 +182,13 @@ def main():
     Ln, fn, pn = nl.length.values, nl.frequency.values, nl.polarization.values
     cw, cR = classical_minmax(loss_max, loss_min, Ln, fn, pn, thr_db, waa_db)
     avail = np.isfinite(loss_max).mean(axis=1)
-    keep = (avail >= 0.5) & (np.nanmean(cw, axis=1) <= 0.3) & (fn >= 10)
+    # QC: >= 50% data and >= 10 GHz. Earlier runs also dropped sub-links the classical
+    # detector calls wet > 30% of the time; that set is scored again under "old_links".
+    keep = (avail >= 0.5) & (fn >= 10)
+    old_rule = keep & (np.nanmean(cw, axis=1) <= 0.3)
     print(f"Netherlands: {keep.sum()} / {keep.size} sub-links pass QC "
-          f"(>=50% data, wet <=30%, >=10 GHz)", flush=True)
+          f"(>=50% data, >=10 GHz; old rule kept {old_rule.sum()})", flush=True)
+    old_ids = nl.cml_id.values[old_rule]
     nl = nl.isel(cml_id=np.where(keep)[0])
     loss_max, loss_min, cw, cR = loss_max[keep], loss_min[keep], cw[keep], cR[keep]
     Ln, fn, pn = Ln[keep], fn[keep], pn[keep]
@@ -185,6 +201,18 @@ def main():
     print("KNMI radar along links ...", flush=True)
     ref = netherlands.radar_along(nl, "2014-06-01T01:00", "2014-08-22T22:00").sel(cml_id=nl.cml_id.values)
     ids_n, t_n = nl.cml_id.values, nl.time.values
+
+    # neighbour check, same rule for both methods
+    A = nb.neighbour_matrix(nl.site_0_lat.values, nl.site_0_lon.values,
+                            nl.site_1_lat.values, nl.site_1_lon.values)
+    est = {"classical": (cw, cR), "ai": (ai_w, ai_R)}
+    nb_info = {}
+    for m in ("classical", "ai"):
+        w, r = est[m]
+        r2, nb_info[m] = nb.neighbour_check(r, A, step_min=15)
+        removed = (np.nan_to_num(r) >= 0.1) & (r2 == 0)
+        est[m + "_nb"] = (np.where(removed, 0.0, w), r2)
+    old = np.isin(ids_n, old_ids)
     res["netherlands"] = {
         "period": ["2014-06-01", "2014-08-22"], "n_sublinks_total": int(keep.size),
         "n_sublinks_qc": int(keep.sum()),
@@ -193,25 +221,29 @@ def main():
         "length_km_pct": np.percentile(Ln, [0, 50, 100]).round(2).tolist(),
         "assumptions": ["polarisation unknown, vertical assumed",
                         "links below 10 GHz dropped (rain barely affects them)"],
-        "ai": evaluate(ai_w, ai_R, None, ref, ids_n, t_n),
-        "classical": evaluate(cw, cR, None, ref, ids_n, t_n),
+        "qc_rule": ">= 50% data and >= 10 GHz",
+        "n_sublinks_old_rule": int(old.sum()),
+        "neighbour_check": nb_info,
+        **{k: evaluate(w, r, None, ref, ids_n, t_n) for k, (w, r) in est.items()},
+        "old_links": {k: evaluate(w[old], r[old], None, ref.sel(cml_id=ids_n[old]), ids_n[old], t_n)
+                      for k, (w, r) in est.items()},
         "by_vendor": {},
     }
     for v in ("NEC", "NOKIA"):
         m = nl.vendor.values == v
         res["netherlands"]["by_vendor"][v] = {
-            "ai": evaluate(ai_w[m], ai_R[m], None, ref.sel(cml_id=ids_n[m]), ids_n[m], t_n),
-            "classical": evaluate(cw[m], cR[m], None, ref.sel(cml_id=ids_n[m]), ids_n[m], t_n)}
+            k: evaluate(w[m], r[m], None, ref.sel(cml_id=ids_n[m]), ids_n[m], t_n) for k, (w, r) in est.items()}
 
     # daily rain over the whole country network: one number per day per method
     def daily_mean(R):
         h = hourly15(da(R, ids_n, t_n))
         return h
-    ai_h, cl_h = daily_mean(ai_R), daily_mean(cR)
+    hz = {k: daily_mean(r) for k, (w, r) in est.items()}
+    ai_h, cl_h = hz["ai_nb"], hz["classical_nb"]
     ref_h = ref.reindex(time=ai_h.time.values)
-    xr.Dataset({"ai": ai_h, "classical": cl_h, "radar": ref_h}).assign_coords(
-        length=("cml_id", Ln), frequency=("cml_id", fn), vendor=("cml_id", nl.vendor.values)).to_netcdf(
-        RUNS / "nl_hourly.nc")
+    xr.Dataset({**hz, "radar": ref_h}).assign_coords(
+        length=("cml_id", Ln), frequency=("cml_id", fn), vendor=("cml_id", nl.vendor.values),
+        old_rule=("cml_id", old)).to_netcdf(RUNS / "nl_hourly.nc")
     ok = np.isfinite(ai_h.values) & np.isfinite(cl_h.values) & np.isfinite(ref_h.values)
     net = {k: np.where(ok, x, np.nan) for k, x in (("ai", ai_h.values), ("classical", cl_h.values),
                                                    ("radar", ref_h.values))}
@@ -221,8 +253,9 @@ def main():
         "day": [str(d) for d in ud],
         **{k: [float(np.nanmean(v[:, days == d]) * 24) for d in ud] for k, v in net.items()}}
     (OUT / "phase2_netherlands.json").write_text(json.dumps(res, indent=2, default=float))
-    for k in ("sweden_test", "netherlands"):
-        for m in ("classical", "ai"):
+    for k, ms in (("sweden_test", ("classical", "ai")),
+                  ("netherlands", ("classical", "ai", "classical_nb", "ai_nb"))):
+        for m in ms:
             s = res[k][m]
             print(k, m, "hourly wet MCC", round(s["wet_dry_vs_radar_hourly"]["MCC"], 3),
                   "hourly r/RMSE/bias", round(s["rain_vs_radar_hourly"]["r"], 3),

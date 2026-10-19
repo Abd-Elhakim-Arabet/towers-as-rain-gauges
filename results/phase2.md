@@ -10,6 +10,10 @@
 | AI no 1-dB augmentation (ablation) | 0.634 | 0.68 / 0.029 | 0.51 / -23% | 0.70 / -23% | 0.79 / 1.08 / -27% | – |
 | classical, data rounded to 1 dB | 0.336 | 0.82 / 0.230 | 0.61 / +18% | 0.78 / +17% | 0.85 / 0.82 / +26% | – |
 | AI physics, data rounded to 1 dB | 0.568 | 0.65 / 0.039 | 0.53 / -7% | 0.71 / -9% | 0.80 / 0.96 / -15% | – |
+| classical + neighbour check | 0.581 | 0.71 / 0.046 | 0.58 / -11% | 0.76 / -10% | 0.81 / 1.04 / -6% | 0.88 |
+| AI + neighbour check | 0.622 | 0.68 / 0.031 | 0.52 / -13% | 0.71 / -13% | 0.80 / 1.02 / -19% | 0.85 |
+
+Neighbour check removed 1.7% (classical) and 1.6% (AI) of rainy minutes in Sweden.
 
 Ablation rows come from single runs (phase2_openmrg.py). 5 retrainings of the main design (seeds 0–4):
 
@@ -23,19 +27,47 @@ Ablation rows come from single runs (phase2_openmrg.py). 5 retrainings of the ma
 
 ## Italy (OpenRainER), May–Sep 2021 and 2022, zero-shot
 
-| season | method | MCC 15-min | radar hourly r / RMSE / bias | gauges hourly r / bias | median per-link r | hours > 100 mm/h |
-|---|---|---|---|---|---|---|
-| 2021 (81 sub-links) | classical | 0.251 | 0.22 / 5.92 / +64% | 0.45 / +39% | 0.84 | 35 |
-| 2021 (81 sub-links) | ai | 0.509 | 0.70 / 1.84 / -5% | 0.74 / -3% | 0.82 | 0 |
-| 2022 (72 sub-links) | classical | 0.269 | 0.12 / 12.90 / +132% | 0.31 / +64% | 0.79 | 124 |
-| 2022 (72 sub-links) | ai | 0.502 | 0.68 / 2.31 / -7% | 0.81 / -10% | 0.79 | 0 |
+QC: sub-links with >= 50% data. `old links` = the earlier QC set (also dropping sub-links the classical detector calls wet > 30% of the time). `_nb` = after the neighbour check (10 km, ±15 min).
 
-## Netherlands, 1 Jun – 22 Aug 2014, 15-min min/max, zero-shot (1081 sub-links)
+| season | links | method | MCC 15-min | radar hourly r / RMSE / bias | gauges hourly r / bias | median per-link r | hours > 100 mm/h |
+|---|---|---|---|---|---|---|---|
+| 2021 | all (281) | classical | 0.156 | 0.22 / 4.44 / +163% | 0.42 / +103% | 0.82 | 54 |
+| 2021 | all (281) | ai | 0.413 | 0.64 / 1.59 / +36% | 0.66 / +21% | 0.83 | 0 |
+| 2021 | all (281) | classical_nb | 0.158 | 0.25 / 4.18 / +121% | 0.45 / +76% | 0.83 | 43 |
+| 2021 | all (281) | ai_nb | 0.449 | 0.70 / 1.49 / +12% | 0.72 / +3% | 0.84 | 0 |
+| 2021 | old links (81) | classical | 0.251 | 0.22 / 5.92 / +64% | 0.45 / +39% | 0.84 | 35 |
+| 2021 | old links (81) | ai | 0.509 | 0.70 / 1.84 / -5% | 0.74 / -3% | 0.82 | 0 |
+| 2021 | old links (81) | classical_nb | 0.254 | 0.25 / 5.51 / +51% | 0.54 / +28% | 0.84 | 26 |
+| 2021 | old links (81) | ai_nb | 0.518 | 0.74 / 1.72 / -10% | 0.75 / -7% | 0.83 | 0 |
 
-| method | MCC hourly | radar hourly r / RMSE / bias | median per-link r | hours > 100 mm/h |
-|---|---|---|---|---|
-| classical | 0.626 | 0.16 / 8.65 / +54% | 0.79 | 219 |
-| ai | 0.547 | 0.50 / 2.47 / +16% | 0.77 | 26 |
+Neighbour check 2021: removed 20.4% (classical) / 22.3% (AI) of rainy minutes; median 6 neighbours per sub-link.
+
+| 2022 | all (267) | classical | 0.166 | 0.12 / 8.40 / +167% | 0.29 / +77% | 0.78 | 165 |
+| 2022 | all (267) | ai | 0.413 | 0.53 / 2.27 / +29% | 0.68 / -3% | 0.81 | 5 |
+| 2022 | all (267) | classical_nb | 0.168 | 0.15 / 7.23 / +130% | 0.38 / +49% | 0.80 | 106 |
+| 2022 | all (267) | ai_nb | 0.443 | 0.56 / 2.29 / +12% | 0.69 / -16% | 0.81 | 5 |
+| 2022 | old links (72) | classical | 0.269 | 0.12 / 12.90 / +132% | 0.31 / +64% | 0.79 | 124 |
+| 2022 | old links (72) | ai | 0.502 | 0.68 / 2.31 / -7% | 0.81 / -10% | 0.79 | 0 |
+| 2022 | old links (72) | classical_nb | 0.271 | 0.15 / 11.48 / +92% | 0.41 / +36% | 0.82 | 77 |
+| 2022 | old links (72) | ai_nb | 0.506 | 0.71 / 2.17 / -14% | 0.84 / -14% | 0.80 | 0 |
+
+Neighbour check 2022: removed 17.2% (classical) / 19.4% (AI) of rainy minutes; median 7 neighbours per sub-link.
+
+
+## Netherlands, 1 Jun – 22 Aug 2014, 15-min min/max, zero-shot (1908 sub-links; old QC set 1081)
+
+| links | method | MCC hourly | radar hourly r / RMSE / bias | median per-link r | hours > 100 mm/h |
+|---|---|---|---|---|---|
+| all | classical | 0.440 | 0.16 / 6.34 / +151% | 0.78 | 262 |
+| all | ai | 0.460 | 0.49 / 2.20 / +42% | 0.76 | 29 |
+| all | classical_nb | 0.463 | 0.19 / 5.81 / +128% | 0.78 | 199 |
+| all | ai_nb | 0.484 | 0.52 / 2.10 / +34% | 0.76 | 19 |
+| old links | classical | 0.626 | 0.16 / 8.65 / +54% | 0.79 | 219 |
+| old links | ai | 0.547 | 0.50 / 2.47 / +16% | 0.77 | 26 |
+| old links | classical_nb | 0.632 | 0.20 / 7.55 / +43% | 0.79 | 163 |
+| old links | ai_nb | 0.562 | 0.53 / 2.31 / +12% | 0.77 | 16 |
+
+Neighbour check: removed 10.6% (classical) / 8.9% (AI) of rainy 15-min steps; median 25 neighbours per sub-link.
 
 ## Rain after a mostly rainy day (past 24 h > 50% rainy)
 

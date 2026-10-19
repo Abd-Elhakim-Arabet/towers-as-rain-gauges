@@ -12,8 +12,10 @@ see differently). References, both converted to mm/h:
   RADadj  gauge-adjusted radar, 15-min, ~1 km, averaged along each link path
   AWS     rain gauges (15-min), for links passing within 1 km of a gauge
 
-Label-free quality control, same rule as Sweden: drop sub-links with < 50% data
-or flagged wet > 30% of the time by the classical detector.
+Quality control: keep sub-links with >= 50% data. (Earlier runs also dropped
+sub-links the classical detector flags wet > 30% of the time; scores on that old
+link set are kept under "old_links" for comparison.) Both methods are also scored
+after the neighbour check (targ.neighbours), as "<method>_nb".
 The 15-min time-label convention (start or end) is not documented; we test both
 on the classical estimates and record which fits (this choice is applied to both
 methods equally).
@@ -31,6 +33,7 @@ import torch
 import xarray as xr
 
 from targ import features as feat
+from targ import neighbours as nb
 from targ import train_torch as T
 from targ.classical import ClassicalParams, retrieve, total_loss
 from targ.data import openmrg, openrainer
@@ -65,14 +68,21 @@ def pooled_r(a, b):
 
 
 def run_season(months, model, thr, cp):
-    ds = openrainer.cml(months)
-    tl = total_loss(ds, cp.max_gap_fill_min)
-    # label-free QC on this season (same rule as Sweden)
+    ds_all = openrainer.cml(months)
+    radar_all = openrainer.radadj_along(ds_all, months)   # cached for every sub-link
+    tl = total_loss(ds_all, cp.max_gap_fill_min)
+    # QC: data availability only. (The Sweden rule also dropped sub-links the classical
+    # detector calls wet > 30% of the time; with 1-dB data that removes most links, and it
+    # judges links by one of the two methods being compared. We record which links it
+    # would keep, to compare with earlier results on the same links.)
     from targ.classical import wet_dry
-    wet_c = wet_dry(tl.values, cp)
-    keep = (np.nanmean(wet_c, axis=1) <= 0.3) & (np.isfinite(tl.values).mean(axis=1) >= 0.5)
-    ds = ds.isel(cml_id=np.where(keep)[0])
-    print(f"{months[0]}..{months[-1]}: {keep.sum()} / {keep.size} sub-links pass QC", flush=True)
+    avail = np.isfinite(tl.values).mean(axis=1)
+    old_rule = (np.nanmean(wet_dry(tl.values, cp), axis=1) <= 0.3) & (avail >= 0.5)
+    keep = avail >= 0.5
+    ds = ds_all.isel(cml_id=np.where(keep)[0])
+    old_ids = ds_all.cml_id.values[old_rule]
+    print(f"{months[0]}..{months[-1]}: {keep.sum()} / {keep.size} sub-links have >= 50% data "
+          f"(old rule kept {old_rule.sum()})", flush=True)
 
     cl = retrieve(ds, cp)
     dyn = feat.dynamic_features(total_loss(ds, 5).values, ds.length.values, ds.frequency.values,
@@ -81,15 +91,30 @@ def run_season(months, model, thr, cp):
     phys = feat.physics_params(ds.length.values, ds.frequency.values, ds.polarization.values)
     P, R = T.predict(model, dyn, stat, phys)
     coords = {"cml_id": ds.cml_id.values, "time": ds.time.values}
-    ai_wet = xr.DataArray((P > thr).astype(float), coords=coords, dims=("cml_id", "time"))
-    ai_R = xr.DataArray(np.where(P > thr, R, 0.0), coords=coords, dims=("cml_id", "time"))
+    dims = ("cml_id", "time")
     miss = np.isnan(cl.tl.values)
-    ai_wet, ai_R = ai_wet.where(~miss), ai_R.where(~miss)
+    ai_R = np.where(P > thr, R, 0.0)
+    ai_R[miss] = np.nan
+    est = {"classical": (cl.wet.values, cl.R.values),
+           "ai": (np.where(miss, np.nan, (P > thr).astype(float)), ai_R)}
 
-    radar = openrainer.radadj_along(ds, months)
+    # neighbour check, same rule for both methods
+    A = nb.neighbour_matrix(ds.site_0_lat.values, ds.site_0_lon.values,
+                            ds.site_1_lat.values, ds.site_1_lon.values)
+    nb_info = {}
+    for m in ("classical", "ai"):
+        w, r = est[m]
+        r2, nb_info[m] = nb.neighbour_check(r, A, step_min=1)
+        removed = (np.nan_to_num(r) >= 0.1) & (r2 == 0)
+        w2 = np.where(removed, 0.0, w)
+        est[m + "_nb"] = (w2, r2)
+    est = {k: (xr.DataArray(w, coords=coords, dims=dims), xr.DataArray(r, coords=coords, dims=dims))
+           for k, (w, r) in est.items()}
+
+    radar = radar_all.sel(cml_id=ds.cml_id.values)
     g = openrainer.gauges(months)
     pairs = openmrg.gauge_link_pairs(ds, g, 1000)
-    return ds, cl, ai_wet, ai_R, radar, g, pairs
+    return ds, cl, est, nb_info, old_ids, radar, g, pairs
 
 
 def score_all(est_wet, est_R, radar, g, pairs, label):
@@ -124,38 +149,47 @@ def main():
     res = {"model": f"runs/phase2/physics_selected.pt (seed {sel['seed']}, trained on Sweden only)", "threshold": thr,
            "classical_params": p1["params"], "seasons": {}}
     for name, months in SEASONS.items():
-        ds, cl, ai_wet, ai_R, radar, g, pairs = run_season(months, model, thr, cp)
+        ds, cl, est, nb_info, old_ids, radar, g, pairs = run_season(months, model, thr, cp)
         # time-label convention: test both on the classical estimate only
         lab = {}
         for label in ("start", "end"):
             lab[label] = pooled_r(radar.reindex(time=to_15(cl.R, label).time.values).values,
                                   to_15(cl.R, label).values)
         label = max(lab, key=lab.get)
-        print(name, "label check (r classical vs radar):", lab, "→", label, flush=True)
-        res["seasons"][name] = {
+        print(name, "label check (r classical vs radar):", lab, "->", label, flush=True)
+        old_pairs = pairs[pairs.cml_id.isin(old_ids)]
+        season = {
             "months": months, "n_sublinks_qc": int(ds.sizes["cml_id"]),
             "n_links_qc": int(len({c.split("_")[0] for c in ds.cml_id.values})),
+            "n_sublinks_old_rule": int(len(old_ids)),
+            "qc_rule": "sub-link has >= 50% of its 1-min data",
             "frequency_ghz": [float(ds.frequency.min()), float(ds.frequency.max())],
             "length_km": [float(ds.length.min()), float(np.median(ds.length)), float(ds.length.max())],
-            "label_check": lab, "label": label,
-            "classical": score_all(cl.wet, cl.R, radar, g, pairs, label),
-            "ai": score_all(ai_wet, ai_R, radar, g, pairs, label),
+            "label_check": lab, "label": label, "neighbour_check": nb_info,
+            "old_links": {},
         }
-        for m in ("classical", "ai"):
-            s = res["seasons"][name][m]
-            print(name, m, "MCC", round(s["wet_dry_vs_radar_15min"]["MCC"], 3),
-                  "radar h r/RMSE/bias", round(s["rain_vs_radar_hourly"]["r"], 2),
-                  round(s["rain_vs_radar_hourly"]["RMSE"], 2),
-                  round(s["rain_vs_radar_hourly"]["bias_pct"]), "gauges",
-                  {k: round(s.get("rain_vs_gauges_hourly", {}).get(k, np.nan), 2)
+        for m, (w, r) in est.items():
+            season[m] = score_all(w, r, radar, g, pairs, label)
+            season["old_links"][m] = score_all(w.sel(cml_id=old_ids), r.sel(cml_id=old_ids),
+                                               radar.sel(cml_id=old_ids), g, old_pairs, label)
+            s_ = season[m]
+            print(name, m, "MCC", round(s_["wet_dry_vs_radar_15min"]["MCC"], 3),
+                  "radar h r/RMSE/bias", round(s_["rain_vs_radar_hourly"]["r"], 2),
+                  round(s_["rain_vs_radar_hourly"]["RMSE"], 2),
+                  round(s_["rain_vs_radar_hourly"]["bias_pct"]), "gauges",
+                  {k: round(s_.get("rain_vs_gauges_hourly", {}).get(k, np.nan), 2)
                    for k in ("r", "RMSE", "bias_pct")}, flush=True)
-        hz = {k: hourly_from_15(to_15(x, label), label) for k, x in (("classical", cl.R), ("ai", ai_R))}
+        res["seasons"][name] = season
+        hz = {k: hourly_from_15(to_15(r, label), label) for k, (w, r) in est.items()}
         hz["radar"] = hourly_from_15(radar.reindex(time=to_15(cl.R, label).time.values), label)
-        xr.Dataset(hz).assign_coords(length=("cml_id", ds.length.values)).to_netcdf(
+        xr.Dataset(hz).assign_coords(length=("cml_id", ds.length.values),
+                                     old_rule=("cml_id", np.isin(ds.cml_id.values, old_ids))).to_netcdf(
             ROOT / "runs" / "phase2" / f"italy_{name}_hourly.nc")
         if name == "2021":
-            # keep one storm for the explainer: the wettest radar hour on a link near a gauge
-            save_example(ds, cl, ai_R, radar, g, pairs, label)
+            # keep one storm for the explainer: the closest link-gauge pair that saw > 20 mm/h
+            save_example(ds.sel(cml_id=old_ids), xr.Dataset({"R": est["classical_nb"][1].sel(cml_id=old_ids)}),
+                         est["ai_nb"][1].sel(cml_id=old_ids),
+                         radar.sel(cml_id=old_ids), g, old_pairs, label)
     (OUT / "phase2_italy.json").write_text(json.dumps(res, indent=2, default=float))
 
 

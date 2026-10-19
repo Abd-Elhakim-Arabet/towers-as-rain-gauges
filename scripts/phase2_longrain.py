@@ -5,7 +5,9 @@
 Rainy reference steps are grouped by the share of the previous 24 h that the
 reference itself called rainy (>= 0.1 mm/h). For each group: share of all rainy
 steps, share caught (method >= 0.1 mm/h), and rain measured as % of the reference
-total. Sweden: 5-min radar, August. Italy / Netherlands: hourly radar.
+total. Sweden: 5-min radar, August. Italy / Netherlands: hourly radar, on the
+sub-links of the earlier quality rule so before/after compare the same links,
+without the neighbour check (this table is about the dry level only).
 
 Writes results/phase2_longrain[_tag].json.
 """
@@ -64,6 +66,8 @@ def main(tag: str = ""):
     for f, name in (("italy_2021_hourly.nc", "italy_2021_hourly"), ("italy_2022_hourly.nc", "italy_2022_hourly"),
                     ("nl_hourly.nc", "netherlands_2014_hourly")):
         h = xr.open_dataset(RUNS / f).load()
+        if "old_rule" in h.coords:   # same sub-links as the "before" table
+            h = h.sel(cml_id=h.old_rule.values)
         out[name] = table(h.radar.values, {"classical": h.classical.values, "ai": h.ai.values},
                           past_wet_fraction(h.radar, 24).values)
     path = ROOT / "results" / f"phase2_longrain{'_' + tag if tag else ''}.json"

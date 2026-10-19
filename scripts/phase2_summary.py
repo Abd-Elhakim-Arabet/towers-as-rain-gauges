@@ -32,17 +32,31 @@ def per_link_median_r(est: xr.DataArray, ref: xr.DataArray) -> float:
     return float(np.median(rs))
 
 
-def robust(h: xr.Dataset, m: str) -> dict:
+def robust(h: xr.Dataset, m: str, subset=None) -> dict:
+    if subset is not None:
+        h = h.sel(cml_id=subset)
     v = h[m].values
     return {"median_per_link_hourly_r_vs_radar": per_link_median_r(h[m], h.radar),
             "hours_over_100mm_h": int(np.nansum(v > 100)),
             "hours_valid": int(np.isfinite(v).sum())}
 
 
+METHODS = ("classical", "ai", "classical_nb", "ai_nb")
+
+
+def robust_all(path) -> dict:
+    h = xr.open_dataset(path).load()
+    out = {m: robust(h, m) for m in METHODS}
+    old = h.cml_id.values[h.old_rule.values]
+    out["old_links"] = {m: robust(h, m, old) for m in METHODS}
+    return out
+
+
 def main():
     p1 = json.loads((RES / "phase1_openmrg.json").read_text())
     p2 = json.loads((RES / "phase2_openmrg.json").read_text())
     seeds = json.loads((RES / "phase2_seeds.json").read_text())
+    swnb = json.loads((RES / "phase2_sweden_neighbours.json").read_text())
     it = json.loads((RES / "phase2_italy.json").read_text())
     nl = json.loads((RES / "phase2_netherlands.json").read_text())
     ms = json.loads((RES / "phase2_mindspore.json").read_text())
@@ -59,15 +73,13 @@ def main():
             "ai_first_run": p2["variants"]["physics"],
             "ablations": {k: p2["variants"][k] for k in ("free", "physics_no_quant")},
             "seeds": seeds["summary"],
+            "neighbour_check": swnb,
             "median_per_link_hourly_r_vs_radar": {
                 "classical": p1["test"]["per_link_hourly_r_vs_radar_median"], "ai": sweden_ai_median_r},
         },
-        "italy": {name: {**s, "robust": {m: robust(xr.open_dataset(RUNS / f"italy_{name}_hourly.nc").load(), m)
-                                         for m in ("classical", "ai")}}
+        "italy": {name: {**s, "robust": robust_all(RUNS / f"italy_{name}_hourly.nc")}
                   for name, s in it["seasons"].items()},
-        "netherlands": {**nl["netherlands"],
-                        "robust": {m: robust(xr.open_dataset(RUNS / "nl_hourly.nc").load(), m)
-                                   for m in ("classical", "ai")},
+        "netherlands": {**nl["netherlands"], "robust": robust_all(RUNS / "nl_hourly.nc"),
                         "sweden_minmax_test": nl["sweden_test"], "classical_params": nl["classical"]},
         "mindspore": ms,
         "long_rain": {"after": json.loads((RES / "phase2_longrain.json").read_text()),
@@ -93,30 +105,47 @@ def main():
               srow("AI free head (ablation)", S["ablations"]["free"]["test"], "–"),
               srow("AI no 1-dB augmentation (ablation)", S["ablations"]["physics_no_quant"]["test"], "–"),
               srow("classical, data rounded to 1 dB", S["classical"]["test_1dB"], "–"),
-              srow("AI physics, data rounded to 1 dB", S["ai"]["test_1dB"], "–"), "",
+              srow("AI physics, data rounded to 1 dB", S["ai"]["test_1dB"], "–"),
+              srow("classical + neighbour check", swnb["classical_nb"],
+                   f"{swnb['classical_nb']['robust']['median_per_link_hourly_r_vs_radar']:.2f}"),
+              srow("AI + neighbour check", swnb["ai_nb"],
+                   f"{swnb['ai_nb']['robust']['median_per_link_hourly_r_vs_radar']:.2f}"), "",
+              f"Neighbour check removed {swnb['neighbour_check']['classical']['removed_share']:.1%} (classical) and "
+              f"{swnb['neighbour_check']['ai']['removed_share']:.1%} (AI) of rainy minutes in Sweden.", "",
               "Ablation rows come from single runs (phase2_openmrg.py). 5 retrainings of the main design (seeds 0–4):", ""]
     for k, v in S["seeds"]["test"].items():
         lines.append(f"- {k}: mean {v['mean']:.3f}, range {v['min']:.3f} – {v['max']:.3f}")
     lines += ["", "## Italy (OpenRainER), May–Sep 2021 and 2022, zero-shot", "",
-              "| season | method | MCC 15-min | radar hourly r / RMSE / bias | gauges hourly r / bias | median per-link r | hours > 100 mm/h |",
-              "|---|---|---|---|---|---|---|"]
-    for name, s in out["italy"].items():
-        for mth in ("classical", "ai"):
-            t = s[mth]
-            g = t.get("rain_vs_gauges_hourly", {})
-            lines.append(f"| {name} ({s['n_sublinks_qc']} sub-links) | {mth} | {t['wet_dry_vs_radar_15min']['MCC']:.3f} "
-                         f"| {t['rain_vs_radar_hourly']['r']:.2f} / {t['rain_vs_radar_hourly']['RMSE']:.2f} / {t['rain_vs_radar_hourly']['bias_pct']:+.0f}% "
-                         f"| {g.get('r', float('nan')):.2f} / {g.get('bias_pct', float('nan')):+.0f}% "
-                         f"| {s['robust'][mth]['median_per_link_hourly_r_vs_radar']:.2f} | {s['robust'][mth]['hours_over_100mm_h']} |")
+              "QC: sub-links with >= 50% data. `old links` = the earlier QC set (also dropping sub-links the classical "
+              "detector calls wet > 30% of the time). `_nb` = after the neighbour check (10 km, ±15 min).", "",
+              "| season | links | method | MCC 15-min | radar hourly r / RMSE / bias | gauges hourly r / bias | median per-link r | hours > 100 mm/h |",
+              "|---|---|---|---|---|---|---|---|"]
+    for name, s_ in out["italy"].items():
+        for tag, blk, rob, n in (("all", s_, s_["robust"], s_["n_sublinks_qc"]),
+                                 ("old links", s_["old_links"], s_["robust"]["old_links"], s_["n_sublinks_old_rule"])):
+            for mth in METHODS:
+                t = blk[mth]
+                g = t.get("rain_vs_gauges_hourly", {})
+                lines.append(f"| {name} | {tag} ({n}) | {mth} | {t['wet_dry_vs_radar_15min']['MCC']:.3f} "
+                             f"| {t['rain_vs_radar_hourly']['r']:.2f} / {t['rain_vs_radar_hourly']['RMSE']:.2f} / {t['rain_vs_radar_hourly']['bias_pct']:+.0f}% "
+                             f"| {g.get('r', float('nan')):.2f} / {g.get('bias_pct', float('nan')):+.0f}% "
+                             f"| {rob[mth]['median_per_link_hourly_r_vs_radar']:.2f} | {rob[mth]['hours_over_100mm_h']} |")
+        nbi = s_["neighbour_check"]
+        lines.append(f"\nNeighbour check {name}: removed {nbi['classical']['removed_share']:.1%} (classical) / "
+                     f"{nbi['ai']['removed_share']:.1%} (AI) of rainy minutes; median {nbi['ai']['median_neighbours']:.0f} neighbours per sub-link.\n")
     N = out["netherlands"]
-    lines += ["", f"## Netherlands, 1 Jun – 22 Aug 2014, 15-min min/max, zero-shot ({N['n_sublinks_qc']} sub-links)", "",
-              "| method | MCC hourly | radar hourly r / RMSE / bias | median per-link r | hours > 100 mm/h |",
-              "|---|---|---|---|---|"]
-    for mth in ("classical", "ai"):
-        t = N[mth]
-        lines.append(f"| {mth} | {t['wet_dry_vs_radar_hourly']['MCC']:.3f} | {t['rain_vs_radar_hourly']['r']:.2f} / "
-                     f"{t['rain_vs_radar_hourly']['RMSE']:.2f} / {t['rain_vs_radar_hourly']['bias_pct']:+.0f}% "
-                     f"| {N['robust'][mth]['median_per_link_hourly_r_vs_radar']:.2f} | {N['robust'][mth]['hours_over_100mm_h']} |")
+    lines += ["", f"## Netherlands, 1 Jun – 22 Aug 2014, 15-min min/max, zero-shot ({N['n_sublinks_qc']} sub-links; old QC set {N['n_sublinks_old_rule']})", "",
+              "| links | method | MCC hourly | radar hourly r / RMSE / bias | median per-link r | hours > 100 mm/h |",
+              "|---|---|---|---|---|---|"]
+    for tag, blk, rob in (("all", N, N["robust"]), ("old links", N["old_links"], N["robust"]["old_links"])):
+        for mth in METHODS:
+            t = blk[mth]
+            lines.append(f"| {tag} | {mth} | {t['wet_dry_vs_radar_hourly']['MCC']:.3f} | {t['rain_vs_radar_hourly']['r']:.2f} / "
+                         f"{t['rain_vs_radar_hourly']['RMSE']:.2f} / {t['rain_vs_radar_hourly']['bias_pct']:+.0f}% "
+                         f"| {rob[mth]['median_per_link_hourly_r_vs_radar']:.2f} | {rob[mth]['hours_over_100mm_h']} |")
+    nbi = N["neighbour_check"]
+    lines.append(f"\nNeighbour check: removed {nbi['classical']['removed_share']:.1%} (classical) / "
+                 f"{nbi['ai']['removed_share']:.1%} (AI) of rainy 15-min steps; median {nbi['ai']['median_neighbours']:.0f} neighbours per sub-link.")
     LR = out["long_rain"]
     lines += ["", "## Rain after a mostly rainy day (past 24 h > 50% rainy)", "",
               "Rain measured as % of the reference total in those steps (before = 24-h median dry level; "
