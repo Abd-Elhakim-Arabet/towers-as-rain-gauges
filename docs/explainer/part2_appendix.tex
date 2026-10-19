@@ -26,7 +26,9 @@
 \item[Pooled score] A score computed over all links and hours mixed together. Sensitive to a few wild values.
 \item[PyTorch] A widely used free toolkit for neural networks; our local default.
 \item[RAINLINK] The min/max rain retrieval algorithm developed for the Dutch link data.
+\item[Reliability score] Our test of whether to trust a link: does its signal drop alone (unconfirmed by its 5 nearest neighbours) or all the time (more than 20\% of the time)?
 \item[Receptive field] How far into the past the network's answer can depend on: 1{,}021 minutes for ours.
+\item[Signal event] A quarter-hour in which a link's loss is at least 1.5\,dB above its own dry level.
 \item[Seed] The starting point of the random numbers used in training. Different seeds give slightly different networks.
 \item[Sigmoid] The function $1/(1+e^{-x})$, which turns any number into a probability between 0 and 1.
 \item[TCN] Temporal convolutional network: a network of stacked, dilated, causal convolutions along time.

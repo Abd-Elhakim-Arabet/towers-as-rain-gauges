@@ -813,12 +813,81 @@ classical method measures half to three-quarters too much. In the Netherlands th
 detecting rain (0.48 against 0.46).
 \end{itemize}
 For a real operator network, where nobody hand-picks the links, this second table is the honest picture. What it calls for
-is a better way to judge each link's reliability from its own behaviour, for example how often its rain goes unconfirmed by
-its neighbours, instead of throwing out links with the classical detector.
+is a fair way to judge each link from its own behaviour, instead of throwing out links with the classical detector.
+
+\subsection{A reliability score for each link}
+\label{sec:reliability}
+The score looks only at the raw signal, never at the rain worked out by either method, so it cannot favour one of them.
+Every 15 minutes we compare the link's total loss with its own dry level (the 3-day low value of
+Section~\ref{sec:drylevel}). If it is at least \textbf{1.5\,dB} above, we call that 15 minutes a \textbf{signal event}:
+something is weakening the beam. Then two questions about each link:
+\begin{enumerate}
+\item \textbf{Does it rain alone?} For each of its events, did at least one of its \textbf{5 nearest neighbours} (within
+10\,km) also have an event within 15 minutes? If more than half of its events had no such company (and it had at least 8
+events, enough to judge), the link is dropped.
+\item \textbf{Is it always ``raining''?} If the link is in an event more than \textbf{20\%} of the time, it is dropped. In
+these climates it rains far less than a fifth of the time; a beam that is weakened that often is drifting or faulty.
+\end{enumerate}
+Links with at least half their data that pass both questions are kept.
+
+\begin{example}[: one link judged]
+Over a summer, a link has 40 signal events. For 30 of them at least one of its five nearest neighbours also had an event
+within 15 minutes; 10 had no company. Unconfirmed share: $10/40 = 25\%$, below one half, so the first question passes. Its
+40 events are 40 of its roughly 14{,}000 quarter-hours of data, 0.3\% of the time, far below 20\%. The link is kept. A link
+whose signal drops every other evening while its neighbours stay calm would have most of its events unconfirmed and be
+dropped.
+\end{example}
+
+\textbf{How we chose the numbers.} We set them on Swedish June--July data only, where we could check them against the radar
+without touching any test month. Our first version asked ``any neighbour within 10\,km''. In Gothenburg a typical link has
+192 neighbours that close, and by pure chance one of them is almost always having an event, so almost nothing was ever
+judged lonely. Asking only the 5 nearest, and adding the 20\% question, fixed that. On the Swedish June--July data, the
+final score drops 69 of 728 sub-links. It agrees with the old rule on 40 of the 45 that rule dropped, and drops 29 more.
+Are those 29 really bad? Their raw signal follows the radar with a typical correlation of 0.33, as poorly as the links
+both rules drop (0.32), against 0.58 for the links kept. So yes.
+
+\textbf{Results.} The same three link sets, both methods with the neighbour check:
+\begin{center}\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lllccc}
+\toprule
+Test & Links & Method & MCC & $r$ / bias$^{*}$ & impossible hours\\
+\midrule
+Italy 2021 & old rule (81) & AI & 0.518 & 0.75 / $-7\%$ & 0\\
+           & all with data (281) & AI & 0.449 & 0.72 / $+3\%$ & 0\\
+           & \textbf{reliability score (196)} & AI & \textbf{0.521} & \textbf{0.78} / $-6\%$ & 0\\
+           & reliability score (196) & classical & 0.186 & 0.47 / $+47\%$ & 37\\
+\midrule
+Italy 2022 & old rule (72) & AI & 0.506 & 0.84 / $-14\%$ & 0\\
+           & all with data (267) & AI & 0.443 & 0.69 / $-16\%$ & 5\\
+           & \textbf{reliability score (194)} & AI & \textbf{0.508} & 0.72 / $-20\%$ & 2\\
+           & reliability score (194) & classical & 0.193 & 0.44 / $+23\%$ & 98\\
+\midrule
+Netherlands & old rule (1{,}081) & AI & 0.562 & 0.53 / $+12\%$ & 16\\
+            & all with data (1{,}908) & AI & 0.484 & 0.52 / $+34\%$ & 19\\
+            & \textbf{reliability score (1{,}653)} & AI & 0.508 & \textbf{0.55} / $+20\%$ & 18\\
+            & reliability score (1{,}653) & classical & 0.517 & 0.22 / $+52\%$ & 180\\
+\bottomrule
+\end{tabular}
+
+\smallskip
+$^{*}$ against gauges in Italy, against the radar in the Netherlands.
+\end{center}
+
+\begin{itemize}
+\item \textbf{Many more links, same quality, in Italy.} The score keeps 196 and 194 Italian sub-links, more than twice as
+many as the old rule, and the AI detects rain as well as on the hand-picked set (0.52 and 0.51). In 2021 it even agrees
+better with the gauges (0.78). In 2022 the gauge agreement stays below the old set's (0.72 against 0.84): some of the
+extra links are still weaker.
+\item \textbf{A middle way in the Netherlands.} 1{,}653 sub-links, in between ``everything'' and the old set, and in between
+on rain detection too; the hourly correlation with the radar is the best of the three.
+\item \textbf{It does not rescue the classical method.} On the reliable links the classical method still raises too many
+false alarms in Italy (MCC 0.19) and keeps many impossible hours. Its problem there is its detector on 1-dB data, not
+bad links.
+\end{itemize}
 
 \begin{oneline}
-Checking each link's rain against its neighbours helps both methods and never hurts rain detection; keeping every link
-instead of hand-picked ones lowers all scores, and the AI stays far ahead of the classical method on the unpicked links.
+Checking each link's rain against its neighbours helps both methods; judging each link by whether its signal drops alone or
+all the time lets us keep two to three times more Italian links than hand-picking, with the AI scoring as well as before.
 \end{oneline}
 
 %==========================================================
@@ -865,15 +934,13 @@ design, a network that outputs mm/h directly does about as well in Sweden; we ha
 \item \textbf{The typical link works across countries.} In Italy and the Netherlands, a typical link's hourly rain followed the
 radar with correlation 0.76--0.84, close to Sweden's 0.88. The weak point is a minority of misbehaving links and hours.
 \item \textbf{Neighbours help, link choice matters more.} Checking each link against its neighbours trims impossible hours
-by a quarter to a half for both methods. Keeping every link instead of a hand-picked set costs more than the check gives
-back; the AI handles the unpicked links far better than the classical method.
+by a quarter to a half for both methods. Which links to trust matters more: a reliability score from each link's own raw
+signal keeps two to three times more Italian links than hand-picking, with the AI scoring as well as on the hand-picked
+set.
 \end{itemize}
 
 \textbf{Next, in order:}
 \begin{enumerate}
-\item A reliability score for each link from its own behaviour (for example, how often its rain is not confirmed by its
-neighbours), to replace the hand-picking rule fairly. Done: the neighbour check itself and the detector-free filter
-(Section~\ref{sec:neighbours}).
 \item Finding out why the AI still under-measures after rainy days in Italy, and why training runs differ so much in
 amounts (more varied training data should help both).
 \item Training on more varied data (several countries at once, then testing on one left out) to improve the amounts.
