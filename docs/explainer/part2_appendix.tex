@@ -1,7 +1,7 @@
 %==========================================================
 % Appendix additions for Part 2
 %==========================================================
-\section{More words, from Part 2}
+\section{More words, from Parts 2 and 3}
 \small
 \begin{description}[leftmargin=3.2cm,style=nextline,itemsep=0.25em]
 \item[Ablation] Removing one ingredient of a method to see how much it was helping.
@@ -9,21 +9,28 @@
 \item[Augmentation] Showing training examples in slightly altered forms (here: rounded to whole decibels) so the network does not depend on details that change between networks.
 \item[Bias (of a neuron)] A fixed number a neuron adds to its weighted sum. Not the same as the \emph{bias} score of Section~\ref{sec:scores}.
 \item[Causal] Using only the present and the past, never the future. Needed for live warnings.
+\item[CSI] Critical success index: hits divided by (hits + misses + false alarms) for rain above a threshold. 1 is perfect.
 \item[Convolution] A small set of weights that slides along the signal, producing one new number per position.
 \item[Dry level] What a link's total loss would be if it were dry right now. Ours: the 20th percentile of the previous 3 days.
 \item[Dilation] Spacing the minutes a convolution looks at further apart (1, 2, 4, \ldots), so a few layers can see far back.
 \item[GPU] Graphics card: a chip that performs many multiplications at once, which makes training fast.
 \item[Gauge-adjusted radar] Radar rain maps corrected with many rain gauges; a better reference than radar alone.
 \item[Loss (penalty)] In AI, one number measuring how wrong the network's answers were. Not the signal loss in dB.
+\item[IDW] Inverse-distance weighting: a map square takes a weighted average of nearby links, closer links counting more ($1/d^2$).
+\item[Kriging] A cleverer way to make maps that learns from the data how quickly rain changes with distance.
 \item[Median] The middle value of a sorted list. Barely moved by a few extreme values.
 \item[Min/max data] Only the weakest and strongest received level of every 15 minutes, as many operators store.
 \item[MindSpore] Huawei's free toolkit for building and training neural networks.
 \item[ModelArts] Huawei Cloud's service for training and running AI models.
+\item[Nowcasting] Forecasting the next minutes to hours by moving the current rain map along its recent motion.
 \item[Neighbour check] Counting a link's rain only if another link within 10\,km also reports rain within 15 minutes.
 \item[Neural network] A large adjustable formula made of layers of simple calculators (neurons), whose dials are set by learning from examples.
 \item[Percentile] The value a given share of the way up a sorted list. The 20th percentile has 20\% of the values below it; the median is the 50th.
+\item[Optical flow] Finding how a pattern moved between two images.
 \item[Overfitting] Doing well on the training examples but badly on new ones: memorising instead of learning.
+\item[Persistence] The lazy forecast: rain stays exactly where it is now. A nowcast must beat it.
 \item[Pooled score] A score computed over all links and hours mixed together. Sensitive to a few wild values.
+\item[pysteps] A free nowcasting toolkit used by weather services; we use its optical flow and extrapolation.
 \item[PyTorch] A widely used free toolkit for neural networks; our local default.
 \item[RAINLINK] The min/max rain retrieval algorithm developed for the Dutch link data.
 \item[Reliability score] Our test of whether to trust a link: does its signal drop alone (unconfirmed by its 5 nearest neighbours) or all the time (more than 20\% of the time)?
@@ -39,7 +46,7 @@
 \end{description}
 \normalsize
 
-\section{Sources for Part 2}
+\section{Sources for Parts 2 and 3}
 \small
 \begin{itemize}
 \item S. Bai, J. Z. Kolter, V. Koltun (2018), \emph{An empirical evaluation of generic convolutional and recurrent networks for sequence modeling}, arXiv:1803.01271. The temporal convolutional network design.
@@ -48,7 +55,8 @@
 \item E. Covi, G. Roversi, R. Nebuloni (2026), \emph{OpenRainER: an open-source dataset for studying the opportunistic sensing of rainfall in Emilia-Romagna, Italy}, Earth System Science Data Discussions, doi:10.5194/essd-2026-160. Dataset: doi:10.5281/zenodo.10593848 (CC BY 4.0, version 2.0.3).
 \item A. Overeem et al., \emph{Four-year commercial microwave link dataset for the Netherlands}, 4TU.ResearchData, \url{https://doi.org/10.4121/be252844-b672-471e-8d69-27269a862ec1} (CC BY 4.0). We used June--August 2014.
 \item KNMI, \emph{Precipitation -- climatological gauge-adjusted radar hourly accumulations for the Netherlands (RAD\_NL25\_RAC\_MFBS\_01H)}, KNMI Data Platform, version 2.0.
+\item S. Pulkkinen et al. (2019), \emph{Pysteps: an open-source Python library for probabilistic precipitation nowcasting (v1.0)}, Geoscientific Model Development 12, 4185--4219. The nowcasting toolkit of Part~3 (we used version 1.21).
 \item MindSpore, Huawei's open-source deep-learning framework, version 2.10, \url{https://www.mindspore.cn}. PyTorch version 2.11, \url{https://pytorch.org}.
 \end{itemize}
-All Part~2 numbers are in \texttt{results/phase2.md} and \texttt{results/phase2\_summary.json} of the project repository.
+All Part~2 numbers are in \texttt{results/phase2.md} and \texttt{results/phase2\_summary.json}; Part~3 numbers in \texttt{results/phase3\_maps.json} and \texttt{results/phase3\_nowcast.json} of the project repository.
 \normalsize

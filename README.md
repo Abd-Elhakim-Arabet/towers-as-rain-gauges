@@ -20,7 +20,7 @@ Built for the Huawei ICT Competition (Innovation Track).
 | 0 | Repo, environment, data downloads | done (NL: June–Aug 2014 subset; KNMI hourly radar 2014) |
 | 1 | Classical baseline on OpenMRG | done — see [results/phase1_openmrg.md](results/phase1_openmrg.md) |
 | 2 | AI models (causal TCN, physics head; PyTorch + MindSpore twin), cross-domain tests on Italy and the Netherlands | done — see [results/phase2.md](results/phase2.md) |
-| 3 | Rain maps + nowcasting | – |
+| 3 | Rain maps (IDW) + nowcasting (pysteps) | done — see [results/phase3_maps.json](results/phase3_maps.json), [results/phase3_nowcast.json](results/phase3_nowcast.json) |
 | 4 | Virtual Algerian network (simulation) | – |
 | 5 | Flood-risk layer | – |
 | 6 | Dashboard | – |
@@ -69,6 +69,8 @@ uv venv --python 3.12 .venv-ms && uv pip install --python .venv-ms/bin/python -r
 .venv/bin/python scripts/phase2_netherlands.py # Phase 2: min/max model, zero-shot test on the Netherlands
 .venv/bin/python scripts/phase2_mindspore.py export && .venv-ms/bin/python scripts/phase2_mindspore.py check
 .venv/bin/python scripts/phase2_summary.py     # results/phase2.md
+.venv/bin/python scripts/phase3_maps.py       # Phase 3: link rain maps vs gauges / radar
+.venv/bin/python scripts/phase3_nowcast.py    # Phase 3: 0-60 min nowcasts, Netherlands
 .venv/bin/python scripts/serve_site.py       # explainer PDF + Algeria map on http://localhost:8000
 ```
 
