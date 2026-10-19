@@ -17,9 +17,9 @@ Built for the Huawei ICT Competition (Innovation Track).
 
 | Phase | What | State |
 |---|---|---|
-| 0 | Repo, environment, data downloads | done (NL subset pending: 4TU blocking us) |
+| 0 | Repo, environment, data downloads | done (NL: June–Aug 2014 subset; KNMI hourly radar 2014) |
 | 1 | Classical baseline on OpenMRG | done — see [results/phase1_openmrg.md](results/phase1_openmrg.md) |
-| 2 | AI wet/dry + rain-rate models, cross-domain tests | – |
+| 2 | AI models (causal TCN, physics head; PyTorch + MindSpore twin), cross-domain tests on Italy and the Netherlands | done — see [results/phase2.md](results/phase2.md) |
 | 3 | Rain maps + nowcasting | – |
 | 4 | Virtual Algerian network (simulation) | – |
 | 5 | Flood-risk layer | – |
@@ -63,6 +63,12 @@ uv venv --python 3.12 .venv-ms && uv pip install --python .venv-ms/bin/python -r
 .venv/bin/python scripts/download_data.py openmrg openrainer netherlands_cml
 .venv/bin/python -m pytest
 .venv/bin/python scripts/phase1_baseline.py   # Phase 1, ~5 min (first run builds a 1-min cache, +6 min)
+.venv/bin/python scripts/phase2_openmrg.py     # Phase 2 Sweden: train + score (~10 min on a GPU)
+.venv/bin/python scripts/phase2_seeds.py       # Phase 2: 5 retrainings, spread of the scores
+.venv/bin/python scripts/phase2_italy.py       # Phase 2: zero-shot test on OpenRainER (Italy)
+.venv/bin/python scripts/phase2_netherlands.py # Phase 2: min/max model, zero-shot test on the Netherlands
+.venv/bin/python scripts/phase2_mindspore.py export && .venv-ms/bin/python scripts/phase2_mindspore.py check
+.venv/bin/python scripts/phase2_summary.py     # results/phase2.md
 .venv/bin/python scripts/serve_site.py       # website on http://localhost:8000
 ```
 

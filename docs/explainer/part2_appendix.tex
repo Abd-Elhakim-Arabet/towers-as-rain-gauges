@@ -1,0 +1,49 @@
+%==========================================================
+% Appendix additions for Part 2
+%==========================================================
+\section{More words, from Part 2}
+\small
+\begin{description}[leftmargin=3.2cm,style=nextline,itemsep=0.25em]
+\item[Ablation] Removing one ingredient of a method to see how much it was helping.
+\item[Ascend] Huawei's family of chips designed for AI calculations.
+\item[Augmentation] Showing training examples in slightly altered forms (here: rounded to whole decibels) so the network does not depend on details that change between networks.
+\item[Bias (of a neuron)] A fixed number a neuron adds to its weighted sum. Not the same as the \emph{bias} score of Section~\ref{sec:scores}.
+\item[Causal] Using only the present and the past, never the future. Needed for live warnings.
+\item[Convolution] A small set of weights that slides along the signal, producing one new number per position.
+\item[Dilation] Spacing the minutes a convolution looks at further apart (1, 2, 4, \ldots), so a few layers can see far back.
+\item[GPU] Graphics card: a chip that performs many multiplications at once, which makes training fast.
+\item[Gauge-adjusted radar] Radar rain maps corrected with many rain gauges; a better reference than radar alone.
+\item[Loss (penalty)] In AI, one number measuring how wrong the network's answers were. Not the signal loss in dB.
+\item[Median] The middle value of a sorted list. Barely moved by a few extreme values.
+\item[Min/max data] Only the weakest and strongest received level of every 15 minutes, as many operators store.
+\item[MindSpore] Huawei's free toolkit for building and training neural networks.
+\item[ModelArts] Huawei Cloud's service for training and running AI models.
+\item[Neural network] A large adjustable formula made of layers of simple calculators (neurons), whose dials are set by learning from examples.
+\item[Overfitting] Doing well on the training examples but badly on new ones: memorising instead of learning.
+\item[Pooled score] A score computed over all links and hours mixed together. Sensitive to a few wild values.
+\item[PyTorch] A widely used free toolkit for neural networks; our local default.
+\item[RAINLINK] The min/max rain retrieval algorithm developed for the Dutch link data.
+\item[Receptive field] How far into the past the network's answer can depend on: 1{,}021 minutes for ours.
+\item[Seed] The starting point of the random numbers used in training. Different seeds give slightly different networks.
+\item[Sigmoid] The function $1/(1+e^{-x})$, which turns any number into a probability between 0 and 1.
+\item[TCN] Temporal convolutional network: a network of stacked, dilated, causal convolutions along time.
+\item[Threshold] The probability above which we say ``raining''. Ours is 0.20, chosen on the validation data.
+\item[Training / validation / test] The three separate piles of data: to learn from, to choose with, to judge once.
+\item[Weight] One of the network's adjustable numbers (a dial), multiplying one input of a neuron.
+\item[Zero-shot] Using a model on a place or kind of data it never learned from, with no changes.
+\end{description}
+\normalsize
+
+\section{Sources for Part 2}
+\small
+\begin{itemize}
+\item S. Bai, J. Z. Kolter, V. Koltun (2018), \emph{An empirical evaluation of generic convolutional and recurrent networks for sequence modeling}, arXiv:1803.01271. The temporal convolutional network design.
+\item J. Polz, C. Chwala, M. Graf, H. Kunstmann (2020), \emph{Rain event detection in commercial microwave link attenuation data using convolutional neural networks}, Atmospheric Measurement Techniques 13, 3835--3853. Earlier work showing neural networks can detect rain in link data.
+\item A. Overeem, H. Leijnse, R. Uijlenhoet (2016), \emph{Retrieval algorithm for rainfall mapping from microwave links in a cellular communication network}, Atmospheric Measurement Techniques 9, 2425--2444. The RAINLINK method.
+\item E. Covi, G. Roversi, R. Nebuloni (2026), \emph{OpenRainER: an open-source dataset for studying the opportunistic sensing of rainfall in Emilia-Romagna, Italy}, Earth System Science Data Discussions, doi:10.5194/essd-2026-160. Dataset: doi:10.5281/zenodo.10593848 (CC BY 4.0, version 2.0.3).
+\item A. Overeem et al., \emph{Four-year commercial microwave link dataset for the Netherlands}, 4TU.ResearchData, \url{https://doi.org/10.4121/be252844-b672-471e-8d69-27269a862ec1} (CC BY 4.0). We used June--August 2014.
+\item KNMI, \emph{Precipitation -- climatological gauge-adjusted radar hourly accumulations for the Netherlands (RAD\_NL25\_RAC\_MFBS\_01H)}, KNMI Data Platform, version 2.0.
+\item MindSpore, Huawei's open-source deep-learning framework, version 2.10, \url{https://www.mindspore.cn}. PyTorch version 2.11, \url{https://pytorch.org}.
+\end{itemize}
+All Part~2 numbers are in \texttt{results/phase2.md} and \texttt{results/phase2\_summary.json} of the project repository.
+\normalsize

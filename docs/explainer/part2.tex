@@ -1,0 +1,580 @@
+%==========================================================
+% PART 2: the AI model (Phase 2). Added after Phase 2 was run.
+% Everything before this point is unchanged.
+%==========================================================
+\clearpage
+\begin{center}
+\begin{minipage}{0.86\textwidth}
+\small
+\textbf{Part 2: the AI, and what happened when we tested it.} The first part of this document explained how a
+radio link feels rain and how the classical method turns that into millimetres per hour. This second part explains
+the neural network we built to do the same job, from the very first idea of what a neural network is, then shows
+every result: in Sweden, where it was trained, and in Italy and the Netherlands, which it had never seen. As before,
+every word is explained, and the numbers are real.
+\end{minipage}
+\end{center}
+
+%==========================================================
+\section{What a neural network is, from scratch}
+\label{sec:nn}
+%==========================================================
+
+In Section~\ref{sec:inverse}, people wrote the rules: ``call it rain if the signal's jumpiness is above 0.35\,dB'',
+``freeze the baseline at the average of the last 5 dry minutes''. A \textbf{neural network} is a different way to get
+rules. Instead of writing them, we show the computer many examples of the input (the signal) together with the right
+answer (what the radar measured at the same time), and let it adjust itself until its answers match. The rules it ends
+up with are not written in words; they are stored as a long list of numbers.
+
+\subsection{The smallest piece: one ``neuron''}
+A neuron is a tiny calculator. It takes a few numbers in, multiplies each by its own \textbf{weight}, adds them up,
+adds one more number called the \textbf{bias}, and then \emph{bends} the result. Bending means: negative results are
+squashed towards zero, positive ones pass through. (Our network uses a smooth version of this bend called GELU; the
+idea is the same.)
+
+\begin{example}[: one neuron]
+Inputs: the link lost 9.2\,dB more than usual, and the signal's jumpiness is 1.5\,dB. Weights $0.4$ and $1.0$, bias $-3$.
+\[
+0.4\times 9.2 \;+\; 1.0\times 1.5 \;+\; (-3) \;=\; 3.68 + 1.5 - 3 \;=\; 2.18 .
+\]
+The result is positive, so it passes the bend almost unchanged: the neuron ``fires'' with strength about 2.2.
+On a dry day (0.1\,dB extra loss, jumpiness 0.1\,dB) the same neuron gives $0.04+0.1-3=-2.86$, which the bend squashes
+to nearly zero: it stays quiet. This one neuron has, in effect, become a little rain detector.
+\end{example}
+
+A network is many neurons arranged in \textbf{layers}: the outputs of one layer are the inputs of the next. Early
+layers notice simple things (``the signal dropped''), later layers combine them into more complex things (``it dropped,
+stayed down for twenty minutes, and wobbled the way rain makes it wobble''). Our network has 111{,}842 weights and
+biases in total. We will call them its \emph{dials}.
+
+\subsection{Turning a number into a probability}
+To answer ``is it raining?'' we want a number between 0 and 1, a probability. The last step does this with the
+\textbf{sigmoid} function,
+\[
+p = \frac{1}{1+e^{-x}} ,
+\]
+which turns any number $x$ into something between 0 and 1: large negative $x$ gives almost 0, $x=0$ gives exactly 0.5,
+large positive $x$ gives almost 1. ($e \approx 2.718$ is a fixed mathematical constant.) For $x=2.18$:
+$p = 1/(1+e^{-2.18}) = 1/(1+0.113) = 0.90$, ``90\% sure it is raining''.
+
+\subsection{Learning: turning the dials}
+At first the dials are set to random values and the network's answers are nonsense. Learning goes in rounds:
+\begin{enumerate}
+\item Give the network a handful of examples and let it answer.
+\item Measure how wrong it was with one number, the \textbf{loss} (here this word means ``penalty for being wrong'',
+not signal loss in dB).
+\item For every dial, work out whether turning it slightly up or slightly down would make the penalty smaller.
+The mathematics for this (called \emph{back-propagation}) does this for all 111{,}842 dials at once.
+\item Turn every dial a tiny bit in its helpful direction. Repeat.
+\end{enumerate}
+After thousands of rounds the dials settle at values that give small penalties on the examples.
+
+\begin{example}[: the two penalties we use]
+\textbf{For rain/no-rain}, the penalty is
+\[ -\ln(\text{the probability the network gave to what really happened}), \]
+where $\ln$ is the natural logarithm. If it said 90\% rain and it rained: $-\ln 0.9 = 0.105$, a small penalty.
+If it said 10\% rain and it rained: $-\ln 0.1 = 2.30$, a big penalty. Being confidently wrong hurts most.
+
+\textbf{For the amount}, the penalty is the squared mistake. Radar says 8\,mm/h, network says 5: penalty
+$(8-5)^2 = 9$. Network says 7: penalty 1. Squaring makes big misses count much more than small ones, the same idea as the
+RMSE in Section~\ref{sec:scores}.
+\end{example}
+
+\subsection{Three piles of data, like school}
+If a student sees the exam questions while studying, a perfect exam score proves nothing. The same is true for
+networks, so we split time into three piles, exactly as in Phase~1:
+\begin{itemize}
+\item \textbf{Training} (1 June -- 15 July 2015): the examples the dials are turned on. The homework.
+\item \textbf{Validation} (16 -- 31 July): never used to turn dials, only to decide when to stop and which version to
+keep. The practice exam.
+\item \textbf{Test} (August): scored once at the end. The real exam.
+\end{itemize}
+A network that does very well on training data but badly on new data has \textbf{overfitted}: it memorised the homework
+instead of learning the subject. Watching the validation score is how we notice.
+
+\begin{oneline}
+A neural network is a big adjustable formula; training means turning its dials until its answers on known examples are
+good, and we only trust it on examples it never saw.
+\end{oneline}
+
+%==========================================================
+\section{Our network: a reader that only looks backwards}
+\label{sec:tcn}
+%==========================================================
+
+\subsection{What it reads}
+Every minute, for every link, the network is given four numbers about the signal and three facts about the link.
+
+\begin{center}\small
+\begin{tabular}{p{3.6cm}p{10.4cm}}
+\toprule
+Input & What it is, in words \\
+\midrule
+Extra loss & The total loss this minute minus the \emph{median} total loss of the previous 24 hours. (The median is the
+middle value when you sort them; unlike the average, a few hours of storm barely move it, so it is a good guess of the
+dry level.) \\
+Physics hint & The rain rate that this extra loss would mean if all of it were rain, from Equation~\ref{eq:inverse}. \\
+Jumpiness & The standard deviation of the total loss over the previous 15 minutes (Step~2 of Section~\ref{sec:inverse}). \\
+Present & 1 if the link reported this minute, 0 if the value is missing. \\
+\midrule
+Link facts & Its length, its frequency, its polarisation. These never change. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Notice the word \emph{previous} everywhere. Nothing the network reads comes from the future. The classical method of
+Part~1 needed 30 minutes of future signal to decide whether it rained; ours does not, so it can run live.
+
+\begin{example}[: the extra loss at 08:30 on 25 August]
+On sub-link 718 the median total loss over the 24 hours before 08:30 was 48.97\,dB. At 08:30 the total loss was
+58.18\,dB, so the extra loss is $58.18-48.97 = 9.21$\,dB. (The classical baseline of Section~\ref{sec:inverse} gave
+9.47\,dB; the two ways of guessing the dry level differ by a quarter of a decibel.)
+\end{example}
+
+\subsection{How it reads: a magnifying glass sliding along time}
+The network's layers are \textbf{convolutions}. A convolution is a small set of weights that slides along the
+signal, looking at a few neighbouring minutes at a time, and produces one new number per minute. Picture a magnifying
+glass that shows three minutes at once, moved one minute at a time.
+
+Three minutes is short. To see longer patterns without needing a huge number of dials, each layer spaces its three
+minutes further apart: the first layer looks at minutes next to each other, the second at minutes 2 apart, then 4, 8,
+16, 32, 64 and 128 apart. This trick is called \textbf{dilation}. Stacking eight such layers (each used twice) lets the
+final answer depend on the last \textbf{1{,}021 minutes}, about 17 hours. That span is called the
+\textbf{receptive field}. Every glass sits at or behind the current minute, never ahead of it; a network built this way
+is called a \emph{causal temporal convolutional network} (TCN).
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[x=0.6cm,y=1.05cm]
+  \foreach \row/\lab in {0/{signal (one dot per minute)},1/{layer 1: neighbours},2/{layer 2: 2 apart},3/{layer 3: 4 apart}} {
+    \foreach \i in {0,...,15} { \fill[inkc!25] (\i,\row) circle (2.2pt); }
+    \node[font=\scriptsize,anchor=east,inkc!80] at (-0.5,\row) {\lab};
+  }
+  % connections into the last output
+  \foreach \s in {15,11,7,3} { \draw[beam!70,thick] (\s,2) -- (15,3); }
+  \foreach \t in {15,11,7,3} { \foreach \s in {0,2} { \pgfmathtruncatemacro{\a}{\t-\s} \draw[beam!45] (\a,1) -- (\t,2); } }
+  \foreach \t in {15,13,11,9,7,5,3,1} { \foreach \s in {0,1} { \pgfmathtruncatemacro{\a}{\t-\s} \ifnum\a>-1 \draw[beam!30] (\a,0) -- (\t,1); \fi } }
+  \fill[gaugec] (15,3) circle (3.2pt);
+  \node[font=\scriptsize,anchor=west,gaugec] at (15.3,3) {answer for ``now''};
+  \draw[-{Stealth},inkc!60] (0,-0.55) -- (15,-0.55) node[right,font=\scriptsize] {time};
+  \node[font=\scriptsize,inkc!60] at (15,-0.85) {now};
+\end{tikzpicture}
+\caption{How dilation widens the view (simplified: two taps per glass, three layers). Each layer looks further apart, so
+the answer for ``now'' (orange) depends on many past minutes but never on future ones. Our real network uses three taps
+and eight levels, reaching 1{,}021 minutes into the past.}
+\label{fig:tcn}
+\end{figure}
+
+\subsection{What it answers: two numbers, then physics}
+For each minute the network gives two numbers:
+\begin{enumerate}
+\item \textbf{The chance it is raining}, $p$, between 0 and 1 (through the sigmoid above). If $p$ is above a
+\textbf{threshold} we say ``raining''. We tried thresholds from 0.05 to 0.80 on the validation fortnight and kept the
+one with the best MCC: \textbf{0.20}.
+\item \textbf{A correction} $c$ in decibels: how much of the extra loss is \emph{not} rain in the air (wet antennas,
+the dry level drifting, slow wobbles). It is built to stay between $-1$ and $+4$\,dB, roughly the size wet antennas
+really reach.
+\end{enumerate}
+Then the network steps aside and the physics of Part~1 takes over: the rain-caused loss is $A = \text{extra loss} - c$,
+and Equation~\ref{eq:inverse} turns it into mm/h with the ITU coefficients $a$ and $b$ of that link. If $p$ is below the
+threshold, the answer is 0.
+\[
+R = \begin{cases} \left(\dfrac{\text{extra loss} - c}{a\,L}\right)^{1/b} & \text{if } p > 0.20,\\[2ex] 0 & \text{otherwise.}\end{cases}
+\]
+
+\begin{oneline}
+The AI decides whether it is raining and how much of the loss to blame on things other than rain; the century-old
+physics of raindrops still does the conversion into millimetres per hour.
+\end{oneline}
+
+\begin{example}[: the AI at 08:30 on 25 August]
+The network says $p=0.78$: above 0.20, so ``raining''. Its correction is $c = 4.00$\,dB (at its upper limit; the
+classical wet-antenna model said 4.10\,dB). So
+\[
+A = 9.21 - 4.00 = 5.21\ \text{dB},\qquad
+\frac{A}{aL} = \frac{5.21}{0.370\times 1.066} = 13.2,
+\]
+\[
+R = 13.2^{1/0.860} \approx 20.1\ \text{mm/h}.
+\]
+The classical method gave 20.7\,mm/h for the same minute. Averaged over the 5 minutes around 08:30, the AI says
+15.2\,mm/h, the classical method 17.3 and the gauge 14.4.
+\end{example}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=1 by 2,vertical sep=0.9cm,xlabels at=edge bottom},
+  width=0.92\textwidth,height=4.8cm,xmin=4,xmax=24,xtick={4,6,...,24},grid=major,grid style={inkc!12},
+  tick label style={font=\small},label style={font=\small},legend style={font=\scriptsize,draw=none,fill=white,fill opacity=0.85,text opacity=1},legend cell align=left]
+\nextgroupplot[ylabel={rain (mm/h)},ymin=0,ymax=24,legend pos=north east]
+  \addplot[thick,color=gaugec,forget plot] table[x=hour,y=gauge] {storm.dat};
+  \addplot[thick,color=rainc!55,forget plot] table[x=hour,y=R] {storm.dat};
+  \addplot[thick,color=inkc,forget plot] table[x=hour,y=ai] {storm_ai.dat};
+  \addlegendimage{thick,color=gaugec} \addlegendentry{rain gauge}
+  \addlegendimage{thick,color=rainc!55} \addlegendentry{classical method (Part 1)}
+  \addlegendimage{thick,color=inkc} \addlegendentry{AI}
+\nextgroupplot[ylabel={dB},xlabel={hour of the day (UTC), 25 August 2015},ymin=-1.5,ymax=10,legend pos=north east]
+  \addplot[very thin,color=rainc,forget plot] table[x=hour,y=excess] {storm_ai.dat};
+  \addplot[thick,color=gaugec,forget plot] table[x=hour,y=corr] {storm_ai.dat};
+  \addlegendimage{thick,color=rainc} \addlegendentry{extra loss (over the 24-h median)}
+  \addlegendimage{thick,color=gaugec} \addlegendentry{AI's correction $c$}
+\end{groupplot}
+\end{tikzpicture}
+\caption{The same storm as Figure~\ref{fig:storm}, now with the AI. Top: rain from the AI (5-minute averages), the
+classical method and the gauge 4\,m away. Bottom: what the AI saw (extra loss) and how much of it the AI decided was
+not rain in the air. In dry spells and light drizzle the correction almost equals the extra loss, so nothing is counted
+as rain. In the storm it stops at its 4\,dB limit, and only the loss above that is turned into rain. The AI under-reads
+the short burst at 17:05 (4\,mm/h against the gauge's 12).}
+\label{fig:storm_ai}
+\end{figure}
+
+\subsection{How it was trained}
+\begin{itemize}
+\item \textbf{Examples:} the 683 Gothenburg sub-links that passed quality control in Phase~1, over the training
+weeks. The ``right answer'' is the weather radar's rain along each link path, available every 5 minutes.
+\item \textbf{One round:} 64 pieces of signal, each 2{,}560 minutes long (about 43 hours), picked at random links and
+random times. The first 1{,}024 minutes of each piece are only there to fill the network's 17-hour view; they are not
+scored.
+\item \textbf{Penalties:} the rain/no-rain penalty on every radar minute, and the squared-mistake penalty for the
+amount \emph{only on minutes where the radar says it rained}. (Why only those? See ``What went wrong first'' below.)
+\item \textbf{Practice with coarse data:} in half the rounds, the signal was first rounded to whole decibels, the way
+much operator equipment stores it (Italy's does). This is called \textbf{augmentation}: showing the same examples in
+a slightly different form so the network learns not to depend on details that change between networks.
+\item \textbf{How long:} 4{,}000 rounds, about one minute on one graphics card (GPU, a chip built for doing many
+multiplications at once). Every 250 rounds we checked the validation fortnight and kept the best version.
+\end{itemize}
+
+\subsection{What went wrong first}
+Our first two designs failed, and how they failed is instructive.
+\begin{enumerate}
+\item \textbf{Letting the network say the mm/h directly.} It caught rain well, but reported only about half the rain.
+The training weeks (June, early July) had light rain; August had heavy storms. When the network meets a signal drop
+bigger than anything it practised on, it plays safe and answers something it has seen before. A network that only
+learned from examples has no reason to believe the rain can be heavier than in its examples.
+\item \textbf{Physics conversion, but an unlimited correction learned on all minutes.} Now it reported a quarter of the
+rain. On the many dry minutes it learned that subtracting a lot is always safe, and it carried the habit into storms.
+\end{enumerate}
+The fix was the design described above: a correction limited to $-1\ldots4$\,dB, and the amount learned only when it
+rains. The physics conversion extrapolates to heavy rain by itself, because the power law does not care whether the
+network practised on heavy storms.
+
+\begin{careful}
+we made these two fixes after looking at August scores. So for the AI, August is no longer a perfectly untouched
+exam: we chose the design partly because it did well there. That is exactly why the Italian and Dutch tests in
+Sections~\ref{sec:italy} and~\ref{sec:nl} matter: nothing was changed after seeing them.
+\end{careful}
+
+%==========================================================
+\section{Results in Sweden}
+\label{sec:se_results}
+%==========================================================
+
+Same links, same month (August 2015), same scores as Section~\ref{sec:scores}.
+
+\begin{center}\small
+\begin{tabular}{lcccc}
+\toprule
+& \multicolumn{2}{c}{\textbf{Rain or no rain}} & \multicolumn{2}{c}{\textbf{How much (hourly, vs gauges)}}\\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Method & MCC & caught / false alarms & correlation $r$ & error (RMSE) / bias\\
+\midrule
+Classical (Part 1) & 0.578 & 71\% / 4.6\% & 0.81 & 1.04\,mm/h / $-6\%$ \\
+AI & \textbf{0.614} & 65\% / \textbf{2.9\%} & \textbf{0.82} & \textbf{0.96\,mm/h} / $-9\%$ \\
+\midrule
+\multicolumn{5}{l}{\emph{Same August data, but rounded to whole decibels first:}}\\
+Classical & 0.336 & 82\% / 23\% & 0.85 & 0.82\,mm/h / $+26\%$ \\
+AI & \textbf{0.541} & 67\% / \textbf{4.9\%} & 0.83 & 0.84\,mm/h / \textbf{$+6\%$} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Reading the table:
+\begin{itemize}
+\item \textbf{Rain or no rain:} the AI is better. It raises fewer false alarms (2.9\% of dry periods instead of
+4.6\%) at the cost of missing slightly more light rain. And it does this without looking into the future.
+\item \textbf{Amounts:} about the same as the classical method. Against the gauges, slightly better correlation and
+error, slightly more under-estimation. Against the radar (not in the table), slightly worse: hourly $r$ 0.72 against
+0.76.
+\item \textbf{Coarse data:} this is the clearest win. Rounded to whole decibels, the classical detector panics (23\%
+false alarms, because 1-dB steps look like jumpiness), while the AI barely changes.
+\end{itemize}
+
+\subsection{Is the AI just lucky?}
+Training starts from random dials, so two training runs never give exactly the same network. We trained the same design
+five times with different random starts (``seeds''):
+\begin{center}\small
+\begin{tabular}{lcc}
+\toprule
+& average of 5 runs & worst -- best \\
+\midrule
+MCC & 0.617 & 0.603 -- 0.634 \\
+hourly correlation with gauges & 0.80 & 0.77 -- 0.82 \\
+hourly error vs gauges (RMSE) & 1.01\,mm/h & 0.94 -- 1.07 \\
+bias vs gauges & $-20\%$ & $-26\%$ -- $-8\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+So: the better rain detection is solid (every run beats 0.578). The amounts are typically \emph{a bit worse} than the
+table above suggests: our reported run was one of the good ones, and a typical run under-estimates by about 20\%
+against the gauges, against 6\% for the classical method.
+
+\subsection{Which design choices mattered?}
+Removing one ingredient at a time (an \textbf{ablation}) shows what each does:
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+Version & MCC & $r$ vs gauges & bias vs gauges\\
+\midrule
+Full design & 0.614 & 0.82 & $-9\%$ \\
+Network says mm/h directly (no physics conversion) & 0.587 & 0.71 & $-29\%$ \\
+No practice on 1-dB rounded data & 0.603 & 0.75 & $-40\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Both ingredients help, and the physics conversion helps most with the amounts.
+
+\begin{oneline}
+In Sweden the AI detects rain better than the classical method, works live, and copes far better with coarse data, but
+it does not yet measure the amounts better.
+\end{oneline}
+
+%==========================================================
+\section{A harder exam: Italy}
+\label{sec:italy}
+%==========================================================
+
+A method that only works in the city where it was trained is of little use for Algeria. So we took the network trained
+in Gothenburg and, \textbf{without any change}, ran it on a completely different network: the Lepida network in
+Emilia-Romagna, northern Italy (the OpenRainER dataset). Using a model on a place it never learned from is called a
+\textbf{zero-shot} test. The classical method was also used with its Swedish settings.
+
+Almost everything is different there:
+\begin{center}\small
+\begin{tabular}{p{3.4cm}p{4.6cm}p{5.6cm}}
+\toprule
+& Sweden (training) & Italy (test)\\
+\midrule
+Frequencies & 7.5 -- 39\,GHz & only 24.5 -- 25.6\,GHz\\
+Link lengths & half under 2.3\,km, up to 15\,km & up to 25\,km (after quality control: up to 9\,km)\\
+Landscape & flat coastal city & plains, hills and Apennine mountains\\
+Rounding of readings & 0.1\,dB & 1\,dB\\
+Period & summer 2015 & May -- September 2021 and 2022\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The references in Italy are good: a \textbf{gauge-adjusted radar} (radar maps corrected with hundreds of rain gauges,
+every 15 minutes, 1\,km squares) and 22--23 gauges standing within 1\,km of a link. One detail had to be checked: the files
+do not say whether a 15-minute value is labelled at the start or the end of its 15 minutes. We tried both on the classical
+estimates; ``end'' fits clearly better (correlation 0.25 against 0.18), and we used it for both methods.
+
+\begin{careful}
+we applied the same quality-control rule as in Sweden (drop a sub-link if it has less than half its data or is flagged
+``wet'' more than 30\% of the time by the classical detector). With 1-dB readings the classical detector flags many
+links as almost always wet, so only 81 of 302 sub-links (2021) and 72 of 302 (2022) survived. Both methods are scored
+on exactly the same surviving links, but a rule that does not depend on the classical detector would keep many more.
+\end{careful}
+
+\begin{center}\footnotesize
+\begin{tabular}{llcccc}
+\toprule
+Season & Method & MCC & caught / false alarms & vs radar (hourly): $r$ / bias & vs gauges (hourly): $r$ / bias\\
+\midrule
+2021 & classical & 0.25 & 75\% / 16.7\% & 0.22 / $+64\%$ & 0.45 / $+39\%$\\
+     & AI        & \textbf{0.49} & 57\% / \textbf{2.1\%} & \textbf{0.34} / $+44\%$ & 0.24 / $+65\%$\\
+2022 & classical & 0.27 & 70\% / 16.3\% & 0.12 / $+132\%$ & 0.31 / $+64\%$\\
+     & AI        & \textbf{0.50} & 52\% / \textbf{2.0\%} & \textbf{0.33} / $+37\%$ & \textbf{0.50} / $+28\%$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Rain detection again goes clearly to the AI: the classical detector raises false alarms on one dry period in six, the AI on
+one in fifty. But look at the correlations for amounts: 0.12 to 0.50, far below Sweden's 0.8. Something is spoiling them.
+
+\subsection{A few broken hours spoil the average}
+The correlation in the table is computed over all links and hours together (``pooled''). Correlation is very sensitive to
+a few wild values: one hour where a link claims 400\,mm/h while the radar says 2 can drag it down more than a thousand good
+hours lift it up. So we also computed it the other way: for \emph{each link on its own}, how well do its hours follow the
+radar? And we counted the impossible hours (more than 100\,mm/h for a whole hour, which essentially never happens there).
+
+\begin{center}\small
+\begin{tabular}{llcc}
+\toprule
+Season & Method & typical link's $r$ (median) & impossible hours ($>$100\,mm/h)\\
+\midrule
+2021 & classical & 0.84 & 35\\
+     & AI        & 0.82 & 8\\
+2022 & classical & 0.79 & 124\\
+     & AI        & 0.81 & 19\\
+\midrule
+\multicolumn{2}{l}{Sweden, for comparison (classical / AI)} & 0.88 / 0.87 & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This changes the picture completely. \textbf{The typical Italian link follows the radar almost as well as a Swedish one}
+(0.8 against 0.88), with both methods. What ruins the pooled numbers is a small number of hours where a link misbehaves,
+for example a sudden drop of the signal caused by equipment rather than rain, read as a cloudburst. The AI produces four
+to six times fewer of these, which is why its pooled scores are better, but it does not remove them.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.95\textwidth,height=5.2cm,xmin=11,xmax=14.5,ymin=0,ymax=36,grid=major,grid style={inkc!12},
+  xtick={11,11.5,...,14.5},xticklabels={11:00,11:30,12:00,12:30,13:00,13:30,14:00,14:30},
+  xlabel={time of day (UTC), 8 June 2021},ylabel={rain (mm/h, 15-min average)},
+  tick label style={font=\small},label style={font=\small},
+  legend style={font=\scriptsize,draw=none,fill=white,fill opacity=0.85,text opacity=1},legend cell align=left,legend pos=north east]
+  \addplot[thick,color=gaugec,mark=*,mark size=1.3pt] table[x=hour,y=gauge] {italy_storm.dat};
+  \addlegendentry{rain gauge, 84\,m from the link}
+  \addplot[thick,color=radarc,mark=square*,mark size=1.3pt] table[x=hour,y=radar] {italy_storm.dat};
+  \addlegendentry{gauge-adjusted radar along the link}
+  \addplot[thick,color=rainc!55,mark=triangle*,mark size=1.6pt] table[x=hour,y=classical] {italy_storm.dat};
+  \addlegendentry{classical method}
+  \addplot[thick,color=inkc,mark=diamond*,mark size=1.6pt] table[x=hour,y=ai] {italy_storm.dat};
+  \addlegendentry{AI (trained in Sweden only)}
+\end{axis}
+\end{tikzpicture}
+\caption{A short cloudburst in Italy (sub-link 154, 2.1\,km, 24.6\,GHz). This storm was picked by a fixed rule (the
+closest link--gauge pair that saw more than 20\,mm/h), not because it looks good. Storm totals: gauge 11.0\,mm, AI
+8.0\,mm, classical 6.5\,mm, radar 4.4\,mm. A storm lasting half an hour over a few square kilometres is exactly the kind
+radar smooths away and flash floods come from.}
+\label{fig:italy}
+\end{figure}
+
+%==========================================================
+\section{A different kind of data: the Netherlands}
+\label{sec:nl}
+%==========================================================
+
+\subsection{Minimum and maximum instead of averages}
+Gothenburg's links report the signal every 10 seconds, and Italy's every minute. Many operators keep far less. The Dutch
+operator, like many, stored only \textbf{two numbers per 15 minutes}: the weakest and the strongest received level in
+that quarter of an hour. This is called \textbf{min/max data}.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[x=0.6cm,y=0.5cm]
+  \draw[inkc!40] (0,0) rectangle (15,6);
+  \draw[rainc,thick] plot[smooth,tension=0.5] coordinates {(0,4.6) (1,4.7) (2,4.4) (3,4.5) (4,3.9) (5,3.2) (6,2.1) (7,1.4) (8,1.9) (9,1.2) (10,2.4) (11,3.1) (12,3.8) (13,4.2) (14,4.5) (15,4.6)};
+  \draw[gaugec,dashed] (0,4.75) -- (15,4.75) node[right,font=\scriptsize] {strongest = max};
+  \draw[gaugec,dashed] (0,1.15) -- (15,1.15) node[right,font=\scriptsize] {weakest = min};
+  \node[font=\scriptsize,anchor=north] at (7.5,0) {15 minutes};
+  \node[font=\scriptsize,rotate=90,anchor=south] at (0,3) {received level};
+\end{tikzpicture}
+\caption{What min/max data keeps. The real signal (blue) wanders during 15 minutes; only its weakest and strongest
+values are stored. Everything in between is thrown away.}
+\label{fig:minmax}
+\end{figure}
+
+Our network was built for minute-by-minute data, so it cannot read this directly. But we can turn the Swedish data into
+the Dutch format: for every 15 minutes, take the weakest and strongest of the ninety 10-second readings (and, in half of
+the practice rounds, round them to whole decibels first, like the Dutch Nokia equipment). We trained a min/max version of
+the same network on that, with the same weeks and the same rules as before. Its view reaches back 63 hours.
+
+For comparison we built a classical min/max method in the style of \textbf{RAINLINK}, the algorithm developed at the Dutch
+meteorological institute (KNMI) and Wageningen University for this kind of data: call it rain if the weakest level falls more than 1.75\,dB below the
+24-hour reference, subtract a fixed 2.3\,dB for wet antennas, and mix the rain from the weakest and strongest readings
+as $0.33\times$ (from weakest) $+ 0.67\times$ (from strongest). The 1.75\,dB and the 2.3\,dB were chosen on Swedish June--July
+data. (Real RAINLINK also compares each link with its neighbours to throw out links that drop alone; ours does not.)
+
+\subsection{The test}
+We then ran both, unchanged, on the Netherlands from 1 June to 22 August 2014: 1{,}081 sub-links (after the same quality
+rule, plus dropping links below 10\,GHz, which rain barely affects), 15--58\,GHz, 0.1 to 16\,km long. The reference is
+KNMI's gauge-adjusted radar, one value per hour per 1\,km square, averaged along each link. Polarisation is not in the
+Dutch files, so we assumed vertical.
+
+\begin{center}\footnotesize
+\begin{tabular}{lccccc}
+\toprule
+Method & MCC (hourly) & $r$ (pooled) & RMSE & bias & typical link's $r$ / impossible hours\\
+\midrule
+Classical min/max & \textbf{0.63} & 0.16 & 8.7\,mm/h & $+54\%$ & 0.79 / 219\\
+AI min/max        & 0.56 & \textbf{0.44} & \textbf{2.8\,mm/h} & \textbf{$+17\%$} & 0.76 / \textbf{40}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Here the classical method detects rain better (hourly MCC 0.63 against 0.56). For amounts, the same story as Italy: the
+typical link works with both methods (0.76--0.79), the classical method produces many impossible hours that destroy its
+pooled score, and the AI produces five times fewer. Split by equipment maker, the AI does better on Nokia links (1-dB
+readings, bias $+12\%$) than on NEC links (0.1-dB readings, $+41\%$).
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.98\textwidth,height=5.4cm,xmin=-1,xmax=83,ymin=0,ymax=26,
+  xlabel={day (1 June -- 22 August 2014)},ylabel={rain (mm/day)},
+  xtick={0,30,61},xticklabels={1 June,1 July,1 August},grid=major,grid style={inkc!12},
+  tick label style={font=\small},label style={font=\small},
+  legend style={font=\scriptsize,draw=none,fill=white,fill opacity=0.85,text opacity=1},legend cell align=left,legend pos=north west]
+  \addplot[ycomb,line width=2.2pt,color=radarc!55,forget plot] table[x=day,y=radar] {nl_daily.dat};
+  \addlegendimage{line width=2.2pt,color=radarc!55}
+  \addlegendentry{KNMI radar}
+  \addplot[only marks,mark=triangle*,mark size=1.8pt,color=rainc!70] table[x=day,y=classical] {nl_daily.dat};
+  \addlegendentry{classical min/max}
+  \addplot[only marks,mark=*,mark size=1.4pt,color=inkc] table[x=day,y=ai] {nl_daily.dat};
+  \addlegendentry{AI min/max}
+\end{axis}
+\end{tikzpicture}
+\caption{Daily rain averaged over all 1{,}081 Dutch links. Day to day both methods follow the radar well
+(correlation 0.88 classical, 0.86 AI). Over the whole summer the classical method adds up to 152\% of the radar's rain
+and the AI to 117\%.}
+\label{fig:nl}
+\end{figure}
+
+\begin{oneline}
+Trained only in Sweden, the AI ran in Italy and the Netherlands with no changes; the typical link worked in both countries,
+and the AI made far fewer absurd readings than the classical method, but both still need a guard against misbehaving links.
+\end{oneline}
+
+%==========================================================
+\section{The Huawei version: MindSpore}
+\label{sec:mindspore}
+%==========================================================
+
+The competition asks for Huawei technology. Huawei's deep-learning toolkit is \textbf{MindSpore}; its AI chips are called
+\textbf{Ascend}; and its cloud service for training models is \textbf{ModelArts}. We do not have Huawei Cloud access yet,
+so the project is built so that the toolkit is one setting in a configuration file: \texttt{framework: torch} today,
+\texttt{framework: mindspore} later. That setting already chooses which version of the network is built. Everything above
+was trained with PyTorch, a widely used free toolkit.
+
+To prove the switch works, we wrote the same network a second time in MindSpore, layer for layer, and ran two checks:
+\begin{enumerate}
+\item \textbf{Same answers.} We copied the 111{,}842 trained dials from the PyTorch network into the MindSpore one and
+gave both the same three days of real signal from 64 Swedish links: 276{,}480 answers each. The largest difference in rain
+was 0.00009\,mm/h, which is just the rounding of the computer's arithmetic; the rain/no-rain decision agreed on every single
+minute.
+\item \textbf{It learns.} We trained a fresh MindSpore network from random dials for 300 rounds on an ordinary processor
+(no graphics card). Its penalty fell from 0.63 to 0.39: the MindSpore training loop works. What remains for a full run on Ascend
+chips through ModelArts is to extend this short loop to the complete training recipe of Section~\ref{sec:tcn}
+(validation checks, threshold choice), and cloud access.
+\end{enumerate}
+
+%==========================================================
+\section{What Phase 2 taught us}
+\label{sec:phase2_end}
+%==========================================================
+
+\begin{itemize}
+\item \textbf{Rain detection: the AI is better in most tests} (Sweden, both Italian summers, Sweden with coarse
+readings), without looking into the future. The Netherlands min/max test is the exception.
+\item \textbf{Rain amounts: not better yet in Sweden.} Over five training runs it under-estimates by about 20\% against
+gauges, the classical method by 6\%.
+\item \textbf{Robustness: clearly better.} With coarse 1-dB readings, and in two countries it never saw, the AI made four to
+six times fewer absurd readings. This matters for Algeria, where we will not be able to retune anything by hand.
+\item \textbf{The physics belongs inside the AI.} In Sweden, letting the network output mm/h freely was clearly worse than
+letting it correct the signal and keeping the ITU conversion. (We did not test the free version abroad.)
+\item \textbf{The typical link works across countries.} In Italy and the Netherlands, a typical link's hourly rain followed the
+radar with correlation 0.76--0.84, close to Sweden's 0.88. The weak point is a minority of misbehaving links and hours.
+\end{itemize}
+
+\textbf{Next, in order:}
+\begin{enumerate}
+\item A neighbour check, as real RAINLINK does: a link that reports a storm that none of its neighbours sees is probably
+broken, not wet. This attacks the impossible hours directly, and it is also what the rain maps of Phase~3 need.
+\item A quality rule that does not depend on the classical detector, so Italy keeps more of its links.
+\item Training on more varied data (several countries at once, then testing on one left out) to improve the amounts.
+\item Phase~3: combining many links into rain maps every few minutes, and pushing them forward in time for a short-range
+forecast.
+\end{enumerate}

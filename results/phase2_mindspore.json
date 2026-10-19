@@ -1,0 +1,18 @@
+{
+  "framework": "MindSpore 2.10.0 (CPU)",
+  "port_check": {
+    "max_abs_diff_logit": 3.814697265625e-06,
+    "max_abs_diff_rain_mm_h": 8.560717105865479e-05,
+    "max_abs_diff_prob": 5.364418029785156e-07,
+    "rain_no_rain_agreement": 1.0,
+    "n_values": 276480
+  },
+  "train_smoke": {
+    "steps": 300,
+    "batch": 16,
+    "crop_min": 1536,
+    "loss_first50": 0.6307001811265945,
+    "loss_last50": 0.38987024299800394,
+    "seconds": 168.4
+  }
+}

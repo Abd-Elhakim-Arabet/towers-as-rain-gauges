@@ -157,3 +157,45 @@ def gauge_link_pairs(ds_cml: xr.Dataset, gauges: xr.Dataset, max_distance_m: flo
     return pd.DataFrame({"cml_id": near.cml_id.values[ok],
                          "gauge": gauges.id.values[idx],
                          "distance_m": dist[ok]})
+
+
+MINMAX_15 = INTERIM / "openmrg_minmax_15min.nc"
+
+
+def load_minmax_15min() -> xr.Dataset:
+    """15-min min / max of the 10-s total loss, like operator 'min/max' logs.
+
+    Intervals are [S, S+15 min) labelled at the END (S+15), as in the Netherlands data.
+    Also stores a version computed after rounding the 10-s RSL/TSL to 1 dB
+    (Nokia-style), used as training augmentation for the min/max model.
+    """
+    if MINMAX_15.exists():
+        return xr.open_dataset(MINMAX_15)
+    raw = xr.open_dataset(RAW / "cml" / "cml.nc")
+    parts = []
+    for i in range(0, raw.sizes["sublink"], 64):
+        b = raw.isel(sublink=slice(i, i + 64)).load()
+        tl = b.tsl - b.rsl
+        tlq = b.tsl.round() - b.rsl.round()
+        r = dict(label="right", closed="left")
+        parts.append(xr.Dataset({
+            "loss_max": tl.resample(time="15min", **r).max(),
+            "loss_min": tl.resample(time="15min", **r).min(),
+            "loss_max_q": tlq.resample(time="15min", **r).max(),
+            "loss_min_q": tlq.resample(time="15min", **r).min(),
+        }))
+    ds = xr.concat(parts, dim="sublink").rename(sublink="cml_id")
+    one = load_cml_1min()
+    ds = ds.assign_coords({c: one[c] for c in ("site_0_lat", "site_0_lon", "site_1_lat",
+                                                "site_1_lon", "length", "frequency", "polarization")})
+    tmp = MINMAX_15.with_suffix(".tmp.nc")
+    ds.astype("float32").to_netcdf(tmp)
+    tmp.rename(MINMAX_15)
+    return xr.open_dataset(MINMAX_15)
+
+
+def radar_15min(radar_5min: xr.DataArray) -> xr.DataArray:
+    """Mean radar rain over [S, S+15) labelled S+15: trapezoid over the scans at S..S+15."""
+    w = xr.DataArray([0.5, 1.0, 1.0, 0.5], dims="window")
+    r = radar_5min.rolling(time=4).construct("window").dot(w) / 3.0
+    return r.sel(time=r.time.dt.minute % 15 == 0)
