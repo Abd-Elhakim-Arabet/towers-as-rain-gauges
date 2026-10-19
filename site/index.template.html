@@ -1,0 +1,572 @@
+<title>Towers as Rain Gauges</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a field engineer's link sheet. One reading column, a mono margin rail
+   carrying the unit of each section (dB, mm/h, km), real charts inline. */
+:root {
+  --paper: #f5f7f8;      /* page */
+  --sheet: #ffffff;      /* raised panels */
+  --ink: #102029;        /* text */
+  --ink-2: #4b5b64;      /* secondary text */
+  --ink-3: #7b8a92;      /* muted, axes */
+  --rule: #dbe2e6;       /* hairlines, grid */
+  --accent: #1d5fa8;     /* links, focus, the one bold colour */
+  --rain: #2a78d6;       /* series 1: CML */
+  --s2: #eb6834;         /* series 2: gauge */
+  --s3: #1baf7a;         /* series 3: radar */
+  --base: #7b8a92;       /* baseline reference line */
+  --wet: rgba(42,120,214,.10);
+  --bad: #d03b3b;        /* status: critical */
+  --good: #0ca30c;       /* status: good */
+  --warn-bg: #fff4dc; --warn-ink: #6b4a00;
+  --seq-lo: #b7d3f6; --seq-hi: #0d366b;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0f171c; --sheet: #16212a; --ink: #e8eef1; --ink-2: #b2c0c8; --ink-3: #82939c;
+  --rule: #26343e; --accent: #6aa6ee; --rain: #3987e5; --s2: #d95926; --s3: #199e70;
+  --base: #82939c; --wet: rgba(57,135,229,.16); --bad: #e66767; --good: #3fbf3f;
+  --warn-bg: #2f2510; --warn-ink: #f2cf83; --seq-lo: #1c5cab; --seq-hi: #cde2fb;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0f171c; --sheet: #16212a; --ink: #e8eef1; --ink-2: #b2c0c8; --ink-3: #82939c;
+  --rule: #26343e; --accent: #6aa6ee; --rain: #3987e5; --s2: #d95926; --s3: #199e70;
+  --base: #82939c; --wet: rgba(57,135,229,.16); --bad: #e66767; --good: #3fbf3f;
+  --warn-bg: #2f2510; --warn-ink: #f2cf83; --seq-lo: #1c5cab; --seq-hi: #cde2fb;
+  color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--ink); font: 400 16px/1.6 var(--body); }
+.wrap { max-width: 1080px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+a { color: var(--accent) }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.08 }
+h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 800; font-stretch: 72%; letter-spacing: -.01em }
+h2 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); font-weight: 750; font-stretch: 80% }
+h3 { font-size: 1.15rem; font-weight: 700; font-stretch: 90% }
+p { margin: 0; max-width: 66ch }
+.mono { font-family: var(--mono); font-size: .82rem; letter-spacing: .02em }
+.eyebrow { font-family: var(--mono); font-size: .75rem; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-3) }
+.muted { color: var(--ink-2) }
+.num { font-variant-numeric: tabular-nums }
+
+/* Sections: mono unit rail on the left, content on the right */
+section { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0 2rem;
+  padding-block: 3.5rem; border-top: 1px solid var(--rule) }
+section > .rail { font-family: var(--mono); font-size: .78rem; color: var(--ink-3); padding-top: .45rem; line-height: 1.5 }
+section > .rail b { display: block; font-weight: 500; color: var(--accent); font-size: 1.05rem }
+section > .body { display: flex; flex-direction: column; gap: 1.4rem; min-width: 0 }
+@media (max-width: 760px) { section { grid-template-columns: minmax(0, 1fr); padding-block: 2.5rem }
+  section > .rail { display: flex; gap: .6rem; align-items: baseline; padding: 0 0 .6rem } }
+
+/* Header */
+header { padding-block: 1.1rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: baseline }
+header .mark { font-family: var(--display); font-weight: 800; font-stretch: 75%; font-size: 1.05rem; letter-spacing: .02em }
+nav { display: flex; gap: 1.1rem; flex-wrap: wrap }
+nav a { color: var(--ink-2); text-decoration: none; font-size: .9rem }
+nav a:hover { color: var(--accent) }
+
+/* Hero */
+.hero { padding-block: 2.2rem 3rem; display: grid; gap: 1.6rem }
+.hero .lede { font-size: 1.18rem; color: var(--ink-2); max-width: 60ch }
+.badges { display: flex; flex-wrap: wrap; gap: .5rem }
+.badge { font-family: var(--mono); font-size: .74rem; padding: .22rem .55rem; border-radius: 3px;
+  border: 1px solid var(--rule); color: var(--ink-2); background: var(--sheet) }
+.badge.real::before { content: "●"; color: var(--good); margin-right: .35rem }
+.badge.sim::before { content: "◐"; color: var(--s2); margin-right: .35rem }
+
+/* Replay console */
+.console { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 1.1rem; display: grid; gap: .9rem }
+.console-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: baseline }
+.scene { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1rem; align-items: stretch }
+@media (max-width: 760px) { .scene { grid-template-columns: minmax(0, 1fr) } }
+.towers { position: relative; border-radius: 4px; background: linear-gradient(var(--paper), var(--sheet)); border: 1px solid var(--rule); min-height: 190px; overflow: hidden }
+.towers canvas { position: absolute; inset: 0; width: 100%; height: 100% }
+.readouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem }
+.readout { border: 1px solid var(--rule); border-radius: 4px; padding: .55rem .7rem; display: grid; gap: .1rem; align-content: start }
+.readout .k { font-family: var(--mono); font-size: .7rem; color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em }
+.readout .v { font-family: var(--display); font-stretch: 85%; font-weight: 700; font-size: 1.65rem; font-variant-numeric: tabular-nums; line-height: 1.1 }
+.readout .v small { font-family: var(--mono); font-size: .75rem; font-weight: 400; color: var(--ink-3); margin-left: .25rem }
+.controls { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap }
+.controls input[type=range] { flex: 1 1 220px; accent-color: var(--accent) }
+button { font: 500 .88rem var(--body); border: 1px solid var(--accent); color: var(--accent); background: transparent;
+  border-radius: 4px; padding: .4rem .9rem; cursor: pointer }
+button:hover { background: var(--accent); color: var(--sheet) }
+
+/* Charts */
+.chart { position: relative; width: 100%; min-width: 0 }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible }
+#c-map svg { max-width: 620px; margin: 0 auto }
+.chart text { fill: var(--ink-3); font: 11px var(--mono) }
+.chart .lbl { fill: var(--ink-2); font: 500 11.5px var(--mono) }
+.grid line { stroke: var(--rule); stroke-width: 1 }
+.axis line, .axis path { stroke: var(--ink-3); stroke-width: 1 }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; font-size: .84rem; color: var(--ink-2) }
+.legend span { display: inline-flex; align-items: center; gap: .4rem }
+.legend i { display: inline-block; width: 16px; height: 3px; border-radius: 2px }
+.legend i.dash { background: repeating-linear-gradient(90deg, var(--base) 0 4px, transparent 4px 7px) !important; height: 2px }
+.legend i.dot { width: 9px; height: 9px; border-radius: 50% }
+.legend i.box { width: 12px; height: 12px; border-radius: 2px }
+.tip { position: absolute; pointer-events: none; background: var(--sheet); color: var(--ink); border: 1px solid var(--rule);
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); border-radius: 4px; padding: .45rem .6rem; font: 12px/1.45 var(--mono);
+  white-space: nowrap; z-index: 5; transform: translate(-50%, calc(-100% - 12px)) }
+.tip b { font-weight: 500; color: var(--ink) }
+.tip .sw { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: .35rem }
+
+/* Two-up panels */
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem }
+@media (max-width: 860px) { .two { grid-template-columns: minmax(0, 1fr) } }
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 1rem 1.1rem; display: grid; gap: .7rem; min-width: 0; align-content: start }
+.panel p { font-size: .93rem }
+
+/* Real vs simulated */
+.rs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem }
+@media (max-width: 860px) { .rs { grid-template-columns: minmax(0, 1fr) } }
+.rs .col { border-top: 3px solid var(--rule); padding-top: .8rem; display: grid; gap: .5rem; align-content: start }
+.rs .col.have { border-color: var(--good) } .rs .col.miss { border-color: var(--bad) } .rs .col.do { border-color: var(--accent) }
+.rs ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .35rem; font-size: .95rem }
+.callout { background: var(--warn-bg); color: var(--warn-ink); border-radius: 4px; padding: .8rem 1rem; font-size: .95rem; max-width: 72ch }
+
+/* Pipeline */
+.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; counter-reset: s }
+@media (max-width: 860px) { .pipe { grid-template-columns: minmax(0, 1fr) } }
+.step { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: .8rem; display: grid; gap: .35rem; align-content: start; position: relative }
+.step .u { font-family: var(--mono); font-size: .72rem; color: var(--accent) }
+.step h3 { font-size: 1rem }
+.step p { font-size: .86rem; color: var(--ink-2) }
+.after { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem }
+@media (max-width: 860px) { .after { grid-template-columns: minmax(0, 1fr) } }
+.after .step { border-style: dashed }
+
+/* Scores */
+.scores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem }
+@media (max-width: 860px) { .scores { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+.score { border-left: 2px solid var(--accent); padding: .2rem 0 .2rem .8rem; display: grid; gap: .2rem; align-content: start }
+.score .v { font-family: var(--display); font-weight: 800; font-stretch: 80%; font-size: 2.3rem; line-height: 1; font-variant-numeric: tabular-nums }
+.score .k { font-size: .88rem; color: var(--ink-2) }
+.score .s { font-family: var(--mono); font-size: .72rem; color: var(--ink-3) }
+.explain { display: grid; gap: .9rem; max-width: 72ch }
+.explain dt { font-weight: 600 }
+.explain dd { margin: .15rem 0 0; color: var(--ink-2) }
+
+table { border-collapse: collapse; width: 100%; font-size: .9rem }
+.tbl { overflow-x: auto }
+th, td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--rule); vertical-align: top }
+th { font-family: var(--mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); font-weight: 500 }
+td.n { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap }
+th.n { text-align: right }
+.pill { font-family: var(--mono); font-size: .7rem; padding: .1rem .45rem; border-radius: 999px; white-space: nowrap; border: 1px solid currentColor }
+.pill.ok { color: var(--good) } .pill.no { color: var(--bad) } .pill.wip { color: var(--s2) } .pill.next { color: var(--ink-3) }
+
+/* Roadmap */
+.road { display: grid; gap: 0; border-left: 2px solid var(--rule); margin-left: .4rem }
+.road .ph { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) auto; gap: .8rem; padding: .55rem 0 .55rem 1rem; position: relative; align-items: baseline }
+.road .ph::before { content: ""; position: absolute; left: -7px; top: .95rem; width: 12px; height: 12px; border-radius: 50%; background: var(--paper); border: 2px solid var(--ink-3) }
+.road .ph.done::before { background: var(--good); border-color: var(--good) }
+.road .ph.now::before { background: var(--s2); border-color: var(--s2) }
+.road .ph .t { font-weight: 600 }
+.road .ph .d { color: var(--ink-2); font-size: .92rem }
+@media (max-width: 600px) { .road .ph { grid-template-columns: minmax(0, 1fr) } }
+
+footer { padding-block: 2.5rem; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: .85rem; display: grid; gap: .4rem }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important } }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="mark">TOWERS AS RAIN GAUGES</div>
+  <nav aria-label="Sections">
+    <a href="#replay">Replay</a><a href="#real">Real vs simulated</a><a href="#how">How it works</a>
+    <a href="#network">Network</a><a href="#results">Results</a><a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <div class="eyebrow">Huawei ICT Competition · Innovation Track</div>
+  <h1>Every cell-tower link is already a rain gauge.</h1>
+  <p class="lede">Rain weakens the microwave signal between two towers, and operators already log that signal every few seconds. We turn the loss in decibels into rainfall in mm/h, then into flash-flood alerts for neighbourhoods that have no rain gauge and no radar.</p>
+  <div class="badges"><span class="badge real">Validated on real data: Sweden · Italy · Netherlands</span><span class="badge sim">Algeria demo: simulation on real tower sites</span></div>
+</div>
+
+<div class="console" id="replay">
+  <div class="console-head">
+    <div><div class="eyebrow">Real data replay · OpenMRG, Gothenburg</div>
+      <h3 id="storm-title">One link through one storm</h3></div>
+    <div class="mono muted" id="storm-meta"></div>
+  </div>
+  <div class="scene">
+    <div class="towers" aria-hidden="true"><canvas id="scene"></canvas></div>
+    <div class="readouts">
+      <div class="readout"><span class="k">Time (UTC)</span><span class="v" id="ro-t">--</span></div>
+      <div class="readout"><span class="k">Signal loss from rain</span><span class="v" id="ro-a">--<small>dB</small></span></div>
+      <div class="readout"><span class="k">Rain from the link</span><span class="v" id="ro-r" style="color:var(--rain)">--<small>mm/h</small></span></div>
+      <div class="readout"><span class="k">Rain gauge below it</span><span class="v" id="ro-g" style="color:var(--s2)">--<small>mm/h</small></span></div>
+    </div>
+  </div>
+  <div class="controls">
+    <button id="play" type="button">Play the day</button>
+    <label class="mono muted" for="scrub">Scrub</label>
+    <input id="scrub" type="range" min="0" max="1439" value="510">
+  </div>
+  <div class="chart" id="c-db"></div>
+  <div class="legend"><span><i style="background:var(--rain)"></i>Total loss TSL − RSL</span><span><i class="dash"></i>Dry-weather baseline</span><span><i class="box" style="background:var(--wet)"></i>Flagged as raining</span></div>
+  <div class="chart" id="c-mm"></div>
+  <div class="legend"><span><i style="background:var(--rain)"></i>Rain from the link</span><span><i style="background:var(--s2)"></i>Rain gauge</span><span><i class="dot" style="background:var(--s3)"></i>Weather radar (5-min scans)</span></div>
+</div>
+
+<section id="real">
+  <div class="rail"><b>?</b>what is real</div>
+  <div class="body">
+    <h2>Why the Algeria part is a simulation</h2>
+    <p>Algeria does have open data on cell towers, but it is the wrong kind of data for measuring rain. OpenCelliD gives us <em>where</em> towers are. Measuring rain needs the <em>signal logs</em> of the microwave links between towers, and those stay inside the operators' network systems.</p>
+    <div class="rs">
+      <div class="col have"><h3>Open for Algeria</h3><ul>
+        <li>Tower positions from OpenCelliD (MCC 603: Mobilis, Djezzy, Ooredoo). These are crowdsourced estimates, accurate to tens or hundreds of metres.</li>
+        <li>Satellite rainfall from past storms (GPM IMERG, 10 km, 30 min).</li>
+        <li>Terrain, land cover, population, roads.</li></ul></div>
+      <div class="col miss"><h3>Not open anywhere</h3><ul>
+        <li>Which towers are linked by microwave and which use fibre.</li>
+        <li>Each link's frequency, length and polarisation.</li>
+        <li>The received and transmitted signal levels (RSL/TSL) over time. This is the actual rain signal.</li></ul></div>
+      <div class="col do"><h3>So we</h3><ul>
+        <li>Train and score the AI on real link data from Sweden, Italy and the Netherlands.</li>
+        <li>Draw plausible links between real Algerian tower sites, with lengths and frequencies matching real networks.</li>
+        <li>Feed real storm rainfall through the physics of attenuation, add realistic noise, and run the same pipeline.</li></ul></div>
+    </div>
+    <p class="callout">The Algeria demo shows how the system would behave on a real network there. It is not evidence of accuracy in Algeria. That needs a pilot with an operator: 50 to 100 links in one flood-prone wilaya, compared against ONM rain gauges.</p>
+  </div>
+</section>
+
+<section id="how">
+  <div class="rail"><b>dB → mm/h</b>pipeline</div>
+  <div class="body">
+    <h2>From a signal log to a flood alert</h2>
+    <p>Each step below is the classical method that Phase 1 reproduced. Phase 2 replaces the first and the last of these steps with small neural networks.</p>
+    <div class="pipe">
+      <div class="step"><span class="u">RSL, TSL · dBm</span><h3>Signal log</h3><p>Operators record received and transmitted power for every link, every 10 s to 15 min.</p></div>
+      <div class="step"><span class="u">std over 60 min</span><h3>Is it raining?</h3><p>Rain makes the signal jitter. A link is flagged wet when its rolling spread passes a threshold.</p></div>
+      <div class="step"><span class="u">dB</span><h3>Dry baseline</h3><p>The signal level just before rain started is held as the reference. Loss above it is rain.</p></div>
+      <div class="step"><span class="u">dB</span><h3>Wet antenna</h3><p>Water on the antenna covers adds loss that is not rain along the path. It is subtracted.</p></div>
+      <div class="step"><span class="u">A = a·Rᵇ·L</span><h3>Rain rate</h3><p>ITU-R P.838 turns loss per km into mm/h, using the link's frequency and polarisation.</p></div>
+    </div>
+    <div class="after">
+      <div class="step"><span class="u">Phase 3 · mm/h on a 1 km grid</span><h3>Rain map + 1 h nowcast</h3><p>Many links together give a rain map. Optical flow pushes it forward 30 to 60 min.</p></div>
+      <div class="step"><span class="u">Phase 5 · risk level</span><h3>Flood risk</h3><p>Rain is combined with terrain, wadi channels and paved surfaces into a risk score per neighbourhood and road.</p></div>
+      <div class="step"><span class="u">Phase 6 · AR / FR / EN</span><h3>Ranked alerts</h3><p>Alerts are ranked by people and critical sites exposed. No flood depth is predicted.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="network">
+  <div class="rail"><b>km</b>network</div>
+  <div class="body">
+    <h2>364 links over Gothenburg, scored one by one</h2>
+    <p>Each line is a sub-link of the Swedish OpenMRG network. Colour shows how well its hourly rain estimate followed the radar in August 2015, the held-out test month. Most links track the radar closely. The red ones were dropped by quality control because their signal claimed rain far more often than it could have rained.</p>
+    <div class="panel">
+      <div class="chart" id="c-map"></div>
+      <div class="legend" id="map-legend"></div>
+    </div>
+  </div>
+</section>
+
+<section id="results">
+  <div class="rail"><b>r, MCC</b>baseline</div>
+  <div class="body">
+    <h2>The classical baseline: what it scored</h2>
+    <p>Tuned on June and July 2015, scored once on August 2015. August was never used for tuning, so these are honest out-of-sample numbers. They are the bar the AI models must clear.</p>
+    <div class="scores" id="scores"></div>
+    <dl class="explain">
+      <dt>Rain or no rain: MCC 0.58</dt>
+      <dd>MCC runs from 0 (no better than chance) to 1 (perfect). At 0.58, the link catches 71% of the 5-minute periods the radar calls rainy, and wrongly flags rain in under 5% of the dry ones. Most misses are very light rain at the edges of storms, where the signal barely moves.</dd>
+      <dt>How much rain: r 0.81 against gauges</dt>
+      <dd>Hour by hour, link rainfall and gauge rainfall move together closely (r = 1 would be identical). The typical hourly error is about 1 mm, and over the month the links come out 6% below the gauges.</dd>
+      <dt>As good as the radar, at this scale</dt>
+      <dd>The weather radar scored r 0.80 against the same gauges. The links matched it without any radar, using equipment the operator already runs.</dd>
+      <dt>Where it falls short</dt>
+      <dd>At 5-minute resolution the scatter is wide (r 0.58), the rain detector needs 30 minutes of future data, and it relies on two hand-tuned settings. Those three weaknesses are what Phase 2's AI models target.</dd>
+    </dl>
+    <div class="two">
+      <div class="panel"><h3>Choosing the rain detector</h3>
+        <p class="muted">Agreement with radar (MCC) on June–July for each window length and threshold. The best is a 60-min window at 0.35 dB.</p>
+        <div class="chart" id="c-tune"></div>
+        <div class="legend"><span><i style="background:var(--rain)"></i>15 min</span><span><i style="background:var(--s2)"></i>30 min</span><span><i style="background:var(--s3)"></i>60 min</span></div></div>
+      <div class="panel"><h3>The wet-antenna setting swings the total</h3>
+        <p class="muted">Bias against gauges on June–July for each correction. With no correction, links report 3.5× too much rain. The chosen one is −12% on tuning and −6% on the test month.</p>
+        <div class="chart" id="c-waa"></div></div>
+    </div>
+    <div class="panel"><h3>Effect of dropping faulty links</h3>
+      <div class="tbl"><table id="t-qc"></table></div>
+      <p class="muted">Pooled scores across all links are dragged down by a few faulty ones. Dropping 45 of 728 sub-links, chosen using June–July only, nearly doubles the 5-minute correlation with radar. The median link was fine either way.</p></div>
+  </div>
+</section>
+
+<section id="data">
+  <div class="rail"><b>GB</b>data</div>
+  <div class="body">
+    <h2>Data in hand</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Dataset</th><th>Role</th><th>What it holds</th><th>Licence</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>OpenMRG · Sweden</td><td>train, test</td><td>364 links, 10-s signals, 10 gauges, radar · summer 2015</td><td>CC BY-SA 4.0</td><td><span class="pill ok">verified</span></td></tr>
+        <tr><td>OpenRainER · Italy</td><td>cross-country test</td><td>151 links, 1-min signals, 319 gauges, gauge-adjusted radar · 2021–22</td><td>CC BY 4.0</td><td><span class="pill ok">verified</span></td></tr>
+        <tr><td>Netherlands 4-year</td><td>operator-format test</td><td>~1,800 paths, 15-min min/max signal only</td><td>CC BY 4.0</td><td><span class="pill wip">downloading</span></td></tr>
+        <tr><td>OpenCelliD · Algeria</td><td>tower sites</td><td>crowdsourced cell positions, MCC 603</td><td>CC BY-SA 4.0</td><td><span class="pill ok">key works</span></td></tr>
+        <tr><td>GPM IMERG</td><td>real storm rain</td><td>30-min, 0.1° satellite rainfall</td><td>NASA open</td><td><span class="pill ok">key works</span></td></tr>
+        <tr><td>DEM, land cover, population, OSM</td><td>flood layer</td><td>terrain, paved surfaces, people, roads</td><td>various open</td><td><span class="pill next">phase 5</span></td></tr>
+      </tbody></table></div>
+  </div>
+</section>
+
+<section id="roadmap">
+  <div class="rail"><b>0–7</b>phases</div>
+  <div class="body">
+    <h2>Where the project stands</h2>
+    <div class="road">
+      <div class="ph done"><span class="mono">Phase 0</span><div><div class="t">Setup and data</div><div class="d">Repo, downloads with checksums, swappable Huawei backends (MindSpore, OBS, ModelArts).</div></div><span class="pill ok">done</span></div>
+      <div class="ph done"><span class="mono">Phase 1</span><div><div class="t">Classical baseline</div><div class="d">Standard pipeline on OpenMRG, scored on a held-out month.</div></div><span class="pill ok">done</span></div>
+      <div class="ph now"><span class="mono">Phase 2</span><div><div class="t">AI models</div><div class="d">1D-CNN and GRU rain detector, rain-rate network; tested across Sweden, Italy, Netherlands.</div></div><span class="pill wip">next</span></div>
+      <div class="ph"><span class="mono">Phase 3</span><div><div class="t">Rain maps and nowcast</div><div class="d">Links to a 1 km grid, graph network, pysteps optical flow.</div></div><span class="pill next">planned</span></div>
+      <div class="ph"><span class="mono">Phase 4</span><div><div class="t">Virtual Algerian network</div><div class="d">Algiers and Ghardaïa, real tower sites, real storm rainfall, simulated signals.</div></div><span class="pill next">planned</span></div>
+      <div class="ph"><span class="mono">Phase 5</span><div><div class="t">Flood-risk layer</div><div class="d">Flow accumulation, impervious surfaces, susceptibility model, exposure ranking.</div></div><span class="pill next">planned</span></div>
+      <div class="ph"><span class="mono">Phase 6</span><div><div class="t">Dashboard</div><div class="d">Links lighting up as a storm passes, rain map, nowcast, ranked alerts in three languages.</div></div><span class="pill next">planned</span></div>
+      <div class="ph"><span class="mono">Phase 7</span><div><div class="t">Report, pitch, video</div><div class="d">Operator integration plan: no new hardware, 15-min NMS export, pilot with ONM.</div></div><span class="pill next">planned</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>Numbers on this page come from <span class="mono">results/phase1_openmrg.json</span> in the project repository, exported by <span class="mono">scripts/export_site_data.py</span>.</div>
+  <div>Data: OpenMRG (Andersson et al., SMHI, CC BY-SA 4.0, doi:10.5281/zenodo.7107689). Radar reference is SMHI reflectivity with Z = 200R^1.5, not gauge-adjusted.</div>
+</footer>
+</div>
+
+<script>
+const DATA = /*DATA*/null;
+const $ = s => document.querySelector(s);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs = {}, parent) { const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+const fmt = (v, d = 1) => v == null || isNaN(v) ? "–" : (+v).toFixed(d);
+function tipFor(chart) { let t = chart.querySelector(".tip"); if (!t) { t = document.createElement("div"); t.className = "tip"; t.hidden = true; chart.appendChild(t); } return t; }
+
+const S = DATA.storm, N = S.tl.length;
+const t0 = new Date(S.t0 + ":00Z");
+const hhmm = i => { const d = new Date(t0.getTime() + i * 60000); return d.toISOString().slice(11, 16); };
+$("#storm-title").textContent = `One link through the storm of ${new Date(S.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`;
+$("#storm-meta").textContent = `sub-link ${S.cml_id} · ${S.km} km · ${S.ghz} GHz · ${S.gauge_distance_m} m from gauge "${S.gauge}"`;
+
+/* ---------- replay time-series panels (shared x, separate y: no dual axis) ---------- */
+const cursors = [];
+function series(chartId, { h, yMax, yMin = 0, yLabel, lines, shade, points, ticks }) {
+  const host = $(chartId); host.innerHTML = "";
+  const W = 900, H = h, m = { l: 46, r: 12, t: 10, b: 24 };
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": yLabel }, host);
+  const x = i => m.l + (i / (N - 1)) * (W - m.l - m.r);
+  const y = v => H - m.b - ((v - yMin) / (yMax - yMin)) * (H - m.t - m.b);
+  const g = el("g", { class: "grid" }, svg);
+  ticks.forEach(v => { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v) }, g);
+    el("text", { x: m.l - 6, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = v; });
+  for (let hr = 0; hr <= 24; hr += 3) { const xi = x(Math.min(hr * 60, N - 1));
+    el("text", { x: xi, y: H - 6, "text-anchor": "middle" }, svg).textContent = String(hr).padStart(2, "0") + ":00"; }
+  el("text", { x: m.l, y: m.t - 1, class: "lbl" }, svg).textContent = yLabel;
+  if (shade) { let s = -1; const sg = el("g", {}, svg);
+    for (let i = 0; i <= N; i++) { const w = i < N && shade[i];
+      if (w && s < 0) s = i; if (!w && s >= 0) { el("rect", { x: x(s), y: m.t, width: Math.max(1, x(i - 1) - x(s)), height: H - m.t - m.b, fill: css("--wet") }, sg); s = -1; } } }
+  lines.forEach(L => { let d = "", pen = false;
+    L.v.forEach((v, i) => { if (v == null) { pen = false; return; } d += (pen ? "L" : "M") + x(i).toFixed(1) + "," + y(Math.min(v, yMax)).toFixed(1); pen = true; });
+    el("path", { d, fill: "none", stroke: css(L.c), "stroke-width": L.w || 2, "stroke-dasharray": L.dash || "", "stroke-linejoin": "round" }, svg); });
+  if (points) points.v.forEach(([i, v]) => { if (v == null) return;
+    el("circle", { cx: x(i), cy: y(Math.min(v, yMax)), r: 2.6, fill: css(points.c), stroke: css("--sheet"), "stroke-width": 1 }, svg); });
+  const cur = el("line", { y1: m.t, y2: H - m.b, stroke: css("--ink"), "stroke-width": 1, "stroke-dasharray": "3 3" }, svg);
+  cursors.push(i => { cur.setAttribute("x1", x(i)); cur.setAttribute("x2", x(i)); });
+  const hit = el("rect", { x: m.l, y: 0, width: W - m.l - m.r, height: H, fill: "transparent", style: "cursor:crosshair" }, svg);
+  const move = ev => { const r = svg.getBoundingClientRect(); const px = (ev.clientX - r.left) / r.width * W;
+    const i = Math.max(0, Math.min(N - 1, Math.round((px - m.l) / (W - m.l - m.r) * (N - 1)))); stopPlay(); setT(i); };
+  hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move);
+}
+const tlVals = S.tl.filter(v => v != null), tlMin = Math.floor(Math.min(...tlVals)) - 1, tlMax = Math.ceil(Math.max(...tlVals)) + 1;
+const dbTicks = []; for (let v = Math.ceil(tlMin / 2) * 2; v <= tlMax; v += 2) dbTicks.push(v);
+function drawReplay() { cursors.length = 0;
+  series("#c-db", { h: 170, yMin: tlMin, yMax: tlMax, yLabel: "dB", ticks: dbTicks, shade: S.wet,
+    lines: [{ v: S.baseline, c: "--base", w: 1.5, dash: "5 4" }, { v: S.tl, c: "--rain", w: 1.4 }] });
+  series("#c-mm", { h: 190, yMax: 25, yLabel: "mm/h", ticks: [0, 5, 10, 15, 20, 25],
+    lines: [{ v: S.gauge_R, c: "--s2", w: 1.6 }, { v: S.R, c: "--rain", w: 2 }],
+    points: { v: S.radar, c: "--s3" } });
+  setT(cur); }
+
+/* ---------- tower scene ---------- */
+const cv = $("#scene"), cx = cv.getContext("2d"); let drops = [];
+function sizeScene() { const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1; cv.width = r.width * d; cv.height = r.height * d; cx.setTransform(d, 0, 0, d, 0, 0); }
+function radarAt(i) { let best = null; for (const [k, v] of S.radar) if (k <= i) best = v; return best; }
+function drawScene(i) {
+  const W = cv.clientWidth, H = cv.clientHeight; cx.clearRect(0, 0, W, H);
+  const A = (S.tl[i] != null && S.baseline[i] != null) ? Math.max(0, S.tl[i] - S.baseline[i]) : 0;
+  const rain = S.gauge_R[i] || 0;
+  const ax = W * .16, bx = W * .84, ty = H * .3, gy = H * .9;
+  // rain
+  const target = Math.min(220, Math.round(rain * 9));
+  while (drops.length < target) drops.push({ x: Math.random() * W, y: Math.random() * H, s: 3 + Math.random() * 3 });
+  drops.length = Math.min(drops.length, target);
+  cx.strokeStyle = css("--rain"); cx.globalAlpha = .55; cx.lineWidth = 1.2;
+  drops.forEach(d => { cx.beginPath(); cx.moveTo(d.x, d.y); cx.lineTo(d.x - 1.5, d.y + 7); cx.stroke(); });
+  cx.globalAlpha = 1;
+  // ground
+  cx.strokeStyle = css("--rule"); cx.lineWidth = 1; cx.beginPath(); cx.moveTo(0, gy); cx.lineTo(W, gy); cx.stroke();
+  // towers
+  cx.strokeStyle = css("--ink-2"); cx.lineWidth = 2;
+  [ax, bx].forEach(px => { cx.beginPath(); cx.moveTo(px - 14, gy); cx.lineTo(px, ty); cx.lineTo(px + 14, gy);
+    cx.moveTo(px - 9, gy - (gy - ty) * .35); cx.lineTo(px + 9, gy - (gy - ty) * .35); cx.stroke();
+    cx.fillStyle = css("--ink-2"); cx.fillRect(px - 4, ty - 6, 8, 10); });
+  // beam: fades with attenuation
+  const strength = Math.max(.12, 1 - A / 9);
+  cx.strokeStyle = css("--accent"); cx.globalAlpha = strength; cx.lineWidth = 3; cx.setLineDash([10, 6]);
+  cx.beginPath(); cx.moveTo(ax + 6, ty); cx.lineTo(bx - 6, ty); cx.stroke(); cx.setLineDash([]); cx.globalAlpha = 1;
+  cx.fillStyle = css("--ink-3"); cx.font = "11px " + css("--mono");
+  cx.fillText(`${S.km} km · ${S.ghz} GHz`, (ax + bx) / 2 - 42, ty - 12);
+  cx.fillText(`signal ${A > 0.05 ? "−" + A.toFixed(1) : "−0.0"} dB`, (ax + bx) / 2 - 36, ty + 20);
+}
+function animateDrops() { const H = cv.clientHeight, W = cv.clientWidth;
+  drops.forEach(d => { d.y += d.s; d.x -= .4; if (d.y > H) { d.y = -8; d.x = Math.random() * W; } }); drawScene(cur); }
+
+/* ---------- time cursor, play ---------- */
+let cur = +$("#scrub").value, playing = null;
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function setT(i) { cur = i; $("#scrub").value = i;
+  const A = (S.tl[i] != null && S.baseline[i] != null) ? Math.max(0, S.tl[i] - S.baseline[i]) : null;
+  $("#ro-t").textContent = hhmm(i);
+  $("#ro-a").innerHTML = `${fmt(A)}<small>dB</small>`;
+  $("#ro-r").innerHTML = `${fmt(S.R[i])}<small>mm/h</small>`;
+  $("#ro-g").innerHTML = `${fmt(S.gauge_R[i])}<small>mm/h</small>`;
+  cursors.forEach(f => f(i)); drawScene(i); }
+function stopPlay() { if (playing) { cancelAnimationFrame(playing); playing = null; $("#play").textContent = "Play the day"; } }
+$("#play").addEventListener("click", () => { if (playing) return stopPlay();
+  $("#play").textContent = "Pause"; let i = cur >= N - 2 ? 0 : cur, last = 0;
+  const step = ts => { if (ts - last > 16) { i = Math.min(N - 1, i + 2); setT(i); last = ts; }
+    if (!reduce) animateDrops(); if (i < N - 1) playing = requestAnimationFrame(step); else stopPlay(); };
+  playing = requestAnimationFrame(step); });
+$("#scrub").addEventListener("input", e => { stopPlay(); setT(+e.target.value); });
+if (!reduce) { (function idle() { if (!playing) animateDrops(); requestAnimationFrame(idle); })(); }
+
+/* ---------- network map ---------- */
+function drawMap() {
+  const host = $("#c-map"); host.innerHTML = "";
+  const L = DATA.links, lons = L.flatMap(l => [l.a[0], l.b[0]]), lats = L.flatMap(l => [l.a[1], l.b[1]]);
+  const lon0 = Math.min(...lons), lon1 = Math.max(...lons), lat0 = Math.min(...lats), lat1 = Math.max(...lats);
+  const k = Math.cos((lat0 + lat1) / 2 * Math.PI / 180);
+  const W = 900, pad = 24, sx = (W - 2 * pad) / ((lon1 - lon0) * k), H = Math.round((lat1 - lat0) * sx + 2 * pad);
+  const X = lon => pad + (lon - lon0) * k * sx, Y = lat => H - pad - (lat - lat0) * sx;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Map of OpenMRG links coloured by correlation with radar" }, host);
+  const lo = css("--seq-lo"), hi = css("--seq-hi");
+  const mix = (a, b, t) => { const p = h => [1, 3, 5].map(j => parseInt(h.slice(j, j + 2), 16)); const A = p(a), B = p(b);
+    return "rgb(" + A.map((v, j) => Math.round(v + (B[j] - v) * t)).join(",") + ")"; };
+  const colr = r => mix(lo, hi, Math.max(0, Math.min(1, (r - 0.5) / 0.5)));
+  const tip = tipFor(host);
+  const sorted = [...L].sort((a, b) => (a.qc - b.qc) || ((a.r ?? 0) - (b.r ?? 0)));
+  const drawn = new Set();
+  sorted.filter(l => l.qc).forEach(l => { const key = l.link; if (drawn.has(key)) return; drawn.add(key);
+    const pair = L.filter(o => o.link === l.link && o.qc), r = Math.max(...pair.map(o => o.r ?? 0));
+    el("line", { x1: X(l.a[0]), y1: Y(l.a[1]), x2: X(l.b[0]), y2: Y(l.b[1]), stroke: colr(r), "stroke-width": 2.2, "stroke-linecap": "round" }, svg); });
+  L.filter(l => !l.qc).forEach(l => el("line", { x1: X(l.a[0]), y1: Y(l.a[1]), x2: X(l.b[0]), y2: Y(l.b[1]), stroke: css("--bad"), "stroke-width": 2.4, "stroke-dasharray": "4 3", "stroke-linecap": "round" }, svg));
+  DATA.gauges.forEach(g => { el("circle", { cx: X(g.lon), cy: Y(g.lat), r: 5, fill: css("--s2"), stroke: css("--sheet"), "stroke-width": 2 }, svg); });
+  // scale bar: 5 km
+  const kmPerDegLon = 111.32 * k, bar = 5 / kmPerDegLon * k * sx;
+  el("line", { x1: pad, x2: pad + bar, y1: H - 8, y2: H - 8, stroke: css("--ink-2"), "stroke-width": 2 }, svg);
+  el("text", { x: pad + bar + 6, y: H - 4 }, svg).textContent = "5 km";
+  el("text", { x: W - pad, y: pad - 6, "text-anchor": "end", class: "lbl" }, svg).textContent = "N ↑   Gothenburg, Sweden";
+  // hit layer
+  const hits = el("g", {}, svg);
+  L.forEach(l => { const h = el("line", { x1: X(l.a[0]), y1: Y(l.a[1]), x2: X(l.b[0]), y2: Y(l.b[1]), stroke: "transparent", "stroke-width": 12 }, hits);
+    h.addEventListener("pointerenter", ev => { const r = host.getBoundingClientRect();
+      tip.innerHTML = `<b>link ${l.link} ${l.dir}</b> · ${l.km} km · ${l.ghz} GHz<br>${l.qc ? `hourly r vs radar <b>${fmt(l.r, 2)}</b>` : `<b style="color:var(--bad)">dropped by QC</b>`}<br>August: link ${fmt(l.cml_mm, 0)} mm · radar ${fmt(l.radar_mm, 0)} mm`;
+      tip.style.left = (ev.clientX - r.left) + "px"; tip.style.top = (ev.clientY - r.top) + "px"; tip.hidden = false; });
+    h.addEventListener("pointerleave", () => tip.hidden = true); });
+  DATA.gauges.forEach(g => { const c = el("circle", { cx: X(g.lon), cy: Y(g.lat), r: 10, fill: "transparent" }, hits);
+    c.addEventListener("pointerenter", ev => { const r = host.getBoundingClientRect(); tip.innerHTML = `<b>gauge ${g.id}</b> · ${g.type.toLowerCase()}`;
+      tip.style.left = (ev.clientX - r.left) + "px"; tip.style.top = (ev.clientY - r.top) + "px"; tip.hidden = false; });
+    c.addEventListener("pointerleave", () => tip.hidden = true); });
+  const nq = L.filter(l => !l.qc).length;
+  $("#map-legend").innerHTML = `<span><i style="width:90px;height:8px;background:linear-gradient(90deg,${lo},${hi})"></i>hourly r vs radar, 0.5 → 1.0</span>
+    <span><i style="background:repeating-linear-gradient(90deg,var(--bad) 0 4px,transparent 4px 7px);height:3px"></i>dropped by QC (${nq} sub-links)</span>
+    <span><i class="dot" style="background:var(--s2)"></i>city rain gauge (10)</span>`;
+}
+
+/* ---------- tuning curves ---------- */
+function drawTune() {
+  const host = $("#c-tune"); host.innerHTML = "";
+  const W = 440, H = 250, m = { l: 40, r: 14, t: 14, b: 34 };
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "MCC versus threshold" }, host);
+  const x = v => m.l + (v - 0.1) / 1.4 * (W - m.l - m.r), y = v => H - m.b - (v - 0.2) / 0.3 * (H - m.t - m.b);
+  const g = el("g", { class: "grid" }, svg);
+  [0.2, 0.3, 0.4, 0.5].forEach(v => { el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v) }, g); el("text", { x: m.l - 6, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = v.toFixed(1); });
+  [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4].forEach(v => el("text", { x: x(v), y: H - 16, "text-anchor": "middle" }, svg).textContent = v.toFixed(1));
+  el("text", { x: (m.l + W - m.r) / 2, y: H - 2, "text-anchor": "middle", class: "lbl" }, svg).textContent = "threshold on rolling std (dB)";
+  el("text", { x: m.l, y: m.t - 3, class: "lbl" }, svg).textContent = "MCC";
+  const cols = { "15": "--rain", "30": "--s2", "60": "--s3" };
+  Object.entries(DATA.tuning).forEach(([w, pts]) => { const d = pts.map((p, i) => (i ? "L" : "M") + x(p[0]).toFixed(1) + "," + y(Math.max(.2, p[1])).toFixed(1)).join("");
+    el("path", { d, fill: "none", stroke: css(cols[w]), "stroke-width": 2 }, svg);
+    const last = pts[pts.length - 1]; el("text", { x: x(last[0]) - 2, y: y(last[1]) - 6, "text-anchor": "end", class: "lbl" }, svg).textContent = w + " min"; });
+  const b = DATA.results.calibration.wet_dry_best;
+  el("circle", { cx: x(b.threshold_db), cy: y(b.MCC), r: 5, fill: css("--s3"), stroke: css("--sheet"), "stroke-width": 2 }, svg);
+  el("text", { x: x(b.threshold_db) + 8, y: y(b.MCC) - 6, class: "lbl" }, svg).textContent = `best ${b.threshold_db} dB · MCC ${fmt(b.MCC, 2)}`;
+  const tip = tipFor(host), cl = el("line", { y1: m.t, y2: H - m.b, stroke: css("--ink-3"), "stroke-dasharray": "3 3", visibility: "hidden" }, svg);
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent" }, svg);
+  hit.addEventListener("pointermove", ev => { const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * W;
+    const pts = DATA.tuning["60"]; let j = 0; pts.forEach((p, k) => { if (Math.abs(x(p[0]) - px) < Math.abs(x(pts[j][0]) - px)) j = k; });
+    const thr = pts[j][0]; cl.setAttribute("x1", x(thr)); cl.setAttribute("x2", x(thr)); cl.setAttribute("visibility", "visible");
+    tip.innerHTML = `<b>${thr.toFixed(2)} dB</b><br>` + Object.entries(DATA.tuning).map(([w, p]) => `<span class="sw" style="background:${css(cols[w])}"></span>${w} min · MCC ${fmt(p[j][1], 3)}`).join("<br>");
+    const hr = host.getBoundingClientRect(); tip.style.left = (ev.clientX - hr.left) + "px"; tip.style.top = (ev.clientY - hr.top) + "px"; tip.hidden = false; });
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; cl.setAttribute("visibility", "hidden"); });
+}
+
+/* ---------- wet-antenna bias bars ---------- */
+function drawWaa() {
+  const host = $("#c-waa"); host.innerHTML = "";
+  const rows = DATA.results.calibration.waa_choice.map(r => ({ ...r,
+    name: r.waa === "none" ? "no correction" : r.waa === "schleiss" ? `Schleiss, max ${r.waa_max_db} dB` : `Pastorek, A_max ${r.pastorek_A_max} dB` }));
+  const p = DATA.results.params;
+  const chosen = r => r.waa === p.waa && (r.waa !== "pastorek" || r.pastorek_A_max === p.pastorek_A_max) && (r.waa !== "schleiss" || r.waa_max_db === p.waa_max_db);
+  const W = 440, rowH = 24, m = { l: 150, r: 56, t: 8, b: 26 }, H = m.t + m.b + rows.length * rowH;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Bias by wet-antenna correction" }, host);
+  const lo = -50, hiV = 250, x = v => m.l + (v - lo) / (hiV - lo) * (W - m.l - m.r);
+  const g = el("g", { class: "grid" }, svg);
+  [-50, 0, 50, 100, 150, 200, 250].forEach(v => { el("line", { x1: x(v), x2: x(v), y1: m.t, y2: H - m.b }, g);
+    el("text", { x: x(v), y: H - 8, "text-anchor": "middle" }, svg).textContent = (v > 0 ? "+" : "") + v + "%"; });
+  el("line", { x1: x(0), x2: x(0), y1: m.t, y2: H - m.b, stroke: css("--ink-2"), "stroke-width": 1.2 }, svg);
+  const tip = tipFor(host);
+  rows.forEach((r, i) => { const yy = m.t + i * rowH + 4, h = rowH - 8, b = r.bias_pct, x0 = x(Math.min(0, b)), w = Math.abs(x(b) - x(0));
+    const bar = el("rect", { x: x0, y: yy, width: Math.max(2, w), height: h, rx: 3, fill: css("--rain"), opacity: chosen(r) ? 1 : .55 }, svg);
+    el("text", { x: m.l - 8, y: yy + h - 4, "text-anchor": "end", class: chosen(r) ? "lbl" : "" }, svg).textContent = r.name;
+    el("text", { x: b >= 0 ? x(b) + 5 : x(0) + 5, y: yy + h - 4, class: "lbl" }, svg).textContent = (b > 0 ? "+" : "") + b.toFixed(0) + "%" + (chosen(r) ? "  chosen" : "");
+    const hb = el("rect", { x: 0, y: yy - 3, width: W, height: rowH, fill: "transparent" }, svg);
+    hb.addEventListener("pointerenter", ev => { const hr = host.getBoundingClientRect();
+      tip.innerHTML = `<b>${r.name}</b><br>bias ${(b > 0 ? "+" : "") + b.toFixed(1)}% · r ${fmt(r.r, 2)} · RMSE ${fmt(r.RMSE, 2)} mm/h`;
+      tip.style.left = (ev.clientX - hr.left) + "px"; tip.style.top = (ev.clientY - hr.top) + "px"; tip.hidden = false; });
+    hb.addEventListener("pointerleave", () => tip.hidden = true); });
+}
+
+/* ---------- scores + QC table ---------- */
+function drawScores() {
+  const t = DATA.results.test, wd = t.wet_dry_vs_radar_5min, g = t.rain_vs_gauges_hourly, rq = t.radar_vs_gauges_hourly;
+  $("#scores").innerHTML = [
+    [fmt(wd.MCC, 2), "Rain or no rain", "MCC vs radar, 5-min"],
+    [Math.round(wd.TPR * 100) + "%", "Rainy periods caught", `${(wd.FPR * 100).toFixed(1)}% false alarms`],
+    [fmt(g.r, 2), "Hourly rain vs gauges", `RMSE ${fmt(g.RMSE, 2)} mm/h · bias ${g.bias_pct.toFixed(0)}%`],
+    [fmt(rq.r, 2), "Radar vs the same gauges", "the bar the links matched"],
+  ].map(([v, k, s]) => `<div class="score"><span class="v">${v}</span><span class="k">${k}</span><span class="s">${s}</span></div>`).join("");
+  const R = DATA.results, row = (name, x) => `<tr><td>${name}</td><td class="n">${fmt(x.wet_dry_vs_radar_5min.MCC, 2)}</td><td class="n">${fmt(x.rain_vs_radar_5min.r, 2)}</td><td class="n">${fmt(x.rain_vs_radar_5min.RMSE, 2)}</td><td class="n">${fmt(x.rain_vs_radar_hourly.r, 2)}</td><td class="n">${fmt(x.per_link_hourly_r_vs_radar_median, 2)}</td><td class="n">${fmt(x.rain_vs_gauges_hourly.r, 2)}</td></tr>`;
+  $("#t-qc").innerHTML = `<thead><tr><th>Sub-links used</th><th class="n">MCC</th><th class="n">r, 5-min radar</th><th class="n">RMSE mm/h</th><th class="n">r, hourly radar</th><th class="n">median link r</th><th class="n">r, hourly gauges</th></tr></thead><tbody>${row(`after QC (${R.n_sublinks_qc})`, R.test)}${row(`all (${R.n_sublinks})`, R.test_no_qc)}</tbody>`;
+}
+
+function drawAll() { sizeScene(); drawReplay(); drawMap(); drawTune(); drawWaa(); }
+drawScores(); drawAll();
+addEventListener("resize", () => { sizeScene(); drawScene(cur); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawAll);
+new MutationObserver(drawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+</script>
