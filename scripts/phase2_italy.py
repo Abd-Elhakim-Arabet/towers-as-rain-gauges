@@ -200,6 +200,12 @@ def main():
                                      old_rule=("cml_id", np.isin(ds.cml_id.values, old_ids)),
                                      reliable=("cml_id", np.isin(ds.cml_id.values, rel_ids))).to_netcdf(
             ROOT / "runs" / "phase2" / f"italy_{name}_hourly.nc")
+        # 15-min estimates (after the neighbour check) for the Phase 3 rain maps
+        xr.Dataset({k: to_15(r, label).astype("float32") for k, (w, r) in est.items() if k.endswith("_nb")}
+                   ).assign_coords({c: ("cml_id", ds[c].values) for c in
+                                    ("site_0_lat", "site_0_lon", "site_1_lat", "site_1_lon", "length")}
+                                   ).assign_coords(reliable=("cml_id", np.isin(ds.cml_id.values, rel_ids))
+                                   ).to_netcdf(ROOT / "runs" / "phase2" / f"italy_{name}_15min.nc")
         if name == "2021":
             # keep one storm for the explainer: the closest link-gauge pair that saw > 20 mm/h
             save_example(ds.sel(cml_id=old_ids), xr.Dataset({"R": est["classical_nb"][1].sel(cml_id=old_ids)}),

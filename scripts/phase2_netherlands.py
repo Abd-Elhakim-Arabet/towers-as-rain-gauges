@@ -256,6 +256,11 @@ def main():
     xr.Dataset({**hz, "radar": ref_h}).assign_coords(
         length=("cml_id", Ln), frequency=("cml_id", fn), vendor=("cml_id", nl.vendor.values),
         old_rule=("cml_id", old), reliable=("cml_id", good)).to_netcdf(RUNS / "nl_hourly.nc")
+    # 15-min estimates (after the neighbour check) for the Phase 3 rain maps
+    xr.Dataset({k: da(r, ids_n, t_n).astype("float32") for k, (w, r) in est.items() if k.endswith("_nb")}
+               ).assign_coords(site_0_lat=("cml_id", nl.site_0_lat.values), site_0_lon=("cml_id", nl.site_0_lon.values),
+                               site_1_lat=("cml_id", nl.site_1_lat.values), site_1_lon=("cml_id", nl.site_1_lon.values),
+                               length=("cml_id", Ln), reliable=("cml_id", good)).to_netcdf(RUNS / "nl_15min.nc")
     ok = np.isfinite(ai_h.values) & np.isfinite(cl_h.values) & np.isfinite(ref_h.values)
     net = {k: np.where(ok, x, np.nan) for k, x in (("ai", ai_h.values), ("classical", cl_h.values),
                                                    ("radar", ref_h.values))}
