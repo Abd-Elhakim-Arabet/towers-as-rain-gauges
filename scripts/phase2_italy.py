@@ -34,6 +34,7 @@ import xarray as xr
 
 from targ import features as feat
 from targ import neighbours as nb
+from targ import reliability as rel
 from targ import train_torch as T
 from targ.classical import ClassicalParams, retrieve, total_loss
 from targ.data import openmrg, openrainer
@@ -111,10 +112,19 @@ def run_season(months, model, thr, cp):
     est = {k: (xr.DataArray(w, coords=coords, dims=dims), xr.DataArray(r, coords=coords, dims=dims))
            for k, (w, r) in est.items()}
 
+    # link reliability from the raw signal and the 5 nearest neighbours (no rain method)
+    rl = rel.score_links(ds, tl_1min=total_loss(ds, 5).values)
+    rel_ids = ds.cml_id.values[rl["keep"]]
+    rel_info = {"kept": int(rl["keep"].sum()), "lonely": int(rl["lonely"].sum()),
+                "always": int(rl["always"].sum()), "judged": int(rl["judged"].sum()),
+                "overlap_with_old_rule": int(np.isin(rel_ids, old_ids).sum()), "rule": rl["rule"]}
+    print(f"reliability score keeps {len(rel_ids)} / {ds.sizes['cml_id']} "
+          f"({rel_info['overlap_with_old_rule']} of them also kept by the old rule)", flush=True)
+
     radar = radar_all.sel(cml_id=ds.cml_id.values)
     g = openrainer.gauges(months)
     pairs = openmrg.gauge_link_pairs(ds, g, 1000)
-    return ds, cl, est, nb_info, old_ids, radar, g, pairs
+    return ds, cl, est, nb_info, old_ids, rel_ids, rel_info, radar, g, pairs
 
 
 def score_all(est_wet, est_R, radar, g, pairs, label):
@@ -149,7 +159,7 @@ def main():
     res = {"model": f"runs/phase2/physics_selected.pt (seed {sel['seed']}, trained on Sweden only)", "threshold": thr,
            "classical_params": p1["params"], "seasons": {}}
     for name, months in SEASONS.items():
-        ds, cl, est, nb_info, old_ids, radar, g, pairs = run_season(months, model, thr, cp)
+        ds, cl, est, nb_info, old_ids, rel_ids, rel_info, radar, g, pairs = run_season(months, model, thr, cp)
         # time-label convention: test both on the classical estimate only
         lab = {}
         for label in ("start", "end"):
@@ -158,6 +168,7 @@ def main():
         label = max(lab, key=lab.get)
         print(name, "label check (r classical vs radar):", lab, "->", label, flush=True)
         old_pairs = pairs[pairs.cml_id.isin(old_ids)]
+        rel_pairs = pairs[pairs.cml_id.isin(rel_ids)]
         season = {
             "months": months, "n_sublinks_qc": int(ds.sizes["cml_id"]),
             "n_links_qc": int(len({c.split("_")[0] for c in ds.cml_id.values})),
@@ -166,12 +177,15 @@ def main():
             "frequency_ghz": [float(ds.frequency.min()), float(ds.frequency.max())],
             "length_km": [float(ds.length.min()), float(np.median(ds.length)), float(ds.length.max())],
             "label_check": lab, "label": label, "neighbour_check": nb_info,
-            "old_links": {},
+            "old_links": {}, "reliable_links": {}, "n_sublinks_reliable": int(len(rel_ids)),
+            "reliability": rel_info,
         }
         for m, (w, r) in est.items():
             season[m] = score_all(w, r, radar, g, pairs, label)
             season["old_links"][m] = score_all(w.sel(cml_id=old_ids), r.sel(cml_id=old_ids),
                                                radar.sel(cml_id=old_ids), g, old_pairs, label)
+            season["reliable_links"][m] = score_all(w.sel(cml_id=rel_ids), r.sel(cml_id=rel_ids),
+                                                    radar.sel(cml_id=rel_ids), g, rel_pairs, label)
             s_ = season[m]
             print(name, m, "MCC", round(s_["wet_dry_vs_radar_15min"]["MCC"], 3),
                   "radar h r/RMSE/bias", round(s_["rain_vs_radar_hourly"]["r"], 2),
@@ -183,7 +197,8 @@ def main():
         hz = {k: hourly_from_15(to_15(r, label), label) for k, (w, r) in est.items()}
         hz["radar"] = hourly_from_15(radar.reindex(time=to_15(cl.R, label).time.values), label)
         xr.Dataset(hz).assign_coords(length=("cml_id", ds.length.values),
-                                     old_rule=("cml_id", np.isin(ds.cml_id.values, old_ids))).to_netcdf(
+                                     old_rule=("cml_id", np.isin(ds.cml_id.values, old_ids)),
+                                     reliable=("cml_id", np.isin(ds.cml_id.values, rel_ids))).to_netcdf(
             ROOT / "runs" / "phase2" / f"italy_{name}_hourly.nc")
         if name == "2021":
             # keep one storm for the explainer: the closest link-gauge pair that saw > 20 mm/h

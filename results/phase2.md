@@ -27,7 +27,7 @@ Ablation rows come from single runs (phase2_openmrg.py). 5 retrainings of the ma
 
 ## Italy (OpenRainER), May–Sep 2021 and 2022, zero-shot
 
-QC: sub-links with >= 50% data. `old links` = the earlier QC set (also dropping sub-links the classical detector calls wet > 30% of the time). `_nb` = after the neighbour check (10 km, ±15 min).
+QC: sub-links with >= 50% data. `old links` = the earlier QC set (also dropping sub-links the classical detector calls wet > 30% of the time). `reliable` = kept by the raw-signal reliability score (targ.reliability). `_nb` = after the neighbour check (10 km, ±15 min).
 
 | season | links | method | MCC 15-min | radar hourly r / RMSE / bias | gauges hourly r / bias | median per-link r | hours > 100 mm/h |
 |---|---|---|---|---|---|---|---|
@@ -39,6 +39,10 @@ QC: sub-links with >= 50% data. `old links` = the earlier QC set (also dropping 
 | 2021 | old links (81) | ai | 0.509 | 0.70 / 1.84 / -5% | 0.74 / -3% | 0.82 | 0 |
 | 2021 | old links (81) | classical_nb | 0.254 | 0.25 / 5.51 / +51% | 0.54 / +28% | 0.84 | 26 |
 | 2021 | old links (81) | ai_nb | 0.518 | 0.74 / 1.72 / -10% | 0.75 / -7% | 0.83 | 0 |
+| 2021 | reliable (196) | classical | 0.184 | 0.29 / 3.98 / +72% | 0.45 / +57% | 0.84 | 47 |
+| 2021 | reliable (196) | ai | 0.508 | 0.74 / 1.47 / +0% | 0.78 / -1% | 0.85 | 0 |
+| 2021 | reliable (196) | classical_nb | 0.186 | 0.32 / 3.76 / +59% | 0.47 / +47% | 0.84 | 37 |
+| 2021 | reliable (196) | ai_nb | 0.521 | 0.77 / 1.44 / -6% | 0.78 / -6% | 0.86 | 0 |
 
 Neighbour check 2021: removed 20.4% (classical) / 22.3% (AI) of rainy minutes; median 6 neighbours per sub-link.
 
@@ -50,6 +54,10 @@ Neighbour check 2021: removed 20.4% (classical) / 22.3% (AI) of rainy minutes; m
 | 2022 | old links (72) | ai | 0.502 | 0.68 / 2.31 / -7% | 0.81 / -10% | 0.79 | 0 |
 | 2022 | old links (72) | classical_nb | 0.271 | 0.15 / 11.48 / +92% | 0.41 / +36% | 0.82 | 77 |
 | 2022 | old links (72) | ai_nb | 0.506 | 0.71 / 2.17 / -14% | 0.84 / -14% | 0.80 | 0 |
+| 2022 | reliable (194) | classical | 0.190 | 0.12 / 10.02 / +106% | 0.35 / +40% | 0.80 | 152 |
+| 2022 | reliable (194) | ai | 0.495 | 0.66 / 1.91 / -6% | 0.71 / -17% | 0.82 | 2 |
+| 2022 | reliable (194) | classical_nb | 0.193 | 0.15 / 8.38 / +76% | 0.44 / +23% | 0.81 | 98 |
+| 2022 | reliable (194) | ai_nb | 0.508 | 0.68 / 1.86 / -11% | 0.72 / -20% | 0.83 | 2 |
 
 Neighbour check 2022: removed 17.2% (classical) / 19.4% (AI) of rainy minutes; median 7 neighbours per sub-link.
 
@@ -66,6 +74,10 @@ Neighbour check 2022: removed 17.2% (classical) / 19.4% (AI) of rainy minutes; m
 | old links | ai | 0.547 | 0.50 / 2.47 / +16% | 0.77 | 26 |
 | old links | classical_nb | 0.632 | 0.20 / 7.55 / +43% | 0.79 | 163 |
 | old links | ai_nb | 0.562 | 0.53 / 2.31 / +12% | 0.77 | 16 |
+| reliable (1653) | classical | 0.505 | 0.19 / 6.48 / +60% | 0.78 | 237 |
+| reliable (1653) | ai | 0.490 | 0.52 / 2.14 / +25% | 0.76 | 28 |
+| reliable (1653) | classical_nb | 0.517 | 0.22 / 5.75 / +52% | 0.78 | 180 |
+| reliable (1653) | ai_nb | 0.508 | 0.55 / 2.03 / +20% | 0.77 | 18 |
 
 Neighbour check: removed 10.6% (classical) / 8.9% (AI) of rainy 15-min steps; median 25 neighbours per sub-link.
 

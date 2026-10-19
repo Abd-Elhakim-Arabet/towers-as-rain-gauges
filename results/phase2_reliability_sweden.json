@@ -1,0 +1,36 @@
+{
+  "n_sublinks": 728,
+  "kept": 659,
+  "phase1_dropped": 45,
+  "both_drop": 40,
+  "only_new_drops": 29,
+  "only_phase1_drops": 5,
+  "judged": 712,
+  "median_unconfirmed_share_judged": 0.030642204569503853,
+  "rule": {
+    "event_db": 1.5,
+    "min_events": 8,
+    "max_unconfirmed": 0.5,
+    "max_event_share": 0.2,
+    "n_nearest": 5,
+    "block_min": 15
+  },
+  "raw_signal_r_vs_radar_median": {
+    "kept_by_both": {
+      "n": 654,
+      "median_r": 0.5753914921687673
+    },
+    "dropped_only_by_new_score": {
+      "n": 29,
+      "median_r": 0.3304733381617987
+    },
+    "dropped_by_both": {
+      "n": 40,
+      "median_r": 0.3230177678886935
+    },
+    "dropped_only_by_phase1": {
+      "n": 5,
+      "median_r": 0.40303358861030064
+    }
+  }
+}

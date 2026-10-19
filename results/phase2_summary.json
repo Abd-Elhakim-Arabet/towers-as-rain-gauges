@@ -1125,6 +1125,172 @@
           "n_gauge_pairs": 22
         }
       },
+      "reliable_links": {
+        "classical": {
+          "wet_dry_vs_radar_15min": {
+            "MCC": 0.18382401600860254,
+            "TPR": 0.8320422139889975,
+            "FPR": 0.3343157922930726,
+            "N_wet_ref": 89070,
+            "N": 2777223
+          },
+          "rain_vs_radar_15min": {
+            "r": 0.31838390009040946,
+            "RMSE": 4.6940305701069605,
+            "MAE": 0.7097239066425364,
+            "bias_pct": 73.42011544952103,
+            "ref_total": 174836.98336846213,
+            "est_total": 308998.62187301123,
+            "N": 2772312
+          },
+          "rain_vs_radar_hourly": {
+            "r": 0.2922743344539641,
+            "RMSE": 3.9790217867271047,
+            "MAE": 0.5791552787885411,
+            "bias_pct": 72.2956004494508,
+            "ref_total": 43218.667379692866,
+            "est_total": 76678.19865302574,
+            "N": 688768
+          },
+          "rain_vs_gauges_hourly": {
+            "r": 0.44714504232937524,
+            "RMSE": 2.6076681323231847,
+            "MAE": 0.5020601148640693,
+            "bias_pct": 57.290798347631124,
+            "ref_total": 16761.300101565997,
+            "est_total": 28071.523806159876,
+            "N": 268187
+          },
+          "n_gauge_pairs": 83
+        },
+        "ai": {
+          "wet_dry_vs_radar_15min": {
+            "MCC": 0.508407059629933,
+            "TPR": 0.6083012428287546,
+            "FPR": 0.02408646771484134,
+            "N_wet_ref": 89071,
+            "N": 2777427
+          },
+          "rain_vs_radar_15min": {
+            "r": 0.6560661763095165,
+            "RMSE": 2.503780010557311,
+            "MAE": 0.8396529705427291,
+            "bias_pct": 0.6699309235653094,
+            "ref_total": 178793.0591576626,
+            "est_total": 180280.86552752976,
+            "N": 2777427
+          },
+          "rain_vs_radar_hourly": {
+            "r": 0.7433910275261016,
+            "RMSE": 1.4702782821211913,
+            "MAE": 0.6165210566574136,
+            "bias_pct": 0.06086843110878991,
+            "ref_total": 44181.84287148997,
+            "est_total": 44699.120538916235,
+            "N": 690021
+          },
+          "rain_vs_gauges_hourly": {
+            "r": 0.779492484707027,
+            "RMSE": 1.5641578909452445,
+            "MAE": 0.6743635282474532,
+            "bias_pct": -0.5087326859209954,
+            "ref_total": 17029.800101742003,
+            "est_total": 17553.968757206832,
+            "N": 268602
+          },
+          "n_gauge_pairs": 83
+        },
+        "classical_nb": {
+          "wet_dry_vs_radar_15min": {
+            "MCC": 0.1860838244915025,
+            "TPR": 0.8255529358931177,
+            "FPR": 0.3249030096129201,
+            "N_wet_ref": 89070,
+            "N": 2777223
+          },
+          "rain_vs_radar_15min": {
+            "r": 0.3488395422752779,
+            "RMSE": 4.468017081433231,
+            "MAE": 0.7335803929857352,
+            "bias_pct": 60.1819542685053,
+            "ref_total": 174836.98336846213,
+            "est_total": 284611.8659787771,
+            "N": 2772312
+          },
+          "rain_vs_radar_hourly": {
+            "r": 0.3213942829759427,
+            "RMSE": 3.7626940646394567,
+            "MAE": 0.5908299881721305,
+            "bias_pct": 59.03249499674995,
+            "ref_total": 43218.667379692866,
+            "est_total": 70636.63654939437,
+            "N": 688768
+          },
+          "rain_vs_gauges_hourly": {
+            "r": 0.467563206647581,
+            "RMSE": 2.601458201419174,
+            "MAE": 0.5256303970043532,
+            "bias_pct": 46.70575381169811,
+            "ref_total": 16761.300101565997,
+            "est_total": 26100.189110085434,
+            "N": 268187
+          },
+          "n_gauge_pairs": 83
+        },
+        "ai_nb": {
+          "wet_dry_vs_radar_15min": {
+            "MCC": 0.5208133448647783,
+            "TPR": 0.5979724040372287,
+            "FPR": 0.02115010065631189,
+            "N_wet_ref": 89071,
+            "N": 2777427
+          },
+          "rain_vs_radar_15min": {
+            "r": 0.6805620889744081,
+            "RMSE": 2.4748942657934054,
+            "MAE": 0.8761923945579598,
+            "bias_pct": -5.675529389888255,
+            "ref_total": 178793.0591576626,
+            "est_total": 168061.19216274348,
+            "N": 2777427
+          },
+          "rain_vs_radar_hourly": {
+            "r": 0.7653947160675437,
+            "RMSE": 1.436928822423481,
+            "MAE": 0.627842997622019,
+            "bias_pct": -5.914789238877946,
+            "ref_total": 44181.84287148997,
+            "est_total": 41670.15858248787,
+            "N": 690021
+          },
+          "rain_vs_gauges_hourly": {
+            "r": 0.7836701750850659,
+            "RMSE": 1.6202694277699612,
+            "MAE": 0.7061469170588756,
+            "bias_pct": -6.482293454994831,
+            "ref_total": 17029.800101742003,
+            "est_total": 16344.048801318644,
+            "N": 268602
+          },
+          "n_gauge_pairs": 83
+        }
+      },
+      "n_sublinks_reliable": 196,
+      "reliability": {
+        "kept": 196,
+        "lonely": 82,
+        "always": 26,
+        "judged": 281,
+        "overlap_with_old_rule": 72,
+        "rule": {
+          "event_db": 1.5,
+          "min_events": 8,
+          "max_unconfirmed": 0.5,
+          "max_event_share": 0.2,
+          "n_nearest": 5,
+          "block_min": 15
+        }
+      },
       "classical": {
         "wet_dry_vs_radar_15min": {
           "MCC": 0.1560727364579869,
@@ -1314,6 +1480,28 @@
             "median_per_link_hourly_r_vs_radar": 0.8251250741314353,
             "hours_over_100mm_h": 0,
             "hours_valid": 296177
+          }
+        },
+        "reliable_links": {
+          "classical": {
+            "median_per_link_hourly_r_vs_radar": 0.8410064668450423,
+            "hours_over_100mm_h": 47,
+            "hours_valid": 712291
+          },
+          "ai": {
+            "median_per_link_hourly_r_vs_radar": 0.8534947479131052,
+            "hours_over_100mm_h": 0,
+            "hours_valid": 713581
+          },
+          "classical_nb": {
+            "median_per_link_hourly_r_vs_radar": 0.8436926285022155,
+            "hours_over_100mm_h": 37,
+            "hours_valid": 712291
+          },
+          "ai_nb": {
+            "median_per_link_hourly_r_vs_radar": 0.8564049096939859,
+            "hours_over_100mm_h": 0,
+            "hours_valid": 713581
           }
         }
       }
@@ -1514,6 +1702,172 @@
           "n_gauge_pairs": 23
         }
       },
+      "reliable_links": {
+        "classical": {
+          "wet_dry_vs_radar_15min": {
+            "MCC": 0.19001417925592567,
+            "TPR": 0.81948490551445,
+            "FPR": 0.35611841176940867,
+            "N_wet_ref": 116367,
+            "N": 2830658
+          },
+          "rain_vs_radar_15min": {
+            "r": 0.14186439929205977,
+            "RMSE": 10.818817106266264,
+            "MAE": 1.018539457113379,
+            "bias_pct": 106.39213732737625,
+            "ref_total": 219697.82892439177,
+            "est_total": 458950.9242029971,
+            "N": 2822832
+          },
+          "rain_vs_radar_hourly": {
+            "r": 0.11849579144592551,
+            "RMSE": 10.017640475743395,
+            "MAE": 0.8580042976406631,
+            "bias_pct": 105.96116631610496,
+            "ref_total": 54452.82903926258,
+            "est_total": 114175.8036954727,
+            "N": 704516
+          },
+          "rain_vs_gauges_hourly": {
+            "r": 0.3528103338172039,
+            "RMSE": 3.825735893613292,
+            "MAE": 0.6534847927465821,
+            "bias_pct": 40.08535339405493,
+            "ref_total": 19889.600152228,
+            "est_total": 29360.432151729394,
+            "N": 232344
+          },
+          "n_gauge_pairs": 77
+        },
+        "ai": {
+          "wet_dry_vs_radar_15min": {
+            "MCC": 0.4951273756780832,
+            "TPR": 0.5469240089714614,
+            "FPR": 0.024521032711165208,
+            "N_wet_ref": 116369,
+            "N": 2830855
+          },
+          "rain_vs_radar_15min": {
+            "r": 0.5771133586485343,
+            "RMSE": 3.1771472750266763,
+            "MAE": 0.9771912911648659,
+            "bias_pct": -5.633916188485475,
+            "ref_total": 229546.3649943889,
+            "est_total": 216852.92272117647,
+            "N": 2830855
+          },
+          "rain_vs_radar_hourly": {
+            "r": 0.6620565713091903,
+            "RMSE": 1.9089180915743964,
+            "MAE": 0.7225654610501075,
+            "bias_pct": -6.166519774145533,
+            "ref_total": 56528.71872201304,
+            "est_total": 53453.114743213606,
+            "N": 706522
+          },
+          "rain_vs_gauges_hourly": {
+            "r": 0.7090728759440901,
+            "RMSE": 2.2823435655582913,
+            "MAE": 0.833832488652294,
+            "bias_pct": -16.57854883767938,
+            "ref_total": 20496.800153334,
+            "est_total": 17548.486921984986,
+            "N": 232927
+          },
+          "n_gauge_pairs": 77
+        },
+        "classical_nb": {
+          "wet_dry_vs_radar_15min": {
+            "MCC": 0.19294764720861174,
+            "TPR": 0.8146811381233511,
+            "FPR": 0.3465929040032922,
+            "N_wet_ref": 116367,
+            "N": 2830658
+          },
+          "rain_vs_radar_15min": {
+            "r": 0.1721617749910808,
+            "RMSE": 9.464432716582259,
+            "MAE": 0.9595251241763705,
+            "bias_pct": 76.57514748997443,
+            "ref_total": 219697.82892439177,
+            "est_total": 392766.07356157736,
+            "N": 2822832
+          },
+          "rain_vs_radar_hourly": {
+            "r": 0.15074871559111505,
+            "RMSE": 8.380673063852875,
+            "MAE": 0.7939735815809599,
+            "bias_pct": 75.73411569882128,
+            "ref_total": 54452.82903926258,
+            "est_total": 97633.27671727588,
+            "N": 704516
+          },
+          "rain_vs_gauges_hourly": {
+            "r": 0.4430202512139755,
+            "RMSE": 3.1871323380233996,
+            "MAE": 0.6457670712087232,
+            "bias_pct": 23.26855832760145,
+            "ref_total": 19889.600152228,
+            "est_total": 25843.11168735203,
+            "N": 232344
+          },
+          "n_gauge_pairs": 77
+        },
+        "ai_nb": {
+          "wet_dry_vs_radar_15min": {
+            "MCC": 0.5081543791793752,
+            "TPR": 0.5392759240003782,
+            "FPR": 0.021471468263236575,
+            "N_wet_ref": 116369,
+            "N": 2830855
+          },
+          "rain_vs_radar_15min": {
+            "r": 0.6051151042092421,
+            "RMSE": 3.099211427241748,
+            "MAE": 1.0153064931430837,
+            "bias_pct": -10.901917956135906,
+            "ref_total": 229546.3649943889,
+            "est_total": 203905.33321376587,
+            "N": 2830855
+          },
+          "rain_vs_radar_hourly": {
+            "r": 0.6843386393796516,
+            "RMSE": 1.8642634500299202,
+            "MAE": 0.7349053342001842,
+            "bias_pct": -11.222592929039596,
+            "ref_total": 56528.71872201304,
+            "est_total": 50223.52426145748,
+            "N": 706522
+          },
+          "rain_vs_gauges_hourly": {
+            "r": 0.7183406701260051,
+            "RMSE": 2.3114484997350635,
+            "MAE": 0.8564370076916883,
+            "bias_pct": -20.29736956342848,
+            "ref_total": 20496.800153334,
+            "est_total": 16648.284775804324,
+            "N": 232927
+          },
+          "n_gauge_pairs": 77
+        }
+      },
+      "n_sublinks_reliable": 194,
+      "reliability": {
+        "kept": 194,
+        "lonely": 71,
+        "always": 27,
+        "judged": 267,
+        "overlap_with_old_rule": 65,
+        "rule": {
+          "event_db": 1.5,
+          "min_events": 8,
+          "max_unconfirmed": 0.5,
+          "max_event_share": 0.2,
+          "n_nearest": 5,
+          "block_min": 15
+        }
+      },
       "classical": {
         "wet_dry_vs_radar_15min": {
           "MCC": 0.16581037591821074,
@@ -1703,6 +2057,28 @@
             "median_per_link_hourly_r_vs_radar": 0.8039423933803307,
             "hours_over_100mm_h": 0,
             "hours_valid": 263096
+          }
+        },
+        "reliable_links": {
+          "classical": {
+            "median_per_link_hourly_r_vs_radar": 0.8043872942340026,
+            "hours_over_100mm_h": 152,
+            "hours_valid": 706364
+          },
+          "ai": {
+            "median_per_link_hourly_r_vs_radar": 0.8221441556520508,
+            "hours_over_100mm_h": 2,
+            "hours_valid": 708375
+          },
+          "classical_nb": {
+            "median_per_link_hourly_r_vs_radar": 0.8106440281312104,
+            "hours_over_100mm_h": 98,
+            "hours_valid": 706364
+          },
+          "ai_nb": {
+            "median_per_link_hourly_r_vs_radar": 0.8324716858930399,
+            "hours_over_100mm_h": 2,
+            "hours_valid": 708375
           }
         }
       }
@@ -1898,6 +2274,96 @@
           "ref_total": 215155.4032517813,
           "est_total": 238664.48376524844,
           "N": 1680618
+        }
+      }
+    },
+    "n_sublinks_reliable": 1653,
+    "reliability": {
+      "kept": 1653,
+      "lonely": 181,
+      "always": 186,
+      "judged": 1897,
+      "overlap_with_old_rule": 1043,
+      "rule": {
+        "event_db": 1.5,
+        "min_events": 8,
+        "max_unconfirmed": 0.5,
+        "max_event_share": 0.2,
+        "n_nearest": 5,
+        "block_min": 15
+      }
+    },
+    "reliable_links": {
+      "classical": {
+        "wet_dry_vs_radar_hourly": {
+          "MCC": 0.5049366280711818,
+          "TPR": 0.644962659399638,
+          "FPR": 0.07661444156289517,
+          "N_wet_ref": 240355,
+          "N": 2339920
+        },
+        "rain_vs_radar_hourly": {
+          "r": 0.19168768873490324,
+          "RMSE": 6.476301291937179,
+          "MAE": 0.9646453083111362,
+          "bias_pct": 60.48872542144949,
+          "ref_total": 292936.370686907,
+          "est_total": 466452.7442131741,
+          "N": 2339920
+        }
+      },
+      "ai": {
+        "wet_dry_vs_radar_hourly": {
+          "MCC": 0.49011761643220186,
+          "TPR": 0.6803361512264696,
+          "FPR": 0.09497098627737005,
+          "N_wet_ref": 240487,
+          "N": 2354659
+        },
+        "rain_vs_radar_hourly": {
+          "r": 0.5187747504718704,
+          "RMSE": 2.1407720913196706,
+          "MAE": 0.680420544681641,
+          "bias_pct": 25.04256674042725,
+          "ref_total": 293059.13440817024,
+          "est_total": 362825.0078319772,
+          "N": 2354659
+        }
+      },
+      "classical_nb": {
+        "wet_dry_vs_radar_hourly": {
+          "MCC": 0.5171119424344826,
+          "TPR": 0.6418422749682761,
+          "FPR": 0.07051413030794475,
+          "N_wet_ref": 240355,
+          "N": 2339920
+        },
+        "rain_vs_radar_hourly": {
+          "r": 0.22084586478197366,
+          "RMSE": 5.746355419690358,
+          "MAE": 0.9327907209865604,
+          "bias_pct": 51.63930015105146,
+          "ref_total": 292936.370686907,
+          "est_total": 440671.958524719,
+          "N": 2339920
+        }
+      },
+      "ai_nb": {
+        "wet_dry_vs_radar_hourly": {
+          "MCC": 0.5077079360830451,
+          "TPR": 0.6755292385867011,
+          "FPR": 0.08487057817433964,
+          "N_wet_ref": 240487,
+          "N": 2354659
+        },
+        "rain_vs_radar_hourly": {
+          "r": 0.5479441232846746,
+          "RMSE": 2.03139148183208,
+          "MAE": 0.6862170913778974,
+          "bias_pct": 20.45837567133359,
+          "ref_total": 293059.13440817024,
+          "est_total": 349419.02344709367,
+          "N": 2354659
         }
       }
     },
@@ -2434,6 +2900,28 @@
           "median_per_link_hourly_r_vs_radar": 0.769722501980342,
           "hours_over_100mm_h": 16,
           "hours_valid": 1800845
+        }
+      },
+      "reliable_links": {
+        "classical": {
+          "median_per_link_hourly_r_vs_radar": 0.7824322928282907,
+          "hours_over_100mm_h": 237,
+          "hours_valid": 2515517
+        },
+        "ai": {
+          "median_per_link_hourly_r_vs_radar": 0.7643323768875634,
+          "hours_over_100mm_h": 28,
+          "hours_valid": 2531656
+        },
+        "classical_nb": {
+          "median_per_link_hourly_r_vs_radar": 0.7837909054669294,
+          "hours_over_100mm_h": 180,
+          "hours_valid": 2515517
+        },
+        "ai_nb": {
+          "median_per_link_hourly_r_vs_radar": 0.766677606767068,
+          "hours_over_100mm_h": 18,
+          "hours_valid": 2531656
         }
       }
     },

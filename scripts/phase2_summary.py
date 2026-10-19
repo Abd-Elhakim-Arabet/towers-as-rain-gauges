@@ -49,6 +49,9 @@ def robust_all(path) -> dict:
     out = {m: robust(h, m) for m in METHODS}
     old = h.cml_id.values[h.old_rule.values]
     out["old_links"] = {m: robust(h, m, old) for m in METHODS}
+    if "reliable" in h.coords:
+        good = h.cml_id.values[h.reliable.values]
+        out["reliable_links"] = {m: robust(h, m, good) for m in METHODS}
     return out
 
 
@@ -117,12 +120,15 @@ def main():
         lines.append(f"- {k}: mean {v['mean']:.3f}, range {v['min']:.3f} – {v['max']:.3f}")
     lines += ["", "## Italy (OpenRainER), May–Sep 2021 and 2022, zero-shot", "",
               "QC: sub-links with >= 50% data. `old links` = the earlier QC set (also dropping sub-links the classical "
-              "detector calls wet > 30% of the time). `_nb` = after the neighbour check (10 km, ±15 min).", "",
+              "detector calls wet > 30% of the time). `reliable` = kept by the raw-signal reliability score "
+              "(targ.reliability). `_nb` = after the neighbour check (10 km, ±15 min).", "",
               "| season | links | method | MCC 15-min | radar hourly r / RMSE / bias | gauges hourly r / bias | median per-link r | hours > 100 mm/h |",
               "|---|---|---|---|---|---|---|---|"]
     for name, s_ in out["italy"].items():
         for tag, blk, rob, n in (("all", s_, s_["robust"], s_["n_sublinks_qc"]),
-                                 ("old links", s_["old_links"], s_["robust"]["old_links"], s_["n_sublinks_old_rule"])):
+                                 ("old links", s_["old_links"], s_["robust"]["old_links"], s_["n_sublinks_old_rule"]),
+                                 ("reliable", s_["reliable_links"], s_["robust"]["reliable_links"],
+                                  s_["n_sublinks_reliable"])):
             for mth in METHODS:
                 t = blk[mth]
                 g = t.get("rain_vs_gauges_hourly", {})
@@ -137,7 +143,8 @@ def main():
     lines += ["", f"## Netherlands, 1 Jun – 22 Aug 2014, 15-min min/max, zero-shot ({N['n_sublinks_qc']} sub-links; old QC set {N['n_sublinks_old_rule']})", "",
               "| links | method | MCC hourly | radar hourly r / RMSE / bias | median per-link r | hours > 100 mm/h |",
               "|---|---|---|---|---|---|"]
-    for tag, blk, rob in (("all", N, N["robust"]), ("old links", N["old_links"], N["robust"]["old_links"])):
+    for tag, blk, rob in (("all", N, N["robust"]), ("old links", N["old_links"], N["robust"]["old_links"]),
+                          (f"reliable ({N['n_sublinks_reliable']})", N["reliable_links"], N["robust"]["reliable_links"])):
         for mth in METHODS:
             t = blk[mth]
             lines.append(f"| {tag} | {mth} | {t['wet_dry_vs_radar_hourly']['MCC']:.3f} | {t['rain_vs_radar_hourly']['r']:.2f} / "

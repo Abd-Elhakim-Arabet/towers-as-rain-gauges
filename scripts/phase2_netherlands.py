@@ -33,6 +33,7 @@ import xarray as xr
 
 from targ import features as feat
 from targ import neighbours as nb
+from targ import reliability as rel
 from targ import train_torch as T
 from targ.data import netherlands, openmrg
 from targ.evaluation import OPENMRG_SPLITS, rain_scores, wet_dry_scores
@@ -213,6 +214,14 @@ def main():
         removed = (np.nan_to_num(r) >= 0.1) & (r2 == 0)
         est[m + "_nb"] = (np.where(removed, 0.0, w), r2)
     old = np.isin(ids_n, old_ids)
+    # link reliability from the raw signal (15-min mid-point loss) and the 5 nearest neighbours
+    rl = rel.score_links(nl, level_15=(loss_max + loss_min) / 2)
+    good = rl["keep"]
+    rel_info = {"kept": int(good.sum()), "lonely": int(rl["lonely"].sum()), "always": int(rl["always"].sum()),
+                "judged": int(rl["judged"].sum()), "overlap_with_old_rule": int((good & old).sum()),
+                "rule": rl["rule"]}
+    print(f"reliability score keeps {good.sum()} / {len(good)} ({(good & old).sum()} also kept by the old rule)",
+          flush=True)
     res["netherlands"] = {
         "period": ["2014-06-01", "2014-08-22"], "n_sublinks_total": int(keep.size),
         "n_sublinks_qc": int(keep.sum()),
@@ -227,6 +236,9 @@ def main():
         **{k: evaluate(w, r, None, ref, ids_n, t_n) for k, (w, r) in est.items()},
         "old_links": {k: evaluate(w[old], r[old], None, ref.sel(cml_id=ids_n[old]), ids_n[old], t_n)
                       for k, (w, r) in est.items()},
+        "n_sublinks_reliable": int(good.sum()), "reliability": rel_info,
+        "reliable_links": {k: evaluate(w[good], r[good], None, ref.sel(cml_id=ids_n[good]), ids_n[good], t_n)
+                           for k, (w, r) in est.items()},
         "by_vendor": {},
     }
     for v in ("NEC", "NOKIA"):
@@ -243,7 +255,7 @@ def main():
     ref_h = ref.reindex(time=ai_h.time.values)
     xr.Dataset({**hz, "radar": ref_h}).assign_coords(
         length=("cml_id", Ln), frequency=("cml_id", fn), vendor=("cml_id", nl.vendor.values),
-        old_rule=("cml_id", old)).to_netcdf(RUNS / "nl_hourly.nc")
+        old_rule=("cml_id", old), reliable=("cml_id", good)).to_netcdf(RUNS / "nl_hourly.nc")
     ok = np.isfinite(ai_h.values) & np.isfinite(cl_h.values) & np.isfinite(ref_h.values)
     net = {k: np.where(ok, x, np.nan) for k, x in (("ai", ai_h.values), ("classical", cl_h.values),
                                                    ("radar", ref_h.values))}

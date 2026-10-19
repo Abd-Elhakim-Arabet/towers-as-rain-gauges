@@ -45,6 +45,22 @@ def neighbour_matrix(lat0, lon0, lat1, lon1, radius_km: float = RADIUS_KM) -> sp
     return sparse.csr_matrix(A.astype(np.float32))
 
 
+def nearest_matrix(lat0, lon0, lat1, lon1, k: int, radius_km: float = RADIUS_KM) -> sparse.csr_matrix:
+    """Like neighbour_matrix, but only each link's k nearest neighbours (within the radius)."""
+    lat0, lon0, lat1, lon1 = (np.asarray(v, float) for v in (lat0, lon0, lat1, lon1))
+    A = neighbour_matrix(lat0, lon0, lat1, lon1, radius_km).toarray()
+    mlat, mlon = (lat0 + lat1) / 2, (lon0 + lon1) / 2
+    d = np.hypot((mlat[:, None] - mlat[None]) * 111.32,
+                 (mlon[:, None] - mlon[None]) * 111.32 * np.cos(np.radians(mlat.mean())))
+    d[A == 0] = np.inf
+    K = np.zeros_like(A)
+    order = np.argsort(d, axis=1)[:, :k]
+    for i in range(len(K)):
+        j = order[i][np.isfinite(d[i, order[i]])]
+        K[i, j] = 1
+    return sparse.csr_matrix(K)
+
+
 def neighbour_check(R: np.ndarray, A: sparse.csr_matrix, step_min: float,
                     window_min: float = WINDOW_MIN):
     """R: (n_links, T) rain rate [mm/h], NaN = missing. Returns (R_checked, info).

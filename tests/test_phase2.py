@@ -83,3 +83,21 @@ def test_neighbour_check_removes_lonely_rain_only():
     assert (out[0, 10:20] == 0).all() and (out[1, 10:20] == 0).all()
     assert (out[0, 60:70] == 5).all() and (out[2, 70:75] == 2).all()
     assert (out[4, 30:40] == 9).all()
+
+
+def test_reliability_flags_link_that_rains_alone():
+    from targ.neighbours import neighbour_matrix
+    from targ.reliability import link_reliability
+    rng = np.random.default_rng(2)
+    B = 3 * 96 * 2                                     # 6 days of 15-min blocks
+    level = 50 + rng.normal(0, 0.1, (3, B))
+    storms = [400, 450, 500, 520]
+    for s in storms:                                   # links 0 and 1 share real storms
+        level[0, s:s + 4] += 5
+        level[1, s:s + 4] += 4
+    for s in range(300, 560, 20):                      # link 2 drops alone, again and again
+        level[2, s:s + 3] += 6
+    lat = np.array([45.00, 45.02, 45.04])
+    A = neighbour_matrix(lat, np.full(3, 9.0), lat, np.full(3, 9.01))
+    rel = link_reliability(level, A)
+    assert rel["keep"].tolist() == [True, True, False]
