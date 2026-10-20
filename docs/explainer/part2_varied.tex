@@ -63,8 +63,10 @@ next to a rain gauge 508\,m away.
   \addlegendentry{radar along the link}
   \addplot[thick,color=inkc,dashed] table[x=hour,y=ai_se] {may6.dat};
   \addlegendentry{AI, Sweden only}
-  \addplot[thick,color=rainc] table[x=hour,y=ai_cv] {may6.dat};
+  \addplot[thick,color=rainc,densely dotted] table[x=hour,y=ai_cv] {may6.dat};
   \addlegendentry{AI, varied training (never saw May)}
+  \addplot[very thick,color=rainc] table[x=hour,y=ai_fin] {may6.dat};
+  \addlegendentry{AI, final recipe (never saw May)}
 \nextgroupplot[ylabel={dB},xlabel={hourly averages (UTC)},ymin=0,ymax=6,legend pos=north east]
   \addplot[thick,color=inkc] table[x=hour,y=excess] {may6.dat};
   \addlegendentry{extra loss above the dry level}
@@ -74,7 +76,7 @@ next to a rain gauge 508\,m away.
 \end{tikzpicture}
 \caption{The long storm of 5--7 May 2022 on sub-link 182\_1 (5.3\,km, 24.6\,GHz). Top: rain. Bottom: what the link
 measured. Storm totals: gauge \Maygauge\,mm, radar \Mayradar\,mm, AI trained on Sweden only \Mayaise\,mm, AI with varied
-training \Mayaicv\,mm.}
+training \Mayaicv\,mm, AI with the final recipe of Section~\ref{sec:recipe} \Mayaifin\,mm.}
 \label{fig:may6}
 \end{figure}
 
@@ -118,10 +120,42 @@ now agree within 7 to 12 points, and in Sweden within 5 to 17 points instead of 
 \item \textbf{Training only on reliable links helps the long storm.} With the reliability score of
 Section~\ref{sec:reliability} applied to the Italian training links, the share of the long storm measured rises from 28\% to
 42\%, with nothing else lost. This supports point 3 above: faulty links were teaching the AI to ignore long raised loss.
-\item \textbf{Two ideas did not work.} Scoring the rate error in a log scale (so light rain counts as much as heavy rain)
+\item \textbf{Three ideas did not work.} Scoring the rate error in a log scale (so light rain counts as much as heavy rain)
 made the AI read 5--15\% too little in Italy. Giving it two extra inputs from its neighbours (``how many links around me
-are raised right now?'') improved rain detection (MCC 0.68) but cost amounts elsewhere and barely helped the long storm.
+are raised right now?'') improved rain detection (MCC 0.68) but cost amounts elsewhere and barely helped the long storm. Scoring the rate on 15-minute averages instead of
+minute by minute (so that small timing errors between radar and link stop counting) made Sweden read even lower.
 \end{itemize}
+
+\subsection{Cleaning the training answers}
+\label{sec:recipe}
+The causes found above point at the \emph{answers} the AI learns from, not at the AI itself. So the next fixes change
+nothing in the network; they only clean what it is told is right:
+\begin{itemize}
+\item \textbf{Correct the Swedish radar with the city's gauges.} In the six training weeks, the radar along the links
+read about a quarter less rain than the Gothenburg gauges, but not in August. An AI that learns from this radar learns to
+read low. Each training day, the radar is now scaled so that its daily total matches the gauges' (at most halved or
+doubled). The August radar and gauges are never touched.
+\item \textbf{Hide the unclear moments.} Right after a rain, the radar often says ``dry'' while the link is still
+raised: wet antennas, or light rain the radar cannot see (Section~\ref{sec:may6}). Telling the AI ``dry'' there teaches it
+to ignore raised loss. These moments (radar dry, rain in the past six hours, link more than 1\,dB raised; about 2--3\% of
+the training time) are now left out of the score instead of being called dry.
+\item \textbf{Use a gauge as the answer where there is one.} 83 of the 196 Italian training links have a rain gauge
+within 1\,km. For those, the gauge replaces the radar as the answer: it sees the light rain at the end of a storm.
+\end{itemize}
+Each of the three helps on its own, and together they help most (last bold row of the table above): in Sweden's August
+the five runs read between \ExpFinSeRange{} of the gauges (instead of \ExpRelSeRange), and the long Italian storm is
+\ExpFinLong{} measured (instead of \ExpRelLong).
+
+\begin{careful}
+\textbf{Not fooling ourselves.} Every row of the table was judged on Sweden's August and Italy 2022, so picking the
+best row would tune the AI to those two test periods. We used two rules. First, keep a fix only if it repairs a cause we
+had found \emph{before} trying it; the three fixes above do, and their settings (6 hours, 1\,dB, 1\,km, a factor of 2) were
+set once and never adjusted. Second, judge the chosen recipe again on data that played no part in the choice
+(Sections~\ref{sec:cv} and~\ref{sec:newlinks}). For that reason one fix was \textbf{not kept} although it scored well: a
+shorter memory (about 4 hours instead of 17) gave Sweden's best number ($-$5\%), but it was a guess about the network,
+not a repair of a cause, and it helped the long storm less. It is the kind of choice that wins on the test and loses
+elsewhere.
+\end{careful}
 
 \subsection{The final check: every Italian month, judged by a model that never saw it}
 \label{sec:cv}
@@ -130,7 +164,8 @@ September of \emph{both} Italian years; to judge June, on the other four months;
 \textbf{cross-validation}. Every Italian month of 2021 and 2022 is then judged by a network that never saw it, and each
 network learns from long rains of the other months (for example September 2021 when May is judged). Training uses the
 reliable links only; the last week of each training month is kept apart to pick the checkpoint and the threshold; three
-runs per month. Sweden's August is never used.
+runs per month. Sweden's August is never used. We ran it twice: with reliable links only, and with the final recipe of
+Section~\ref{sec:recipe}. For the recipe, gauges near the judged month's links are never used in training.
 
 The same hourly table as in Section~\ref{sec:drylevel}, same links, same groups (rain measured as a share of the radar's):
 \begin{center}\footnotesize
@@ -141,10 +176,12 @@ The same hourly table as in Section~\ref{sec:drylevel}, same links, same groups 
 & under 10\% & 10--25\% & 25--50\% & over 50\%\\
 \midrule
 Italy 2021, Sweden-only AI & \SeOnlyLongAa & \SeOnlyLongAb & \SeOnlyLongAc & \SeOnlyLongAd\\
-Italy 2021, \textbf{varied training} & \textbf{\CVrelLongAa} & \textbf{\CVrelLongAb} & \textbf{\CVrelLongAc} & \textbf{\CVrelLongAd}\\
+Italy 2021, varied training & \CVrelLongAa & \CVrelLongAb & \CVrelLongAc & \CVrelLongAd\\
+Italy 2021, \textbf{final recipe} & \textbf{\CVfinLongAa} & \textbf{\CVfinLongAb} & \textbf{\CVfinLongAc} & \textbf{\CVfinLongAd}\\
 \midrule
 Italy 2022, Sweden-only AI & \SeOnlyLongBa & \SeOnlyLongBb & \SeOnlyLongBc & \SeOnlyLongBd\\
-Italy 2022, \textbf{varied training} & \textbf{\CVrelLongBa} & \textbf{\CVrelLongBb} & \textbf{\CVrelLongBc} & \CVrelLongBd\\
+Italy 2022, varied training & \CVrelLongBa & \CVrelLongBb & \CVrelLongBc & \CVrelLongBd\\
+Italy 2022, \textbf{final recipe} & \textbf{\CVfinLongBa} & \textbf{\CVfinLongBb} & \textbf{\CVfinLongBc} & \textbf{\CVfinLongBd}\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -154,16 +191,60 @@ In Sweden's August, the same networks score MCC \CVrelSeMCC, hourly correlation 
 \CVrelSeRMSE\,mm/h and bias \CVrelSeBias{} (runs from \CVrelSeBiasRange), against 0.615, 0.79, 1.04\,mm/h and $-20\%$ for the
 Sweden-only model: rain detection and agreement between runs improve clearly, the Swedish shortfall only a little.
 
+With the \textbf{final recipe}, the same test gives: against the gauges, \CVfinGaugesA{} (2021) and \CVfinGaugesB{} (2022)
+of their rain; Italy's total within \CVfinBiasA{} (2021) and \CVfinBiasB{} (2022) of the radar; and in Sweden's August
+MCC \CVfinSeMCC, correlation \CVfinSeR, error \CVfinSeRMSE\,mm/h and bias \CVfinSeBias{} (runs from \CVfinSeBiasRange).
+The Swedish shortfall is roughly halved, and the long storm of May 2022 goes from \CVrelLongBd{} to \CVfinLongBd.
+The AI now reads a little \emph{more} than the radar in Italy, and over 100\% after rainy days. This is expected rather than
+worrying: the radar itself misses light rain (Section~\ref{sec:may6}), and against the gauges the AI is still a little
+low, not high.
+
 \begin{careful}
-\textbf{What this test is, and is not.} The Italian links are the same in every month: this tests new weather on known links,
-not new links. The Italy and Netherlands results of Sections~\ref{sec:italy}--\ref{sec:neighbours}, and the maps of Part~3,
+\textbf{What this test is, and is not.} The Italian links are the same in every month: this tests new weather on known links.
+New links are tested next. The Italy and Netherlands results of Sections~\ref{sec:italy}--\ref{sec:neighbours}, and the maps of Part~3,
 keep the Sweden-only model on purpose, so that they remain tests on countries the AI has never seen. For Algeria, which
 has no reference data of its own, the recipe of this section is the one to use: train on several countries, reliable links
-only, and average several runs.
+only, cleaned answers (Section~\ref{sec:recipe}), and average several runs.
 \end{careful}
 
+\subsection{Links it has never seen}
+\label{sec:newlinks}
+The real use is a network the AI has never seen. To test that inside Italy, we cut the Italian links in two halves at
+the middle longitude (10.9\textdegree\,E, with an 8\,km gap so that close neighbours do not end up on both sides).
+The AI learns from Sweden plus the 2021 summer of one half, and is judged on the 2022 summer of the \emph{other} half:
+new links \emph{and} a new year. Five runs each, both directions:
+\begin{center}\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llcccc}
+\toprule
+& & total bias, & share of & rain after a & rain after a\\
+Training & learn $\to$ judge & 5 runs & gauges' rain & dry day & mostly rainy day\\
+\midrule
+\NlRows
+\bottomrule
+\end{tabular}
+\end{center}
+(The Italian test uses the stricter link list of Section~\ref{sec:italy}: 40 links in the east half and
+27 in the west, so these numbers move more from run to run than the ones above.)
+
+What this shows:
+\begin{itemize}
+\item \textbf{The recipe helps on new links too}, in both directions: more of the gauges' rain is found
+(\NlFinWestGauges{} instead of \NlRelWestGauges{} when judging the east, \NlFinEastGauges{} instead of
+\NlRelEastGauges{} when judging the west), and more of the rain after a rainy day.
+\item \textbf{But the long storm depends on where you look.} On the eastern links the AI now measures \NlFinWestLong{}
+of the radar's rain after a rainy day; on the western links only \NlFinEastLong{}. Even the old recipe
+found only \NlRelEastLong{} there: the western links see this storm differently from anything the AI learned from in
+the east, and cleaning the answers cannot make up for links it has never seen in such weather.
+\item \textbf{With half the training links, the runs can disagree again}: learning from the west, the five runs' Italian
+totals spread from $+$9\% to $+$37\%. The agreement found
+above came from \emph{amount} of varied data, not from any single fix. More links and more regions are what help most.
+\end{itemize}
+
 \begin{oneline}
-More varied rain fixed most of both problems: training runs now agree on amounts, Sweden improved, and in Italy the AI
-measures \CVrelLongAd{} of the rain after a rainy day in 2021. Two things remain: the one long storm of May 2022 is only
-partly measured (\CVrelLongBd{}), and in Sweden's August the AI still reads \CVrelSeBias{} low.
+Cleaning the training answers (gauge-corrected radar, unclear moments hidden, gauges as answers where possible) fixed most
+of both problems on months the AI never saw: runs agree on amounts, Sweden's shortfall is down to
+\CVfinSeBias, and after a rainy day the AI measures \CVfinLongAd{} (2021) and \CVfinLongBd{} (2022) of the radar's rain.
+What remains: the one long storm of May 2022 is still only partly measured (\Mayaifin{} of \Maygauge\,mm on the
+link of Figure~\ref{fig:may6}), Sweden still reads a little low, and on Italian links it never saw the gain is smaller and
+less even: the AI needs data from many more links and regions, which is exactly what Algeria will lack.
 \end{oneline}

@@ -31,6 +31,9 @@ def loss_fn(logit, rate, y, rate_weight: float, rate_loss: str = "mse"):
     rate_loss "mse": squared error in mm/h (heavy minutes dominate).
     rate_loss "log": squared error of log(1 + R) (every wet minute counts similarly),
                      scaled by 25 so its size is comparable at rate_weight 0.05.
+    rate_loss "agg": squared error of 15-minute averages (rate and target averaged over
+                     the same 15 minutes), so small timing mismatches between link and
+                     reference do not teach the network to flatten its peaks.
     """
     ok = torch.isfinite(y)
     if ok.sum() == 0:
@@ -41,12 +44,30 @@ def loss_fn(logit, rate, y, rate_weight: float, rate_loss: str = "mse"):
         return bce
     # the rate is only learned where the reference says it rains; rain/no-rain is the
     # logit's job. Learning rate on dry minutes too teaches the network to shrink.
+    if rate_loss == "agg":
+        return bce + rate_weight * _agg_mse(rate, y)
     yt = torch.clamp(y[ok][wet], max=100.0)
     if rate_loss == "log":
         err = 25.0 * F.mse_loss(torch.log1p(rate[ok][wet]), torch.log1p(yt))
     else:
         err = F.mse_loss(rate[ok][wet], yt)
     return bce + rate_weight * err
+
+
+def _agg_mse(rate, y, block: int = 15):
+    """MSE between 15-min means of rate and of the (possibly sparse) target, wet blocks only."""
+    B, T_ = rate.shape
+    n = T_ // block
+    r = rate[:, :n * block].reshape(B, n, block)
+    yy = y[:, :n * block].reshape(B, n, block)
+    has = torch.isfinite(yy)
+    cnt = has.sum(-1)
+    y_m = torch.where(has, yy, torch.zeros_like(yy)).sum(-1) / cnt.clamp(min=1)
+    r_m = r.mean(-1)                      # all 15 minutes: the target's few scans stand for the block
+    wet = (cnt > 0) & (y_m >= WET_MM_H)
+    if wet.sum() == 0:
+        return rate.sum() * 0
+    return F.mse_loss(r_m[wet], torch.clamp(y_m[wet], max=100.0))
 
 
 def train(dyn: list[np.ndarray], stat: np.ndarray, phys: np.ndarray, target: np.ndarray,

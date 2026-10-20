@@ -114,8 +114,23 @@ One-season experiments (5 runs each; Sweden August, Italy 2022 held out; long-ra
 | mix21_log | 0.651 | -23% .. -16% | -15% .. -5% | 83% | 20% |
 | mix21nb_mse | 0.685 | -17% .. -11% | -16% .. +0% | 91% | 35% |
 | mix21rel_mse | 0.648 | -18% .. -13% | -7% .. +5% | 95% | 42% |
+| mix21rel+mask_agg | 0.653 | -24% .. -13% | -8% .. -2% | 91% | 50% |
+| mix21rel+mfb_mse | 0.648 | -13% .. -9% | -4% .. +12% | 94% | 40% |
+| mix21rel+mask_mse | 0.649 | -15% .. -11% | -5% .. +5% | 93% | 56% |
+| mix21rel+mfb+mask_mse | 0.651 | -13% .. -6% | +1% .. +11% | 95% | 55% |
+| mix21rel+mask+gt_mse | 0.649 | -15% .. +2% | +5% .. +11% | 97% | 67% |
+| mix21rel+mfb+mask+gt_mse | 0.645 | -11% .. +1% | +5% .. +13% | 96% | 66% |
+| mix21rel+rf6_mse | 0.661 | -14% .. -4% | -2% .. +5% | 95% | 51% |
+| mix21rel+mask+rf6_mse | 0.656 | -12% .. -7% | +2% .. +7% | 93% | 57% |
+| mix21rel+mfb+mask+rf6_mse | 0.651 | -8% .. -3% | -2% .. +8% | 93% | 59% |
+| mix21rel+west_mse | 0.644 | -28% .. -4% | +4% .. +19% | 104% | 66% |
+| mix21rel+east_mse | 0.650 | -20% .. -15% | -13% .. -12% | 84% | 22% |
+| mix21rel+mfb+mask+gt+west_mse | 0.639 | -19% .. +2% | +9% .. +37% | 103% | 93% |
+| mix21rel+mfb+mask+gt+east_mse | 0.645 | -23% .. -9% | -13% .. -6% | 82% | 30% |
 
-Month-by-month cross-validation (Sweden + both Italian summers minus the judged month, reliable links only, 3 runs per month). Hourly long-rain table, AI rain as % of radar, groups by share of past 24 h rainy (<10%, 10-25%, 25-50%, >50%):
+Flags: rel = reliable Italian links only; mfb = Swedish training radar rescaled daily to the city gauges (training period only); mask = drop targets where radar says dry right after rain while the link is still raised; gt = Italian training links within 1 km of a gauge use the gauge as target; rf6 = shorter memory (~4 h); west/east = train on that half of the Italian links, judge the other half (new links); agg = rate loss on 15-min means; log = rate loss in log scale; nb = neighbour inputs.
+
+Month-by-month cross-validation, reliable links only (Sweden + both Italian summers minus the judged month, 3 runs per month). Hourly long-rain table, AI rain as % of radar, groups by share of past 24 h rainy (<10%, 10-25%, 25-50%, >50%):
 
 | season | Sweden-only kept model | varied training | Italy total bias (runs) |
 |---|---|---|---|
@@ -123,6 +138,16 @@ Month-by-month cross-validation (Sweden + both Italian summers minus the judged 
 | 2022 | 84% / 86% / 72% / 55% | 98% / 102% / 87% / 60% | -1% .. +4% |
 
 Sweden August, same networks: MCC 0.648, gauges r 0.81, RMSE 1.01, bias -17% (runs -23% .. -12%).
+
+Month-by-month cross-validation, final recipe: rel+mfb+mask+gt (Sweden + both Italian summers minus the judged month, 3 runs per month). Hourly long-rain table, AI rain as % of radar, groups by share of past 24 h rainy (<10%, 10-25%, 25-50%, >50%):
+
+| season | Sweden-only kept model | varied training | Italy total bias (runs) |
+|---|---|---|---|
+| 2021 | 77% / 79% / 70% / 77% | 93% / 98% / 97% / 107% | +5% .. +13% |
+| 2022 | 84% / 86% / 72% / 55% | 98% / 107% / 95% / 74% | +6% .. +12% |
+
+Sweden August, same networks: MCC 0.645, gauges r 0.85, RMSE 0.91, bias -10% (runs -13% .. -5%).
+
 Italy and Netherlands zero-shot results above (and Phase 3) keep the Sweden-only model on purpose.
 
 ## MindSpore

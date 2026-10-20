@@ -7,7 +7,9 @@ Link 182_1 (5.3 km, 24.6 GHz), 508 m from the Castelnovo ne' Monti gauge.
 Columns: hours since 5 May 12:00 UTC, extra loss above the AI's dry level [dB],
 loss the radar rain should cause (ITU-R P.838) [dB], radar along the path, the gauge,
 AI trained on Sweden only (kept model), AI from the cross-validation (models that
-never saw May, trained on reliable Italian links; average of 3 runs) [mm/h].
+never saw May, trained on reliable Italian links; average of 3 runs), and the same for the
+final recipe (reliable links, gauge-corrected Swedish radar, unclear moments hidden, gauge
+answers near Italian gauges) [mm/h].
 Writes docs/explainer/may6.dat.
 """
 
@@ -55,17 +57,21 @@ def main():
     for f in sorted(glob.glob(str(ROOT / "runs" / "phase2" / "cv" / "mse-rel_m5_s*.pt"))):
         cv.append(run(f, json.loads(Path(f).with_suffix(".json").read_text())["threshold"]))
     ai_cv = np.mean(cv, axis=0)
+    fin = []
+    for f in sorted(glob.glob(str(ROOT / "runs" / "phase2" / "cv" / "mse-rel+mfb+mask+gt_m5_s*.pt"))):
+        fin.append(run(f, json.loads(Path(f).with_suffix(".json").read_text())["threshold"]))
+    ai_fin = np.mean(fin, axis=0)
     t0 = pd.Timestamp(c["ds"].time.values[0])
     t15 = t0 + pd.to_timedelta(15 * (np.arange(c["radar"].shape[1]) + 1), "min")
     g = openrainer.gauges(["202205"]).rainfall_rate.sel(id=GAUGE).reindex(time=t15.values).values
     df = pd.DataFrame({"excess": c["blk"]["ex"][i], "expected": c["A_exp"][i], "radar": c["radar"][i],
-                       "gauge": g, "ai_se": ai_se, "ai_cv": ai_cv}, index=t15)
+                       "gauge": g, "ai_se": ai_se, "ai_cv": ai_cv, "ai_fin": ai_fin}, index=t15)
     h = df.resample("1h", label="right", closed="right").mean().loc[START:END]
     h.insert(0, "hour", ((h.index - pd.Timestamp(START)) / pd.Timedelta("1h")).astype(int))
     out = ROOT / "docs" / "explainer" / "may6.dat"
     h.round(3).to_csv(out, sep=" ", index=False, na_rep="nan")
-    tot = h[["radar", "gauge", "ai_se", "ai_cv"]].sum()
-    print(tot.round(1).to_dict(), "n models cv", len(cv))
+    tot = h[["radar", "gauge", "ai_se", "ai_cv", "ai_fin"]].sum()
+    print(tot.round(1).to_dict(), "n models cv", len(cv), len(fin))
     (ROOT / "results" / "phase2_may6_example.json").write_text(json.dumps(
         {"link": LINK, "gauge": GAUGE, "distance_m": 508, "window": [START, END],
          "totals_mm": {k: float(v) for k, v in tot.items()}}, indent=1))
@@ -105,7 +111,15 @@ def numbers():
     names = {"se_mse": "Sweden only (as before)", "se_log": "Sweden only, rate error in log scale",
              "mix21_mse": "Sweden + Italy 2021", "mix21_log": "Sweden + Italy 2021, log scale",
              "mix21nb_mse": "Sweden + Italy 2021 + neighbour inputs",
-             "mix21rel_mse": "\\textbf{Sweden + Italy 2021, reliable links only}"}
+             "mix21rel_mse": "Sweden + Italy 2021, reliable links only",
+             "mix21rel+mask_agg": "\\quad + hidden + rate error on 15-minute averages (not kept)",
+             "mix21rel+mfb_mse": "\\quad + Swedish radar corrected with gauges",
+             "mix21rel+mask_mse": "\\quad + unclear moments hidden",
+             "mix21rel+mfb+mask_mse": "\\quad + both of the above",
+             "mix21rel+mask+gt_mse": "\\quad + hidden + gauge answers in Italy",
+             "mix21rel+mfb+mask+gt_mse": "\\textbf{\\quad + all three (final recipe)}",
+             "mix21rel+rf6_mse": "\\quad + shorter memory (not kept)",
+             "mix21rel+mfb+mask+rf6_mse": "\\quad + corrected + hidden + shorter memory (not kept)"}
     rows = []
     for c, label in names.items():
         d = json.loads((R / f"phase2_mixed_{c}.json").read_text())
@@ -117,9 +131,33 @@ def numbers():
                     f" & {fmt_pct(it['min'], True)} to {fmt_pct(it['max'], True)} & "
                     f"{fmt_pct(i['pct_of_radar_0.00-0.10'])} & {fmt_pct(i['pct_of_radar_0.50-1.00'])}\\\\")
     cmd("ExpRows", "\n".join(rows))
+    for c, key in (("mix21rel_mse", "ExpRel"), ("mix21rel+mfb+mask+gt_mse", "ExpFin")):
+        d = json.loads((R / f"phase2_mixed_{c}.json").read_text())
+        g = d["spread"]["sweden"]["gauges_bias_pct"]
+        cmd(key + "SeRange", f"{fmt_pct(g['min'], True)} and {fmt_pct(g['max'], True)}")
+        cmd(key + "Long", fmt_pct(d["ensemble"]["italy_2022"]["pct_of_radar_0.50-1.00"]))
+
+    # new-links test (phase2_mixed_*+west/east_mse.json): train one side of Italy, judge the other
+    nl = []
+    for rec, key in (("mix21rel", "NlRel"), ("mix21rel+mfb+mask+gt", "NlFin")):
+        for side in ("west", "east"):
+            f = R / f"phase2_mixed_{rec}+{side}_mse.json"
+            if not f.exists():
+                continue
+            d = json.loads(f.read_text())
+            e, it = d["ensemble"]["italy_2022"], d["spread"]["italy_2022"]["bias_pct_all_steps"]
+            label = {"NlRel": "reliable links only", "NlFin": "\\textbf{final recipe}"}[key]
+            judged = "east" if side == "west" else "west"
+            nl.append(f"{label} & {side} $\\to$ {judged} & {fmt_pct(it['min'], True)} to "
+                      f"{fmt_pct(it['max'], True)} & {fmt_pct(e['pct_of_gauges_0.00-1.00'])} & "
+                      f"{fmt_pct(e['pct_of_radar_0.00-0.10'])} & {fmt_pct(e['pct_of_radar_0.50-1.00'])}\\\\")
+            cmd(key + side.capitalize() + "Long", fmt_pct(e["pct_of_radar_0.50-1.00"]))
+            cmd(key + side.capitalize() + "Gauges", fmt_pct(e["pct_of_gauges_0.00-1.00"]))
+    if nl:
+        cmd("NlRows", "\n".join(nl))
 
     # month-by-month cross-validation (phase2_italy_cv_*.json)
-    for tag, key in (("mse", "CVall"), ("mse-rel", "CVrel")):
+    for tag, key in (("mse", "CVall"), ("mse-rel", "CVrel"), ("mse-rel+mfb+mask+gt", "CVfin")):
         f = R / f"phase2_italy_cv_{tag}.json"
         if not f.exists():
             continue
@@ -137,7 +175,7 @@ def numbers():
             for k, row in enumerate(d["longrain_hourly_table"][y]):
                 cmd(key + "Long" + ("A" if y == "2021" else "B") + "abcd"[k], fmt_pct(row["ai"]["total_pct"]))
             for k, row in enumerate(d["longrain_hourly_table"][y + "_sweden_only_kept_model"]):
-                if key == "CVall":       # same model in both files: write once
+                if key != "CVrel":       # same model in every file: write once
                     continue
                 cmd("SeOnlyLong" + ("A" if y == "2021" else "B") + "abcd"[k], fmt_pct(row["ai"]["total_pct"]))
             e = d["ensemble"][y]

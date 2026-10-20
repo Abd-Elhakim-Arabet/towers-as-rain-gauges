@@ -10,7 +10,31 @@ Sweden only, rate error in log scale & 0.62 & $-$20\% to $+$9\% & $-$8\% to $+$3
 Sweden + Italy 2021 & 0.65 & $-$17\% to $+$0\% & $-$3\% to $+$4\% & 95\% & 28\%\\
 Sweden + Italy 2021, log scale & 0.65 & $-$23\% to $-$16\% & $-$15\% to $-$5\% & 83\% & 20\%\\
 Sweden + Italy 2021 + neighbour inputs & 0.68 & $-$17\% to $-$11\% & $-$16\% to $+$0\% & 91\% & 35\%\\
-\textbf{Sweden + Italy 2021, reliable links only} & 0.65 & $-$18\% to $-$13\% & $-$7\% to $+$5\% & 95\% & 42\%\\}
+Sweden + Italy 2021, reliable links only & 0.65 & $-$18\% to $-$13\% & $-$7\% to $+$5\% & 95\% & 42\%\\
+\quad + hidden + rate error on 15-minute averages (not kept) & 0.65 & $-$24\% to $-$13\% & $-$8\% to $-$2\% & 91\% & 50\%\\
+\quad + Swedish radar corrected with gauges & 0.65 & $-$13\% to $-$9\% & $-$4\% to $+$12\% & 94\% & 40\%\\
+\quad + unclear moments hidden & 0.65 & $-$15\% to $-$11\% & $-$5\% to $+$5\% & 93\% & 56\%\\
+\quad + both of the above & 0.65 & $-$13\% to $-$6\% & $+$1\% to $+$11\% & 95\% & 55\%\\
+\quad + hidden + gauge answers in Italy & 0.65 & $-$15\% to $+$2\% & $+$5\% to $+$11\% & 97\% & 67\%\\
+\textbf{\quad + all three (final recipe)} & 0.65 & $-$11\% to $+$1\% & $+$5\% to $+$13\% & 96\% & 66\%\\
+\quad + shorter memory (not kept) & 0.66 & $-$14\% to $-$4\% & $-$2\% to $+$5\% & 95\% & 51\%\\
+\quad + corrected + hidden + shorter memory (not kept) & 0.65 & $-$8\% to $-$3\% & $-$2\% to $+$8\% & 93\% & 59\%\\}
+\newcommand{\ExpRelSeRange}{$-$18\% and $-$13\%}
+\newcommand{\ExpRelLong}{42\%}
+\newcommand{\ExpFinSeRange}{$-$11\% and $+$1\%}
+\newcommand{\ExpFinLong}{66\%}
+\newcommand{\NlRelWestLong}{66\%}
+\newcommand{\NlRelWestGauges}{91\%}
+\newcommand{\NlRelEastLong}{22\%}
+\newcommand{\NlRelEastGauges}{84\%}
+\newcommand{\NlFinWestLong}{93\%}
+\newcommand{\NlFinWestGauges}{93\%}
+\newcommand{\NlFinEastLong}{30\%}
+\newcommand{\NlFinEastGauges}{87\%}
+\newcommand{\NlRows}{reliable links only & west $\to$ east & $+$4\% to $+$19\% & 91\% & 104\% & 66\%\\
+reliable links only & east $\to$ west & $-$13\% to $-$12\% & 84\% & 84\% & 22\%\\
+\textbf{final recipe} & west $\to$ east & $+$9\% to $+$37\% & 93\% & 103\% & 93\%\\
+\textbf{final recipe} & east $\to$ west & $-$13\% to $-$6\% & 87\% & 82\% & 30\%\\}
 \newcommand{\CVallSeMCC}{0.651}
 \newcommand{\CVallSeR}{0.83}
 \newcommand{\CVallSeRMSE}{0.97}
@@ -53,7 +77,25 @@ Sweden + Italy 2021 + neighbour inputs & 0.68 & $-$17\% to $-$11\% & $-$16\% to 
 \newcommand{\SeOnlyLongBc}{72\%}
 \newcommand{\SeOnlyLongBd}{55\%}
 \newcommand{\CVrelGaugesB}{86\%}
+\newcommand{\CVfinSeMCC}{0.645}
+\newcommand{\CVfinSeR}{0.85}
+\newcommand{\CVfinSeRMSE}{0.91}
+\newcommand{\CVfinSeBias}{$-$10\%}
+\newcommand{\CVfinSeBiasRange}{$-$13\% to $-$5\%}
+\newcommand{\CVfinBiasA}{$+$5\% to $+$13\%}
+\newcommand{\CVfinLongAa}{93\%}
+\newcommand{\CVfinLongAb}{98\%}
+\newcommand{\CVfinLongAc}{97\%}
+\newcommand{\CVfinLongAd}{107\%}
+\newcommand{\CVfinGaugesA}{90\%}
+\newcommand{\CVfinBiasB}{$+$6\% to $+$12\%}
+\newcommand{\CVfinLongBa}{98\%}
+\newcommand{\CVfinLongBb}{107\%}
+\newcommand{\CVfinLongBc}{95\%}
+\newcommand{\CVfinLongBd}{74\%}
+\newcommand{\CVfinGaugesB}{89\%}
 \newcommand{\Mayradar}{51}
 \newcommand{\Maygauge}{48}
-\newcommand{\Mayaise}{13}
+\newcommand{\Mayaise}{12}
 \newcommand{\Mayaicv}{17}
+\newcommand{\Mayaifin}{25}

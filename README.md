@@ -72,6 +72,9 @@ uv venv --python 3.12 .venv-ms && uv pip install --python .venv-ms/bin/python -r
 .venv/bin/python scripts/phase2_diagnose_longrain.py  # why long rain is under-measured in Italy
 .venv/bin/python scripts/phase2_mixed.py se_mse mix21_mse mix21rel_mse   # varied-training experiments
 .venv/bin/python scripts/phase2_italy_cv.py train 5,6,7,8,9 0,1,2 mse-rel && .venv/bin/python scripts/phase2_italy_cv.py eval mse-rel
+.venv/bin/python scripts/phase2_mixed.py "mix21rel+mfb+mask+gt_mse"   # final recipe (flags: mfb, mask, gt, rf6, west/east)
+.venv/bin/python scripts/phase2_mixed.py "mix21rel+mfb+mask+gt+west_mse" "mix21rel+mfb+mask+gt+east_mse"   # new-links test
+.venv/bin/python scripts/phase2_italy_cv.py train 5,6,7,8,9 0,1,2 mse-rel+mfb+mask+gt && .venv/bin/python scripts/phase2_italy_cv.py eval mse-rel+mfb+mask+gt
 .venv/bin/python scripts/export_explainer_varied.py && .venv/bin/python scripts/export_explainer_varied.py numbers
 .venv/bin/python scripts/phase2_summary.py     # results/phase2.md
 .venv/bin/python scripts/phase3_maps.py       # Phase 3: link rain maps vs gauges / radar

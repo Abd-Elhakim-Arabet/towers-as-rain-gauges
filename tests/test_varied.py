@@ -66,3 +66,17 @@ def test_train_multi_uses_only_allowed_pieces():
     torch.manual_seed(0)
     fresh = T.TCN(5, 3, n_levels=6, head="physics")
     assert all(torch.allclose(a.cpu(), b) for a, b in zip(m.state_dict().values(), fresh.state_dict().values()))
+
+
+def test_new_links_split_keeps_sides_apart():
+    import xarray as xr
+    import phase2_mixed as M
+    lon0 = np.array([9.5, 10.90, 10.95, 11.5, 12.0])
+    ds = xr.Dataset(coords={"cml_id": list("abcde")},
+                    data_vars={"site_0_lon": ("cml_id", lon0), "site_1_lon": ("cml_id", lon0)})
+    w, e = M.side_index(ds, "west"), M.side_index(ds, "east")
+    assert list(w) == [0] and list(e) == [3, 4]            # links inside the gap belong to neither
+    d = {"ds": ds, "tl": np.arange(5 * 4).reshape(5, 4), "blk": {"ai": np.arange(5)}, "tr": (0, 3)}
+    s = M.subset_links(d, e)
+    assert list(s["ds"].cml_id.values) == ["d", "e"] and s["tl"].shape == (2, 4)
+    assert list(s["blk"]["ai"]) == [3, 4] and s["tr"] == (0, 3)

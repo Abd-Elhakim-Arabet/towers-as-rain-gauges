@@ -3,7 +3,10 @@
     python scripts/phase2_italy_cv.py train MONTHS SEEDS [LOSS]  e.g. train 5,6 0,1,2 (data loaded once)
     python scripts/phase2_italy_cv.py eval [LOSS]                score all saved models
 LOSS is "mse" or "log"; "<loss>-rel" trains only on Italian links kept by the
-reliability score (targ.reliability), the recipe that worked best in phase2_mixed.
+reliability score (targ.reliability). Further "+flags" as in phase2_mixed: +mfb (Swedish
+training radar rescaled to the gauges, June-July only), +mask (ambiguous "dry" targets
+left out), +gt (Italian links near a gauge learn from the gauge), +rf6 (4-hour memory),
+e.g. mse-rel+mfb+mask+gt+rf6.
 
 Why: the long-rain hours in Italy come from a few days (85% of the "> half of the
 past day rainy" group in 2022 is one storm, 6 May 2022). A model trained on one
@@ -67,7 +70,15 @@ def pieces(times, year, held_out):
 def train(months: list[int], seeds: list[int], loss: str = "mse"):
     RUNS.mkdir(parents=True, exist_ok=True)
     se = MX.sweden()
-    its = {y: MX.italy_train(y, reliable_only=loss.endswith("-rel")) for y in YEARS}
+    flags = loss.split("+")[1:]
+    its = {y: MX.italy_train(y, reliable_only="-rel" in loss) for y in YEARS}
+    if "gt" in flags:
+        its = {y: MX.gauge_target(it, y) for y, it in its.items()}
+    if "mfb" in flags:
+        se = MX.mfb_adjust(se)
+    if "mask" in flags:
+        se = MX.mask_ambiguous(se)
+        its = {y: MX.mask_ambiguous(it) for y, it in its.items()}
     for month in months:
         for seed in seeds:
             if (RUNS / f"{loss}_m{month}_s{seed}.pt").exists():
@@ -76,8 +87,10 @@ def train(months: list[int], seeds: list[int], loss: str = "mse"):
 
 
 def train_one(se, its, month: int, seed: int, loss: str):
-    base = loss.split("-")[0]     # rate loss; "-rel" only changes the training links
+    base = loss.split("-")[0].split("+")[0]     # rate loss; "-rel" and "+flags" change the data
     kw = json.loads((OUT / "phase2_openmrg.json").read_text())["variants"]["physics"]["model_kw"]
+    if "rf6" in loss.split("+")[1:]:
+        kw = {**kw, "n_levels": 6}
     for y, it in its.items():
         it["tr_pieces"], it["va_pieces"] = pieces(it["ds"].time.values, y, month)
 
@@ -129,7 +142,7 @@ def train_one(se, its, month: int, seed: int, loss: str):
         if best is None or (m_se + m_it) / 2 > best[0]:
             best = ((m_se + m_it) / 2, float(thr))
     f.with_suffix(".tmp").rename(f)
-    f.with_suffix(".json").write_text(json.dumps({"month": month, "seed": seed, "loss": loss, "threshold": best[1],
+    f.with_suffix(".json").write_text(json.dumps({"month": month, "seed": seed, "loss": loss, "threshold": best[1], "model_kw": kw,
                                                   "val_mcc_mean": best[0], "history": hist}, indent=1))
     print("saved", f.name, "threshold", best[1], flush=True)
 
@@ -155,7 +168,7 @@ def evaluate(loss: str = "mse"):
     models = {}
     for f in sorted(glob.glob(str(RUNS / f"{loss}_m*_s*.pt"))):
         meta = json.loads(Path(f).with_suffix(".json").read_text())
-        m = TCN(5, 3, **kw).to(T.device())
+        m = TCN(5, 3, **{**kw, **meta.get("model_kw", {})}).to(T.device())
         m.load_state_dict(torch.load(f))
         m.eval()
         models[(meta["month"], meta["seed"])] = (m, meta["threshold"])

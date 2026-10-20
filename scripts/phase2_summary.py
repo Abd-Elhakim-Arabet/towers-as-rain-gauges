@@ -192,7 +192,10 @@ def varied_section():
     L += ["", "One-season experiments (5 runs each; Sweden August, Italy 2022 held out; long-rain groups in 15-min steps):", "",
           "| config | Sweden MCC (mean) | Sweden gauge bias (runs) | Italy 2022 bias (runs) | IT22 after dry day | IT22 after mostly rainy day |",
           "|---|---|---|---|---|---|"]
-    for c in ("se_mse", "se_log", "mix21_mse", "mix21_log", "mix21nb_mse", "mix21rel_mse"):
+    for c in ("se_mse", "se_log", "mix21_mse", "mix21_log", "mix21nb_mse", "mix21rel_mse", "mix21rel+mask_agg",
+              "mix21rel+mfb_mse", "mix21rel+mask_mse", "mix21rel+mfb+mask_mse", "mix21rel+mask+gt_mse",
+              "mix21rel+mfb+mask+gt_mse", "mix21rel+rf6_mse", "mix21rel+mask+rf6_mse", "mix21rel+mfb+mask+rf6_mse",
+              "mix21rel+west_mse", "mix21rel+east_mse", "mix21rel+mfb+mask+gt+west_mse", "mix21rel+mfb+mask+gt+east_mse"):
         p_ = RES / f"phase2_mixed_{c}.json"
         if not p_.exists():
             continue
@@ -201,9 +204,22 @@ def varied_section():
         g, it = sp["sweden"]["gauges_bias_pct"], sp["italy_2022"]["bias_pct_all_steps"]
         L.append(f"| {c} | {sp['sweden']['MCC_5min']['mean']:.3f} | {g['min']:+.0f}% .. {g['max']:+.0f}% "
                  f"| {it['min']:+.0f}% .. {it['max']:+.0f}% | {e['pct_of_radar_0.00-0.10']:.0f}% | {e['pct_of_radar_0.50-1.00']:.0f}% |")
-    d = _j.loads(f.read_text())
+    L += ["", "Flags: rel = reliable Italian links only; mfb = Swedish training radar rescaled daily to the city gauges "
+          "(training period only); mask = drop targets where radar says dry right after rain while the link is still "
+          "raised; gt = Italian training links within 1 km of a gauge use the gauge as target; rf6 = shorter memory "
+          "(~4 h); west/east = train on that half of the Italian links, judge the other half (new links); agg = rate loss on 15-min means; log = rate loss in log scale; nb = neighbour inputs."]
+    for tag, title in (("mse-rel", "reliable links only"), ("mse-rel+mfb+mask+gt", "final recipe: rel+mfb+mask+gt")):
+        f = RES / f"phase2_italy_cv_{tag}.json"
+        if f.exists():
+            L += cv_block(_j.loads(f.read_text()), title)
+    L += ["", "Italy and Netherlands zero-shot results above (and Phase 3) keep the Sweden-only model on purpose."]
+    return L
+
+
+def cv_block(d, title):
     sw = d["sweden_august"]
-    L += ["", "Month-by-month cross-validation (Sweden + both Italian summers minus the judged month, reliable links only, "
+    L = []
+    L += ["", f"Month-by-month cross-validation, {title} (Sweden + both Italian summers minus the judged month, "
           "3 runs per month). Hourly long-rain table, AI rain as % of radar, groups by share of past 24 h rainy "
           "(<10%, 10-25%, 25-50%, >50%):", "",
           "| season | Sweden-only kept model | varied training | Italy total bias (runs) |", "|---|---|---|---|"]
@@ -214,8 +230,7 @@ def varied_section():
         L.append(f"| {y} | {a_} | {b_} | {bb['min']:+.0f}% .. {bb['max']:+.0f}% |")
     L += ["", f"Sweden August, same networks: MCC {sw['MCC_5min']['mean']:.3f}, gauges r {sw['gauges_r']['mean']:.2f}, "
           f"RMSE {sw['gauges_RMSE']['mean']:.2f}, bias {sw['gauges_bias_pct']['mean']:+.0f}% "
-          f"(runs {sw['gauges_bias_pct']['min']:+.0f}% .. {sw['gauges_bias_pct']['max']:+.0f}%).",
-          "Italy and Netherlands zero-shot results above (and Phase 3) keep the Sweden-only model on purpose."]
+          f"(runs {sw['gauges_bias_pct']['min']:+.0f}% .. {sw['gauges_bias_pct']['max']:+.0f}%)."]
     return L
 
 

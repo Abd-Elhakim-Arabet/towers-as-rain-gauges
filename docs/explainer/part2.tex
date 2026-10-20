@@ -190,20 +190,20 @@ and~\ref{sec:nl}.
 Test & a rainy day & 24-h median & low value & training$^{*}$ & day\\
 \midrule
 Netherlands 2014 & 10\% & 48\% & \textbf{69\%} & -- & 100\%\\
-Italy 2022 & 11\% & 64\% & 55\% & \CVrelLongBd & 83\%\\
-Italy 2021 & 2\% & 86\% & 77\% & \textbf{\CVrelLongAd} & 77\%\\
+Italy 2022 & 11\% & 64\% & 55\% & \CVfinLongBd & 83\%\\
+Italy 2021 & 2\% & 86\% & 77\% & \textbf{\CVfinLongAd} & 77\%\\
 \bottomrule
 \end{tabular}
 
 \smallskip
-{\footnotesize $^{*}$ Section~\ref{sec:varied}: trained on Sweden and on other months of Italy, never on the month judged.}
+{\footnotesize $^{*}$ Section~\ref{sec:varied}: trained on Sweden and on other months of Italy, never on the month judged, with cleaned training answers (Section~\ref{sec:recipe}).}
 \end{center}
 In the Netherlands the fix works: the shortfall after a rainy day shrank from about half to about a third. In Italy it
 did not help: there the AI measures between half and two-thirds of the rain after a rainy day, with either dry level, and the
 classical method, which does not use a 24-hour median at all, does no better (62\%). Section~\ref{sec:varied} finds out
 why. In short: the dry level is fine; in a long rain the antennas stay wet, the radar we learn from misses the light rain at
 its end, and faulty links in the training data had taught the AI that a loss which stays raised for hours is not rain.
-Training on more varied weather (fifth column) fixes this in 2021 and helps a little in 2022, where these hours come almost
+Training on more varied weather with cleaned answers (fifth column) fixes this in 2021 and helps clearly in 2022, where these hours come almost
 all from one long storm. (An earlier check here said this rain is not lighter than usual. Looked at in 15-minute steps, it is: 1.2
 against 2.3\,mm/h on average in 2022, which makes it harder to see under the wet antennas.)
 
@@ -939,15 +939,15 @@ in Sweden (the classical method 6\%), and this varies a lot between training run
 breaks down, the AI's totals are within 10\% and its hourly correlation with gauges is 0.74--0.81.
 \item \textbf{Varied training fixes most of the amount problem.} Trained also on Italian months it is never judged on,
 the AI's training runs agree (Italian totals within a few percent of each other and of the radar), and Italian rain after a
-rainy day is measured much better. Sweden's August shortfall only shrinks from $-20\%$ to \CVrelSeBias{}
-(Section~\ref{sec:varied}).
+rainy day is measured much better. With cleaned training answers (gauge-corrected radar, unclear moments hidden), Sweden's August shortfall shrinks
+from $-20\%$ to \CVfinSeBias{} (Section~\ref{sec:varied}).
 \item \textbf{Robustness: clearly better.} With coarse 1-dB readings, and in two countries it never saw, the AI made
 no absurd readings in Italy and eight times fewer in the Netherlands. This matters for Algeria, where we will not be able
 to retune anything by hand.
 \item \textbf{Long rain: mostly fixed, one storm left.} A 3-day low dry level fixed much of the under-measurement after
 rainy days in the Netherlands. In Italy the cause was elsewhere (wet antennas, a radar that misses light rain, faulty
-training links); varied training on reliable links fixed it in 2021 and helped in 2022, where one day-long storm is still
-only partly measured.
+training links); varied training on reliable links with cleaned answers fixed it in 2021 and mostly in 2022 (\CVfinLongBd), where one
+day-long storm is still only partly measured. On Italian links the AI never saw, the recipe still helps, but less evenly (Section~\ref{sec:newlinks}).
 \item \textbf{The physics conversion rescued our first designs}, which under-measured heavy rain badly. With the final
 design, a network that outputs mm/h directly does about as well in Sweden; we have not tested it abroad.
 \item \textbf{The typical link works across countries.} In Italy and the Netherlands, a typical link's hourly rain followed the
@@ -962,7 +962,7 @@ set.
 \begin{enumerate}
 \item Finding out why the AI still under-measures after rainy days in Italy, and why training runs differ so much in
 amounts (more varied training data should help both). \emph{Done: Section~\ref{sec:varied}.}
-\item Training on more varied data to improve the amounts. \emph{Done for Sweden + Italy (Section~\ref{sec:cv}); a test
+\item Training on more varied data to improve the amounts. \emph{Done for Sweden + Italy (Sections~\ref{sec:cv}--\ref{sec:newlinks}); a test
 leaving a whole country out still needs a third country with 1-minute data.}
 \item Phase~3: combining many links into rain maps every few minutes, and pushing them forward in time for a short-range
 forecast.

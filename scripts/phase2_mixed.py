@@ -10,6 +10,15 @@ CONFIG = <data>_<loss>:
         mix22    Sweden + Italy 2022 (May-Aug train, Sep validation); Italy scored on 2021
         <data>nb same, plus two inputs from the neighbours (targ.features.neighbour_features)
         mix21rel Italian training links limited to those kept by the reliability score
+        +mfb     Sweden training radar rescaled day by day to the city gauges (June-July
+                 gauges only: "mean-field bias" adjustment); August never touched
+        +mask    training minutes left out where the radar says dry although it rained
+                 in the past 6 h and the link's loss is still >= 1 dB raised (the
+                 radar often misses the light end of long rain)
+        +rf6     network with 6 levels: sees ~4 h back instead of ~17 h
+        +gt      Italian training links within 1 km of a rain gauge learn from the gauge
+                 instead of the radar (gauges catch light rain the radar misses)
+        e.g. mix21rel+mfb+mask_mse
   loss  mse      rate error in mm/h (as before)
         log      rate error of log(1 + R)
 se_mse reuses the five existing runs (runs/phase2/physics_seed*.pt).
@@ -119,7 +128,100 @@ def with_neighbours(d: dict, keys=("dyn", "dyn_q")) -> dict:
     return out
 
 
+def mfb_adjust(se: dict, max_factor: float = 2.0) -> dict:
+    """Rescale the Swedish training radar day by day so that, along the links next to the
+    city gauges, its daily total matches the gauges'. Only days before 1 August are
+    adjusted (training and validation); the test month keeps the raw radar."""
+    import xarray as xr
+    g = se["gauges"].rainfall_rate
+    pairs = se["pairs"]
+    rad = se["radar"]
+    rp = rad.sel(cml_id=pairs.cml_id.values).resample(time="1h").mean()
+    gp = g.sel(id=pairs.gauge.values).resample(time="1h").mean().reindex(time=rp.time.values)
+    ok = np.isfinite(rp.values) & np.isfinite(gp.transpose("id", "time").values)
+    r_day = pd.Series(np.where(ok, rp.values, 0).sum(axis=0), index=rp.time.values).resample("1D").sum()
+    g_day = pd.Series(np.where(ok, gp.transpose("id", "time").values, 0).sum(axis=0),
+                      index=rp.time.values).resample("1D").sum()
+    fac = (g_day / r_day).where((r_day > 5) & (g_day > 5)).clip(1 / max_factor, max_factor).fillna(1.0)
+    fac[fac.index >= pd.Timestamp("2015-08-01")] = 1.0
+    f_t = fac.reindex(pd.DatetimeIndex(rad.time.values).normalize()).values
+    out = dict(se)
+    out["radar"] = rad * xr.DataArray(f_t, dims="time", coords={"time": rad.time.values})
+    out["target"] = P2.minute_target(out["radar"], se["ds"].time.values)
+    out["radar_val"] = out["radar"].sel(time=OPENMRG_SPLITS["val"])
+    out["mfb_factors"] = fac[fac.index < pd.Timestamp("2015-08-01")]
+    print("mean-field factors (Jun-Jul): median %.2f, range %.2f-%.2f" %
+          (out["mfb_factors"].median(), out["mfb_factors"].min(), out["mfb_factors"].max()), flush=True)
+    return out
+
+
+def gauge_target(it: dict, year: str, max_m: float = 1000.0) -> dict:
+    """Italian training target from the nearest rain gauge (within max_m) where it has data."""
+    months = [f"{year}{m:02d}" for m in range(5, 10)]
+    ds = it["ds"]
+    g = openrainer.gauges(months)
+    pairs = openmrg.gauge_link_pairs(ds, g, max_m).sort_values("distance_m").drop_duplicates("cml_id")
+    times = ds.time.values
+    tgt = it["target"].copy()
+    pos_link = {c: i for i, c in enumerate(ds.cml_id.values)}
+    gt = g.rainfall_rate.sel(id=pairs.gauge.values)
+    pos = np.searchsorted(times, gt.time.values)
+    n = 0
+    for row, gv in zip(pairs.itertuples(), gt.transpose("id", "time").values):
+        i = pos_link[row.cml_id]
+        for k in range(1, 16):
+            p = pos - k
+            ok = (p >= 0) & (p < len(times)) & np.isfinite(gv)
+            tgt[i, p[ok]] = gv[ok]
+        n += 1
+    tgt[~np.isfinite(it["target"]) & ~np.isfinite(tgt)] = np.nan
+    print(f"gauge target on {n} of {len(pos_link)} Italian training sub-links", flush=True)
+    out = dict(it)
+    out["target"] = tgt
+    return out
+
+
+def mask_ambiguous(d: dict, hours: int = 6, raised_db: float = 1.0) -> dict:
+    """Leave out training targets that say 'dry' right after rain while the link is still raised."""
+    import bottleneck as bn
+    tgt = d["target"].copy()
+    recent = bn.move_max(tgt, window=hours * 60, min_count=1, axis=-1)
+    exc = bn.move_mean(d["dyn"][:, 0], window=15, min_count=8, axis=-1)
+    amb = np.isfinite(tgt) & (tgt < 0.1) & (np.nan_to_num(recent) >= 0.1) & (np.nan_to_num(exc) >= raised_db)
+    print(f"masked {amb.sum() / max(1, np.isfinite(tgt).sum()):.1%} of training targets as ambiguous", flush=True)
+    tgt[amb] = np.nan
+    out = dict(d)
+    out["target"] = tgt
+    return out
+
+
 # ------------------------------------------------------------------ helpers
+# New-links test: Italian links are split at the median path-midpoint longitude; training
+# uses one side, the Italian test the other, with a 0.05 deg (~4 km) gap on each side.
+SPLIT_LON, SPLIT_GAP = 10.935, 0.05
+
+
+def side_index(ds, side: str):
+    lon = (ds.site_0_lon.values + ds.site_1_lon.values) / 2
+    return np.where(lon < SPLIT_LON - SPLIT_GAP)[0] if side == "west" else np.where(lon > SPLIT_LON + SPLIT_GAP)[0]
+
+
+def subset_links(d: dict, idx) -> dict:
+    """Keep only links idx in a training dict (italy_train) or a test dict (DL.prepare)."""
+    n = d["ds"].sizes["cml_id"]
+    out = {}
+    for k, v in d.items():
+        if k == "ds" or (hasattr(v, "dims") and "cml_id" in v.dims):
+            out[k] = v.isel(cml_id=idx)
+        elif isinstance(v, np.ndarray) and v.ndim >= 1 and v.shape[0] == n:
+            out[k] = v[idx]
+        elif isinstance(v, dict):
+            out[k] = {kk: vv[idx] for kk, vv in v.items()}
+        else:
+            out[k] = v
+    return out
+
+
 def mcc_15(P, R, thr, target):
     """Rain/no-rain MCC on 15-min blocks vs the (block-constant) minute target."""
     est = DL.block15(np.where(P > thr, R, 0.0))
@@ -201,6 +303,7 @@ def spread(rows, key):
 # ------------------------------------------------------------------ main
 def run(config: str, se, cache):
     data, loss = config.split("_")
+    data, *flags = data.split("+")
     use_nb = data.endswith("nb")
     data = data[:-2] if use_nb else data
     kw = json.loads((OUT / "phase2_openmrg.json").read_text())["variants"]["physics"]["model_kw"]
@@ -212,6 +315,10 @@ def run(config: str, se, cache):
         if ("train", year, rel_only) not in cache:
             cache[("train", year, rel_only)] = italy_train(year, rel_only)
         it = cache[("train", year, rel_only)]
+    side = "west" if "west" in flags else "east" if "east" in flags else None
+    if side and it is not None:
+        it = subset_links(it, side_index(it["ds"], side))
+        print(f"new-links test: training on {it['ds'].sizes['cml_id']} {side} Italian sub-links", flush=True)
     if use_nb:
         if "se_nb" not in cache:
             cache["se_nb"] = with_neighbours(se)
@@ -220,6 +327,21 @@ def run(config: str, se, cache):
             if ("train_nb", year) not in cache:
                 cache[("train_nb", year)] = with_neighbours(it)
             it = cache[("train_nb", year)]
+    if "mfb" in flags:
+        if "se_mfb" not in cache:
+            cache["se_mfb"] = mfb_adjust(se)
+        se = cache["se_mfb"]
+    if "gt" in flags and it is not None:
+        key = ("gt", year, rel_only, side)
+        if key not in cache:
+            cache[key] = gauge_target(it, year)
+        it = cache[key]
+    if "mask" in flags:
+        se = mask_ambiguous(se)
+        if it is not None:
+            it = mask_ambiguous(it)
+    if "rf6" in flags:
+        kw = {**kw, "n_levels": 6}
     test_years = {"se": ["2021", "2022"], "mix21": ["2022"], "mix22": ["2021"]}[data]
     RUNS.mkdir(parents=True, exist_ok=True)
 
@@ -279,6 +401,10 @@ def run(config: str, se, cache):
         if ("test", y) not in cache:
             cache[("test", y)] = DL.prepare([f"{y}{m:02d}" for m in range(5, 10)], cp)
         c = cache[("test", y)]
+        if side:
+            other = "east" if side == "west" else "west"
+            c = subset_links(c, side_index(c["ds"], other))
+            print(f"new-links test: judging {c['ds'].sizes['cml_id']} {other} sub-links in {y}", flush=True)
         if use_nb:
             if ("test_nb", y) not in cache:
                 cache[("test_nb", y)] = with_neighbours(c, keys=("dyn",))
