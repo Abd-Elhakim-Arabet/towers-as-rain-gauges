@@ -164,6 +164,7 @@ def main():
         fmt = lambda v: "–" if v is None else f"{v:.0f}%"
         lines.append(f"| {k} | {r['share_of_rainy_steps']:.1%} | {fmt(r['classical']['total_pct'])} "
                      f"| {fmt(rb['ai']['total_pct']) if rb else '–'} | {fmt(r['ai']['total_pct'])} |")
+    lines += varied_section()
     lines += ["", "## MindSpore", "", f"- {ms['framework']}: PyTorch weights ported, max difference "
               f"{ms['port_check']['max_abs_diff_rain_mm_h']:.1e} mm/h over {ms['port_check']['n_values']} values; "
               f"rain/no-rain agreement {ms['port_check']['rain_no_rain_agreement']:.0%}.",
@@ -171,6 +172,51 @@ def main():
               f"{ms['train_smoke']['loss_last50']:.2f} in {ms['train_smoke']['steps']} steps.", ""]
     (RES / "phase2.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
+
+
+def varied_section():
+    """Follow-up: why runs disagree, long rain in Italy, training on more varied data."""
+    import json as _j
+    f = RES / "phase2_italy_cv_mse-rel.json"
+    if not f.exists():
+        return []
+    ds = _j.loads((RES / "phase2_diagnose_seeds.json").read_text())
+    L = ["", "## Follow-up: why runs disagree, long rain in Italy, more varied training", "",
+         "Runs differ in the strength of their rain (AI/radar where both say rain), not in rain/no-rain. "
+         f"July bias vs August bias across runs: r = {ds['val_vs_test_bias_r']:.2f}.", "",
+         "| run | July bias | July strength | Aug bias | Aug strength | Aug missed / false (share of radar) |",
+         "|---|---|---|---|---|---|"]
+    for r in ds["runs"]:
+        L.append(f"| {r['run']} | {r['val']['bias_pct']:+.0f}% | {r['val']['amplitude_on_hits']:.2f} | {r['test']['bias_pct']:+.0f}% "
+                 f"| {r['test']['amplitude_on_hits']:.2f} | {r['test']['missed_share_of_radar']:.0%} / {r['test']['false_share_of_radar']:.0%} |")
+    L += ["", "One-season experiments (5 runs each; Sweden August, Italy 2022 held out; long-rain groups in 15-min steps):", "",
+          "| config | Sweden MCC (mean) | Sweden gauge bias (runs) | Italy 2022 bias (runs) | IT22 after dry day | IT22 after mostly rainy day |",
+          "|---|---|---|---|---|---|"]
+    for c in ("se_mse", "se_log", "mix21_mse", "mix21_log", "mix21nb_mse", "mix21rel_mse"):
+        p_ = RES / f"phase2_mixed_{c}.json"
+        if not p_.exists():
+            continue
+        d = _j.loads(p_.read_text())
+        sp, e = d["spread"], d["ensemble"]["italy_2022"]
+        g, it = sp["sweden"]["gauges_bias_pct"], sp["italy_2022"]["bias_pct_all_steps"]
+        L.append(f"| {c} | {sp['sweden']['MCC_5min']['mean']:.3f} | {g['min']:+.0f}% .. {g['max']:+.0f}% "
+                 f"| {it['min']:+.0f}% .. {it['max']:+.0f}% | {e['pct_of_radar_0.00-0.10']:.0f}% | {e['pct_of_radar_0.50-1.00']:.0f}% |")
+    d = _j.loads(f.read_text())
+    sw = d["sweden_august"]
+    L += ["", "Month-by-month cross-validation (Sweden + both Italian summers minus the judged month, reliable links only, "
+          "3 runs per month). Hourly long-rain table, AI rain as % of radar, groups by share of past 24 h rainy "
+          "(<10%, 10-25%, 25-50%, >50%):", "",
+          "| season | Sweden-only kept model | varied training | Italy total bias (runs) |", "|---|---|---|---|"]
+    for y in ("2021", "2022"):
+        a_ = " / ".join(f"{r['ai']['total_pct']:.0f}%" for r in d["longrain_hourly_table"][y + "_sweden_only_kept_model"])
+        b_ = " / ".join(f"{r['ai']['total_pct']:.0f}%" for r in d["longrain_hourly_table"][y])
+        bb = d["spread_" + y]["bias_pct_all_steps"]
+        L.append(f"| {y} | {a_} | {b_} | {bb['min']:+.0f}% .. {bb['max']:+.0f}% |")
+    L += ["", f"Sweden August, same networks: MCC {sw['MCC_5min']['mean']:.3f}, gauges r {sw['gauges_r']['mean']:.2f}, "
+          f"RMSE {sw['gauges_RMSE']['mean']:.2f}, bias {sw['gauges_bias_pct']['mean']:+.0f}% "
+          f"(runs {sw['gauges_bias_pct']['min']:+.0f}% .. {sw['gauges_bias_pct']['max']:+.0f}%).",
+          "Italy and Netherlands zero-shot results above (and Phase 3) keep the Sweden-only model on purpose."]
+    return L
 
 
 if __name__ == "__main__":

@@ -1,0 +1,165 @@
+{
+  "runs": [
+    {
+      "run": "physics_seed0.pt",
+      "threshold": 0.2,
+      "val": {
+        "bias_pct": -11.921955129782091,
+        "missed_share_of_radar": 0.16684968415490692,
+        "amplitude_on_hits": 0.8727876690354512,
+        "false_share_of_radar": 0.16411578225594034,
+        "hits_share_of_radar": 0.8171200694922998
+      },
+      "val_thr025": {
+        "bias_pct": -13.943326418858625,
+        "missed_share_of_radar": 0.2015514781835597,
+        "amplitude_on_hits": 0.9003745656242454,
+        "false_share_of_radar": 0.151627074560867,
+        "hits_share_of_radar": 0.782418275463647
+      },
+      "test": {
+        "bias_pct": -27.67159025406074,
+        "missed_share_of_radar": 0.10302467099111526,
+        "amplitude_on_hits": 0.6935900773086464,
+        "false_share_of_radar": 0.10477251621325159,
+        "hits_share_of_radar": 0.8869100959278962
+      },
+      "test_thr025": {
+        "bias_pct": -29.667933241926036,
+        "missed_share_of_radar": 0.12273450374848956,
+        "amplitude_on_hits": 0.7007449980219496,
+        "false_share_of_radar": 0.09130553064815088,
+        "hits_share_of_radar": 0.8672002631705218
+      }
+    },
+    {
+      "run": "physics_seed1.pt",
+      "threshold": 0.25,
+      "val": {
+        "bias_pct": 7.399200765546499,
+        "missed_share_of_radar": 0.17780671019147026,
+        "amplitude_on_hits": 1.0097391683457193,
+        "false_share_of_radar": 0.2515682780785998,
+        "hits_share_of_radar": 0.8061630434557363
+      },
+      "val_thr025": {
+        "bias_pct": 7.399200765546499,
+        "missed_share_of_radar": 0.17780671019147026,
+        "amplitude_on_hits": 1.0097391683457193,
+        "false_share_of_radar": 0.2515682780785998,
+        "hits_share_of_radar": 0.8061630434557363
+      },
+      "test": {
+        "bias_pct": -13.63746491465655,
+        "missed_share_of_radar": 0.11543865104187567,
+        "amplitude_on_hits": 0.794572119771764,
+        "false_share_of_radar": 0.16098593012896656,
+        "hits_share_of_radar": 0.8744961158771358
+      },
+      "test_thr025": {
+        "bias_pct": -13.63746491465655,
+        "missed_share_of_radar": 0.11543865104187567,
+        "amplitude_on_hits": 0.794572119771764,
+        "false_share_of_radar": 0.16098593012896656,
+        "hits_share_of_radar": 0.8744961158771358
+      }
+    },
+    {
+      "run": "physics_seed2.pt",
+      "threshold": 0.25,
+      "val": {
+        "bias_pct": 15.50258018959485,
+        "missed_share_of_radar": 0.20813617531405557,
+        "amplitude_on_hits": 1.120461442107347,
+        "false_share_of_radar": 0.27458507946084115,
+        "hits_share_of_radar": 0.7758335783331509
+      },
+      "val_thr025": {
+        "bias_pct": 15.50258018959485,
+        "missed_share_of_radar": 0.20813617531405557,
+        "amplitude_on_hits": 1.120461442107347,
+        "false_share_of_radar": 0.27458507946084115,
+        "hits_share_of_radar": 0.7758335783331509
+      },
+      "test": {
+        "bias_pct": -4.599954686148622,
+        "missed_share_of_radar": 0.11276029651261257,
+        "amplitude_on_hits": 0.8947099516575732,
+        "false_share_of_radar": 0.16018831916306228,
+        "hits_share_of_radar": 0.8771744704063987
+      },
+      "test_thr025": {
+        "bias_pct": -4.599954686148622,
+        "missed_share_of_radar": 0.11276029651261257,
+        "amplitude_on_hits": 0.8947099516575732,
+        "false_share_of_radar": 0.16018831916306228,
+        "hits_share_of_radar": 0.8771744704063987
+      }
+    },
+    {
+      "run": "physics_seed3.pt",
+      "threshold": 0.2,
+      "val": {
+        "bias_pct": 5.591791450241512,
+        "missed_share_of_radar": 0.17116138341033854,
+        "amplitude_on_hits": 1.0152806168749473,
+        "false_share_of_radar": 0.22424878173255522,
+        "hits_share_of_radar": 0.8128083702368681
+      },
+      "val_thr025": {
+        "bias_pct": 2.1916283696721273,
+        "missed_share_of_radar": 0.20137961461273146,
+        "amplitude_on_hits": 1.0369047534726528,
+        "false_share_of_radar": 0.20302228985796672,
+        "hits_share_of_radar": 0.782590139034475
+      },
+      "test": {
+        "bias_pct": -17.659060225049494,
+        "missed_share_of_radar": 0.10544505384845111,
+        "amplitude_on_hits": 0.7694666462651424,
+        "false_share_of_radar": 0.1376344150554504,
+        "hits_share_of_radar": 0.8844897130705602
+      },
+      "test_thr025": {
+        "bias_pct": -20.300162128216726,
+        "missed_share_of_radar": 0.12081349231367776,
+        "amplitude_on_hits": 0.7746650237316934,
+        "false_share_of_radar": 0.1177523431507425,
+        "hits_share_of_radar": 0.8691212746053336
+      }
+    },
+    {
+      "run": "physics_seed4.pt",
+      "threshold": 0.2,
+      "val": {
+        "bias_pct": 4.846915758207704,
+        "missed_share_of_radar": 0.18692671272978223,
+        "amplitude_on_hits": 1.0150851491281625,
+        "false_share_of_radar": 0.23233075802346373,
+        "hits_share_of_radar": 0.7970430409174244
+      },
+      "val_thr025": {
+        "bias_pct": 0.6634717760140907,
+        "missed_share_of_radar": 0.22272191919722667,
+        "amplitude_on_hits": 1.0376074622262137,
+        "false_share_of_radar": 0.20826035123610584,
+        "hits_share_of_radar": 0.7612478344499799
+      },
+      "test": {
+        "bias_pct": -13.944969792852756,
+        "missed_share_of_radar": 0.12152573226963372,
+        "amplitude_on_hits": 0.8107148446528414,
+        "false_share_of_radar": 0.14909896486927723,
+        "hits_share_of_radar": 0.8684090346493777
+      },
+      "test_thr025": {
+        "bias_pct": -18.156898348494778,
+        "missed_share_of_radar": 0.14663957128388316,
+        "amplitude_on_hits": 0.8131204744884883,
+        "false_share_of_radar": 0.1238954354499126,
+        "hits_share_of_radar": 0.8432951956351282
+      }
+    }
+  ],
+  "val_vs_test_bias_r": 0.9703720767702986
+}

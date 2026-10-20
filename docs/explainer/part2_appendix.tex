@@ -11,6 +11,7 @@
 \item[Causal] Using only the present and the past, never the future. Needed for live warnings.
 \item[CSI] Critical success index: hits divided by (hits + misses + false alarms) for rain above a threshold. 1 is perfect.
 \item[Convolution] A small set of weights that slides along the signal, producing one new number per position.
+\item[Cross-validation] Judging every part of the data in turn with a model trained on all the other parts, so everything gets an honest test.
 \item[Dry level] What a link's total loss would be if it were dry right now. Ours: the 20th percentile of the previous 3 days.
 \item[Dilation] Spacing the minutes a convolution looks at further apart (1, 2, 4, \ldots), so a few layers can see far back.
 \item[GPU] Graphics card: a chip that performs many multiplications at once, which makes training fast.
@@ -35,6 +36,7 @@
 \item[RAINLINK] The min/max rain retrieval algorithm developed for the Dutch link data.
 \item[Reliability score] Our test of whether to trust a link: does its signal drop alone (unconfirmed by its 5 nearest neighbours) or all the time (more than 20\% of the time)?
 \item[Receptive field] How far into the past the network's answer can depend on: 1{,}021 minutes for ours.
+\item[Strength (of a run)] The AI's rain divided by the reference's, at the moments when both say it rains. 1.00 is perfect.
 \item[Signal event] A quarter-hour in which a link's loss is at least 1.5\,dB above its own dry level.
 \item[Seed] The starting point of the random numbers used in training. Different seeds give slightly different networks.
 \item[Sigmoid] The function $1/(1+e^{-x})$, which turns any number into a probability between 0 and 1.

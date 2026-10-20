@@ -137,3 +137,32 @@ def minmax_features(loss_max: np.ndarray, loss_min: np.ndarray, length_km, freq_
     out[:, :3] = np.clip(out[:, :3], -10, 40)
     out[:, 5] = np.clip(out[:, 5], -10, 40)
     return out.astype(np.float32)
+
+
+# --- neighbour inputs (optional, Phase 2 follow-up) ---------------------------------
+
+NB_CHANNELS = ("nb_raised", "nb_any")
+NB_RAISED_DB = 1.0       # a neighbour counts as "raised" with >= 1 dB extra loss ...
+NB_SMOOTH_MIN = 15       # ... averaged over its last 15 minutes
+
+
+def neighbour_features(dyn: np.ndarray, A) -> np.ndarray:
+    """Two channels from the neighbours, at the same moment (nothing from the future).
+
+    nb_raised  share of neighbours with data whose extra loss (channel 0, last 15 min
+               mean) is >= NB_RAISED_DB; 0 when no neighbour has data
+    nb_any     1 if at least one neighbour has data, else 0
+    A: (n, n) sparse 0/1 neighbour matrix (targ.neighbours.neighbour_matrix), so a
+    link's own other direction does not count. Long rain raises many neighbours at
+    once; a drifting or broken link is raised alone.
+    Returns float32 (n_links, 2, T).
+    """
+    ex = dyn[:, 0].astype(np.float32)
+    present = dyn[:, 3].astype(np.float32)
+    ex_s = bn.move_mean(np.where(present > 0, ex, np.nan), window=NB_SMOOTH_MIN, min_count=1, axis=-1)
+    raised = np.nan_to_num((ex_s >= NB_RAISED_DB).astype(np.float32) * (np.isfinite(ex_s)))
+    has = np.isfinite(ex_s).astype(np.float32)
+    num = A @ raised
+    den = A @ has
+    frac = np.where(den > 0, num / np.maximum(den, 1), 0.0)
+    return np.stack([frac, (den > 0).astype(np.float32)], axis=1).astype(np.float32)

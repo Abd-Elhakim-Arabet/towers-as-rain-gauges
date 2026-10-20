@@ -1,0 +1,179 @@
+{
+  "model": "runs/phase2/physics_selected.pt",
+  "threshold": 0.25,
+  "2021": {
+    "n_sublinks": 81,
+    "rows": [
+      {
+        "past24h_wet": [
+          0.0,
+          0.1
+        ],
+        "n": 17721,
+        "n_with_gauge": 1395,
+        "radar_mean_mm_h": 2.0666056214215534,
+        "dry_level_error_db": -0.14801647762541625,
+        "dry_level_error_db_median": 0.0,
+        "excess_over_low_db": 1.59509773280723,
+        "excess_over_oracle_db": 1.447081255181814,
+        "expected_from_radar_db": 1.004204673698167,
+        "ai_correction_db": 1.5883086736963354,
+        "ai_pct_of_radar": 72.25490162325103,
+        "ai_no24h_pct_of_radar": 71.51738686954802,
+        "classical_pct_of_radar": 78.74133566066364,
+        "radar_pct_of_gauges": 88.77032455524133,
+        "ai_pct_of_gauges": 71.89973474367659,
+        "classical_pct_of_gauges": 84.08332092583208
+      },
+      {
+        "past24h_wet": [
+          0.1,
+          0.25
+        ],
+        "n": 10956,
+        "n_with_gauge": 1105,
+        "radar_mean_mm_h": 2.039668488811535,
+        "dry_level_error_db": -0.20797432152853843,
+        "dry_level_error_db_median": 0.0,
+        "excess_over_low_db": 2.2419631907583715,
+        "excess_over_oracle_db": 2.033988869229833,
+        "expected_from_radar_db": 1.0678272515025864,
+        "ai_correction_db": 1.7906446056507408,
+        "ai_pct_of_radar": 73.05826918664934,
+        "ai_no24h_pct_of_radar": 72.0880100745956,
+        "classical_pct_of_radar": 89.11166126578931,
+        "radar_pct_of_gauges": 94.39592113999778,
+        "ai_pct_of_gauges": 71.83268190239357,
+        "classical_pct_of_gauges": 90.05219072418788
+      },
+      {
+        "past24h_wet": [
+          0.25,
+          0.5
+        ],
+        "n": 4536,
+        "n_with_gauge": 390,
+        "radar_mean_mm_h": 1.6974443407947162,
+        "dry_level_error_db": -0.1742063492063493,
+        "dry_level_error_db_median": 0.0,
+        "excess_over_low_db": 2.306496178718401,
+        "excess_over_oracle_db": 2.132289829512052,
+        "expected_from_radar_db": 0.9401489039464934,
+        "ai_correction_db": 1.9672467659787192,
+        "ai_pct_of_radar": 64.01590900438184,
+        "ai_no24h_pct_of_radar": 62.53115394307674,
+        "classical_pct_of_radar": 85.41406807938888,
+        "radar_pct_of_gauges": 84.52333900770718,
+        "ai_pct_of_gauges": 52.867674303344266,
+        "classical_pct_of_gauges": 70.34776329311813
+      },
+      {
+        "past24h_wet": [
+          0.5,
+          1.0
+        ],
+        "n": 130,
+        "n_with_gauge": 0,
+        "radar_mean_mm_h": 1.6317785739099782,
+        "dry_level_error_db": -0.11820512820512794,
+        "dry_level_error_db_median": 0.0,
+        "excess_over_low_db": 1.1682051282051282,
+        "excess_over_oracle_db": 1.0500000000000005,
+        "expected_from_radar_db": 0.8021201818763942,
+        "ai_correction_db": 1.0215954168506047,
+        "ai_pct_of_radar": 34.86510720602463,
+        "ai_no24h_pct_of_radar": 32.55179566984345,
+        "classical_pct_of_radar": 46.38996354070707
+      }
+    ]
+  },
+  "2022": {
+    "n_sublinks": 72,
+    "rows": [
+      {
+        "past24h_wet": [
+          0.0,
+          0.1
+        ],
+        "n": 16832,
+        "n_with_gauge": 1548,
+        "radar_mean_mm_h": 2.273822174794022,
+        "dry_level_error_db": -0.15703224017743986,
+        "dry_level_error_db_median": 0.0,
+        "excess_over_low_db": 1.7621219045529881,
+        "excess_over_oracle_db": 1.6050896643755483,
+        "expected_from_radar_db": 1.1007552594394978,
+        "ai_correction_db": 1.6719995939845866,
+        "ai_pct_of_radar": 81.19745754004258,
+        "ai_no24h_pct_of_radar": 80.64798365972504,
+        "classical_pct_of_radar": 95.46048518216523,
+        "radar_pct_of_gauges": 85.71855351595416,
+        "ai_pct_of_gauges": 81.89432993513897,
+        "classical_pct_of_gauges": 88.79373827326488
+      },
+      {
+        "past24h_wet": [
+          0.1,
+          0.25
+        ],
+        "n": 12316,
+        "n_with_gauge": 1646,
+        "radar_mean_mm_h": 1.8019671457197013,
+        "dry_level_error_db": -0.15853361481000322,
+        "dry_level_error_db_median": 0.0,
+        "excess_over_low_db": 1.9400841336859524,
+        "excess_over_oracle_db": 1.7815505188759495,
+        "expected_from_radar_db": 0.8847609797110343,
+        "ai_correction_db": 1.8438487628127886,
+        "ai_pct_of_radar": 78.19831072732634,
+        "ai_no24h_pct_of_radar": 77.3857300594418,
+        "classical_pct_of_radar": 91.0874213798274,
+        "radar_pct_of_gauges": 86.66577131378995,
+        "ai_pct_of_gauges": 72.32867278188596,
+        "classical_pct_of_gauges": 86.6160945761944
+      },
+      {
+        "past24h_wet": [
+          0.25,
+          0.5
+        ],
+        "n": 7498,
+        "n_with_gauge": 1086,
+        "radar_mean_mm_h": 1.9206005121062508,
+        "dry_level_error_db": -0.23519160665066238,
+        "dry_level_error_db_median": 0.0,
+        "excess_over_low_db": 2.1105826511001227,
+        "excess_over_oracle_db": 1.8753910444494601,
+        "expected_from_radar_db": 0.8827775286302896,
+        "ai_correction_db": 2.2169113047593916,
+        "ai_pct_of_radar": 69.06097135094748,
+        "ai_no24h_pct_of_radar": 68.60368336603126,
+        "classical_pct_of_radar": 77.58247500902877,
+        "radar_pct_of_gauges": 90.6476410552942,
+        "ai_pct_of_gauges": 63.92957898971498,
+        "classical_pct_of_gauges": 77.05681857416616
+      },
+      {
+        "past24h_wet": [
+          0.5,
+          1.0
+        ],
+        "n": 3797,
+        "n_with_gauge": 737,
+        "radar_mean_mm_h": 1.2351792519405183,
+        "dry_level_error_db": -0.878667368975507,
+        "dry_level_error_db_median": -1.0,
+        "excess_over_low_db": 2.4075673777543676,
+        "excess_over_oracle_db": 1.5289000087788607,
+        "expected_from_radar_db": 0.6200825686071444,
+        "ai_correction_db": 2.582330403219504,
+        "ai_pct_of_radar": 27.71210434577524,
+        "ai_no24h_pct_of_radar": 33.95907178787581,
+        "classical_pct_of_radar": 32.91088249705029,
+        "radar_pct_of_gauges": 71.36736533096999,
+        "ai_pct_of_gauges": 28.747656794385946,
+        "classical_pct_of_gauges": 34.385761181803986
+      }
+    ]
+  }
+}

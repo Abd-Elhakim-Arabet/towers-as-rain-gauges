@@ -92,6 +92,39 @@ Rain measured as % of the reference total in those steps (before = 24-h median d
 | italy_2022_hourly | 10.6% | 62% | 64% | 55% |
 | netherlands_2014_hourly | 9.7% | 75% | 48% | 69% |
 
+## Follow-up: why runs disagree, long rain in Italy, more varied training
+
+Runs differ in the strength of their rain (AI/radar where both say rain), not in rain/no-rain. July bias vs August bias across runs: r = 0.97.
+
+| run | July bias | July strength | Aug bias | Aug strength | Aug missed / false (share of radar) |
+|---|---|---|---|---|---|
+| physics_seed0.pt | -12% | 0.87 | -28% | 0.69 | 10% / 10% |
+| physics_seed1.pt | +7% | 1.01 | -14% | 0.79 | 12% / 16% |
+| physics_seed2.pt | +16% | 1.12 | -5% | 0.89 | 11% / 16% |
+| physics_seed3.pt | +6% | 1.02 | -18% | 0.77 | 11% / 14% |
+| physics_seed4.pt | +5% | 1.02 | -14% | 0.81 | 12% / 15% |
+
+One-season experiments (5 runs each; Sweden August, Italy 2022 held out; long-rain groups in 15-min steps):
+
+| config | Sweden MCC (mean) | Sweden gauge bias (runs) | Italy 2022 bias (runs) | IT22 after dry day | IT22 after mostly rainy day |
+|---|---|---|---|---|---|
+| se_mse | 0.619 | -32% .. -6% | -6% .. +41% | 83% | 32% |
+| se_log | 0.621 | -20% .. +9% | -8% .. +32% | 81% | 48% |
+| mix21_mse | 0.648 | -17% .. +0% | -3% .. +4% | 95% | 28% |
+| mix21_log | 0.651 | -23% .. -16% | -15% .. -5% | 83% | 20% |
+| mix21nb_mse | 0.685 | -17% .. -11% | -16% .. +0% | 91% | 35% |
+| mix21rel_mse | 0.648 | -18% .. -13% | -7% .. +5% | 95% | 42% |
+
+Month-by-month cross-validation (Sweden + both Italian summers minus the judged month, reliable links only, 3 runs per month). Hourly long-rain table, AI rain as % of radar, groups by share of past 24 h rainy (<10%, 10-25%, 25-50%, >50%):
+
+| season | Sweden-only kept model | varied training | Italy total bias (runs) |
+|---|---|---|---|
+| 2021 | 77% / 79% / 70% / 77% | 93% / 94% / 87% / 95% | +1% .. +4% |
+| 2022 | 84% / 86% / 72% / 55% | 98% / 102% / 87% / 60% | -1% .. +4% |
+
+Sweden August, same networks: MCC 0.648, gauges r 0.81, RMSE 1.01, bias -17% (runs -23% .. -12%).
+Italy and Netherlands zero-shot results above (and Phase 3) keep the Sweden-only model on purpose.
+
 ## MindSpore
 
 - MindSpore 2.10.0 (CPU): PyTorch weights ported, max difference 7.7e-05 mm/h over 276480 values; rain/no-rain agreement 100%.

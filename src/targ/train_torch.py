@@ -25,7 +25,13 @@ def device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def loss_fn(logit, rate, y, rate_weight: float):
+def loss_fn(logit, rate, y, rate_weight: float, rate_loss: str = "mse"):
+    """BCE on rain/no-rain + rate error on wet targets.
+
+    rate_loss "mse": squared error in mm/h (heavy minutes dominate).
+    rate_loss "log": squared error of log(1 + R) (every wet minute counts similarly),
+                     scaled by 25 so its size is comparable at rate_weight 0.05.
+    """
     ok = torch.isfinite(y)
     if ok.sum() == 0:
         return logit.sum() * 0
@@ -35,8 +41,12 @@ def loss_fn(logit, rate, y, rate_weight: float):
         return bce
     # the rate is only learned where the reference says it rains; rain/no-rain is the
     # logit's job. Learning rate on dry minutes too teaches the network to shrink.
-    mse = F.mse_loss(rate[ok][wet], torch.clamp(y[ok][wet], max=100.0))
-    return bce + rate_weight * mse
+    yt = torch.clamp(y[ok][wet], max=100.0)
+    if rate_loss == "log":
+        err = 25.0 * F.mse_loss(torch.log1p(rate[ok][wet]), torch.log1p(yt))
+    else:
+        err = F.mse_loss(rate[ok][wet], yt)
+    return bce + rate_weight * err
 
 
 def train(dyn: list[np.ndarray], stat: np.ndarray, phys: np.ndarray, target: np.ndarray,
@@ -75,7 +85,7 @@ def train(dyn: list[np.ndarray], stat: np.ndarray, phys: np.ndarray, target: np.
         x = dyn_t[v][li[:, None], :, idx].permute(0, 2, 1)       # (B, C, crop)
         y = tgt_t[li[:, None], idx][:, warm:]
         logit, rate = model(x, stat_t[li], phys_t[li])
-        loss = loss_fn(logit[:, warm:], rate[:, warm:], y, rate_weight)
+        loss = loss_fn(logit[:, warm:], rate[:, warm:], y, rate_weight, rate_loss)
         opt.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -119,3 +129,64 @@ def predict(model, dyn: np.ndarray, stat: np.ndarray, phys: np.ndarray,
 
 def state_numpy(model) -> dict:
     return {k: v.detach().cpu().numpy() for k, v in model.state_dict().items()}
+
+
+def train_multi(domains: list[dict], *, val_fn=None, steps: int = 4000, batch: int = 64, crop: int = 2560,
+                warm: int = 1024, lr: float = 2e-3, rate_weight: float = 0.05, seed: int = 0,
+                model_kw: dict | None = None, log_every: int = 250, rate_loss: str = "mse"):
+    """Like `train`, but every batch is drawn from one of several datasets.
+
+    domains: dicts with keys dyn (list of variants), stat, phys, target, t_range (or
+    t_ranges: a list of (start, end) pieces, e.g. to skip a held-out month) and weight
+    (share of batches). Each dataset keeps its own links and time axis.
+    """
+    rng = np.random.default_rng(seed)
+    torch.manual_seed(seed)
+    dev = device()
+    d0 = domains[0]
+    model = TCN(d0["dyn"][0].shape[1], d0["stat"].shape[1], **(model_kw or {})).to(dev)
+    assert model.receptive_field <= warm + 1, model.receptive_field
+    opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+    sched = torch.optim.lr_scheduler.LambdaLR(
+        opt, lambda s: min(1.0, s / 200) * 0.5 * (1 + math.cos(math.pi * s / steps)))
+    D = [{"dyn": [torch.from_numpy(x).to(dev) for x in d["dyn"]], "stat": torch.from_numpy(d["stat"]).to(dev),
+          "phys": torch.from_numpy(d["phys"]).to(dev), "tgt": torch.from_numpy(d["target"]).to(dev),
+          "t_ranges": [r for r in d.get("t_ranges", [d.get("t_range")]) if r[1] - r[0] > crop],
+          "n": d["stat"].shape[0]} for d in domains]
+    for d in D:
+        lens = np.array([b - a - crop for a, b in d["t_ranges"]], float)
+        d["p_range"] = lens / lens.sum()
+    w = np.array([d.get("weight", 1.0) for d in domains], float)
+    w /= w.sum()
+    best, best_state, hist = float("inf"), None, []
+    tic = time.time()
+    for step in range(1, steps + 1):
+        model.train()
+        d = D[rng.choice(len(D), p=w)]
+        t0, t1 = d["t_ranges"][rng.choice(len(d["t_ranges"]), p=d["p_range"])]
+        li = torch.from_numpy(rng.integers(0, d["n"], batch)).to(dev)
+        st = rng.integers(t0, t1 - crop, batch)
+        idx = torch.from_numpy(st[:, None] + np.arange(crop)[None]).to(dev)
+        x = d["dyn"][rng.integers(len(d["dyn"]))][li[:, None], :, idx].permute(0, 2, 1)
+        y = d["tgt"][li[:, None], idx][:, warm:]
+        logit, rate = model(x, d["stat"][li], d["phys"][li])
+        loss = loss_fn(logit[:, warm:], rate[:, warm:], y, rate_weight, rate_loss)
+        opt.zero_grad(set_to_none=True)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        opt.step()
+        sched.step()
+        if step % log_every == 0 or step == steps:
+            msg = f"step {step:5d} loss {loss.item():.4f} ({time.time() - tic:.0f}s)"
+            if val_fn is not None:
+                score = val_fn(model)
+                hist.append({"step": step, "train_loss": float(loss.item()), "val": float(score)})
+                msg += f" val {score:.4f}"
+                if score < best:
+                    best = score
+                    best_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
+            print(msg, flush=True)
+    if best_state is not None:
+        model.load_state_dict(best_state)
+    model.eval()
+    return model, hist

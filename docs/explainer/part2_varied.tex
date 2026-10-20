@@ -1,0 +1,169 @@
+%==========================================================
+\section{Teaching the AI with more varied weather}
+\label{sec:varied}
+%==========================================================
+
+Two questions were left open above. Why does the AI still measure too little rain after a rainy day in Italy
+(Section~\ref{sec:drylevel})? And why do training runs that agree on \emph{whether} it rains disagree so much on
+\emph{how much} (Section~\ref{sec:se_results})? We first looked for the causes, then tried fixes, and kept the test months
+untouched throughout.
+
+\subsection{Why the training runs disagree on amounts}
+\label{sec:why_runs}
+A run's rain total can be wrong in three ways: it calls rain ``dry'' (missed rain), it calls a dry moment ``rain'' (false
+rain), or it says ``rain'' at the right moments but with the wrong strength. We split the total of each of the five runs
+of Section~\ref{sec:se_results} into these three parts, against the radar, on the July validation weeks and on the
+August test month:
+\begin{center}\footnotesize\setlength{\tabcolsep}{5pt}
+\begin{tabular}{cccccc}
+\toprule
+& \multicolumn{2}{c}{\textbf{July (validation)}} & \multicolumn{3}{c}{\textbf{August (test)}}\\
+\cmidrule(lr){2-3}\cmidrule(lr){4-6}
+Run & bias & strength when it says rain & bias & strength & missed / false rain\\
+\midrule
+\SeedRows
+\bottomrule
+\end{tabular}
+\end{center}
+(``Strength'' is the run's rain divided by the radar's, at the moments when both say it rains; 1.00 is perfect. The
+missed and false columns are shares of the radar's total.)
+
+Three things stand out:
+\begin{itemize}
+\item \textbf{It is the strength, not the switch.} All runs miss about the same rain (10--12\%) and add about the same
+false rain. What differs is how strongly they convert a decibel into millimetres: from 0.69 to 0.89 of the radar in August.
+Fixing the rain/no-rain threshold at the same value for every run does not change this.
+\item \textbf{July tells us about August.} A run that reads high in July also reads high in August: the correlation between
+the two columns of bias is \SeedValTestR. So the spread is a property of each trained network, not bad luck in August.
+\item \textbf{All runs read lower in August than in July}, by 15 to 20 points. August 2015 had more heavy downpours, and the
+strength is learned mostly from the few heavy minutes of six weeks in one city. Each run fits those few minutes a little
+differently.
+\end{itemize}
+That last point is the cause: too little and too uniform training rain. The cure we expected was more varied rain.
+
+\subsection{What a long rain looks like to a link}
+\label{sec:may6}
+The Italian ``after a mostly rainy day'' hours are not spread over the summer. In 2022, 85\% of them come from a single
+storm: a day and a half of steady rain on 5--7 May over the Apennine hills. Figure~\ref{fig:may6} shows one link through it,
+next to a rain gauge 508\,m away.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=1 by 2,vertical sep=1.5cm,xlabels at=edge bottom},
+  width=0.95\textwidth,height=4.6cm,xmin=0,xmax=60,grid=major,grid style={inkc!12},
+  xtick={0,12,24,36,48,60},xticklabels={{5 May\\12:00},{6 May\\00:00},{6 May\\12:00},{7 May\\00:00},{7 May\\12:00},{8 May\\00:00}},
+  xticklabel style={align=center,font=\scriptsize},
+  tick label style={font=\small},label style={font=\small},
+  legend style={font=\scriptsize,draw=none,fill=white,fill opacity=0.85,text opacity=1},legend cell align=left]
+\nextgroupplot[ylabel={rain (mm/h)},ymin=0,ymax=4.5,legend pos=north east]
+  \addplot[thick,color=gaugec,mark=*,mark size=1pt] table[x=hour,y=gauge] {may6.dat};
+  \addlegendentry{rain gauge}
+  \addplot[thick,color=radarc] table[x=hour,y=radar] {may6.dat};
+  \addlegendentry{radar along the link}
+  \addplot[thick,color=inkc,dashed] table[x=hour,y=ai_se] {may6.dat};
+  \addlegendentry{AI, Sweden only}
+  \addplot[thick,color=rainc] table[x=hour,y=ai_cv] {may6.dat};
+  \addlegendentry{AI, varied training (never saw May)}
+\nextgroupplot[ylabel={dB},xlabel={hourly averages (UTC)},ymin=0,ymax=6,legend pos=north east]
+  \addplot[thick,color=inkc] table[x=hour,y=excess] {may6.dat};
+  \addlegendentry{extra loss above the dry level}
+  \addplot[thick,color=radarc,dashed] table[x=hour,y=expected] {may6.dat};
+  \addlegendentry{loss the radar's rain should cause}
+\end{groupplot}
+\end{tikzpicture}
+\caption{The long storm of 5--7 May 2022 on sub-link 182\_1 (5.3\,km, 24.6\,GHz). Top: rain. Bottom: what the link
+measured. Storm totals: gauge \Maygauge\,mm, radar \Mayradar\,mm, AI trained on Sweden only \Mayaise\,mm, AI with varied
+training \Mayaicv\,mm.}
+\label{fig:may6}
+\end{figure}
+
+What the figure, and the same numbers for every link, show:
+\begin{enumerate}
+\item \textbf{The dry level is not the problem.} In every group of Italian rainy hours, the 3-day low value is at or a little below (by
+0.1--0.2\,dB, and up to 0.9\,dB in the long storm) the level the link has when the radar says it is dry. It is never too
+high, so it cannot be what makes the AI read too little.
+\item \textbf{The link sees more than the rain.} While it rains, the extra loss is the rain's share plus a steady 1.5--2\,dB
+more: water on the antenna covers, which stay wet in a long rain (the wet antenna of Section~\ref{sec:fakes}).
+\item \textbf{The extra loss lasts a whole day after the radar stops} (6 May evening to 7 May noon). The gauge shows why:
+light rain, 0.2--1.2\,mm/h, kept falling. The radar, looking from far above, saw almost none of it.
+\item \textbf{The AI gives up.} After about twelve hours of raised loss, the AI reports almost nothing, even at hours when
+the radar shows 2--4\,mm/h. To a single link, ``my loss has been raised for half a day'' looks like a faulty or drifting link, and
+our training data are full of those. That is what the AI learned.
+\end{enumerate}
+So the cause is not one bug. Three things push the same way: a long rain wets the antennas, the radar we train on misses the
+light rain at its end (so the training answer says ``dry'' while the link is still wet), and faulty links teach that a
+loss which stays raised for hours is not rain.
+
+\subsection{Trying fixes, one Italian summer at a time}
+Each fix was trained five times (seeds 0--4) on Sweden June--July, plus Italy 2021 where stated, and tested on what it never
+saw: Sweden in August and Italy in 2022. ``Rain after a mostly rainy day'' is measured here in 15-minute steps, which is
+stricter than the hourly table of Section~\ref{sec:drylevel}.
+\begin{center}\footnotesize\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{p{5.1cm}ccccc}
+\toprule
+& \multicolumn{2}{c}{\textbf{Sweden, August}} & \multicolumn{3}{c}{\textbf{Italy 2022}}\\
+\cmidrule(lr){2-3}\cmidrule(lr){4-6}
+& & bias vs gauges, & total bias, & rain after a & rain after a\\
+Training & MCC & 5 runs & 5 runs & dry day & mostly rainy day\\
+\midrule
+\ExpRows
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{itemize}
+\item \textbf{One Italian summer fixes most of the spread.} Five runs that disagreed by 47 points on Italy's 2022 total
+now agree within 7 to 12 points, and in Sweden within 5 to 17 points instead of 26. Rain detection in Sweden improves too
+(MCC 0.65 against 0.62), even though no Swedish data was added.
+\item \textbf{Training only on reliable links helps the long storm.} With the reliability score of
+Section~\ref{sec:reliability} applied to the Italian training links, the share of the long storm measured rises from 28\% to
+42\%, with nothing else lost. This supports point 3 above: faulty links were teaching the AI to ignore long raised loss.
+\item \textbf{Two ideas did not work.} Scoring the rate error in a log scale (so light rain counts as much as heavy rain)
+made the AI read 5--15\% too little in Italy. Giving it two extra inputs from its neighbours (``how many links around me
+are raised right now?'') improved rain detection (MCC 0.68) but cost amounts elsewhere and barely helped the long storm.
+\end{itemize}
+
+\subsection{The final check: every Italian month, judged by a model that never saw it}
+\label{sec:cv}
+One Italian summer may be luck. So we used both summers, month by month: to judge May, we train on Sweden plus June to
+September of \emph{both} Italian years; to judge June, on the other four months; and so on. This is called
+\textbf{cross-validation}. Every Italian month of 2021 and 2022 is then judged by a network that never saw it, and each
+network learns from long rains of the other months (for example September 2021 when May is judged). Training uses the
+reliable links only; the last week of each training month is kept apart to pick the checkpoint and the threshold; three
+runs per month. Sweden's August is never used.
+
+The same hourly table as in Section~\ref{sec:drylevel}, same links, same groups (rain measured as a share of the radar's):
+\begin{center}\footnotesize
+\begin{tabular}{lcccc}
+\toprule
+& \multicolumn{4}{c}{\textbf{share of the previous 24 hours that was rainy}}\\
+\cmidrule(lr){2-5}
+& under 10\% & 10--25\% & 25--50\% & over 50\%\\
+\midrule
+Italy 2021, Sweden-only AI & \SeOnlyLongAa & \SeOnlyLongAb & \SeOnlyLongAc & \SeOnlyLongAd\\
+Italy 2021, \textbf{varied training} & \textbf{\CVrelLongAa} & \textbf{\CVrelLongAb} & \textbf{\CVrelLongAc} & \textbf{\CVrelLongAd}\\
+\midrule
+Italy 2022, Sweden-only AI & \SeOnlyLongBa & \SeOnlyLongBb & \SeOnlyLongBc & \SeOnlyLongBd\\
+Italy 2022, \textbf{varied training} & \textbf{\CVrelLongBa} & \textbf{\CVrelLongBb} & \textbf{\CVrelLongBc} & \CVrelLongBd\\
+\bottomrule
+\end{tabular}
+\end{center}
+Against the rain gauges, over all rainy hours, the varied AI measures \CVrelGaugesA{} (2021) and \CVrelGaugesB{} (2022) of
+the gauges' rain. The three runs per month agree on Italy's total within \CVrelBiasA{} (2021) and \CVrelBiasB{} (2022).
+In Sweden's August, the same networks score MCC \CVrelSeMCC, hourly correlation with gauges \CVrelSeR, error
+\CVrelSeRMSE\,mm/h and bias \CVrelSeBias{} (runs from \CVrelSeBiasRange), against 0.615, 0.79, 1.04\,mm/h and $-20\%$ for the
+Sweden-only model: rain detection and agreement between runs improve clearly, the Swedish shortfall only a little.
+
+\begin{careful}
+\textbf{What this test is, and is not.} The Italian links are the same in every month: this tests new weather on known links,
+not new links. The Italy and Netherlands results of Sections~\ref{sec:italy}--\ref{sec:neighbours}, and the maps of Part~3,
+keep the Sweden-only model on purpose, so that they remain tests on countries the AI has never seen. For Algeria, which
+has no reference data of its own, the recipe of this section is the one to use: train on several countries, reliable links
+only, and average several runs.
+\end{careful}
+
+\begin{oneline}
+More varied rain fixed most of both problems: training runs now agree on amounts, Sweden improved, and in Italy the AI
+measures \CVrelLongAd{} of the rain after a rainy day in 2021. Two things remain: the one long storm of May 2022 is only
+partly measured (\CVrelLongBd{}), and in Sweden's August the AI still reads \CVrelSeBias{} low.
+\end{oneline}
