@@ -21,7 +21,7 @@ Built for the Huawei ICT Competition (Innovation Track).
 | 1 | Classical baseline on OpenMRG | done — see [results/phase1_openmrg.md](results/phase1_openmrg.md) |
 | 2 | AI models (causal TCN, physics head; PyTorch + MindSpore twin), cross-domain tests on Italy and the Netherlands | done — see [results/phase2.md](results/phase2.md) |
 | 3 | Rain maps (IDW) + nowcasting (pysteps) | done — see [results/phase3_maps.json](results/phase3_maps.json), [results/phase3_nowcast.json](results/phase3_nowcast.json) |
-| 4 | Virtual Algerian network (simulation) | – |
+| 4 | Virtual Algerian network (simulation) | done — see [results/phase4.md](results/phase4.md), explainer Part 4, interactive replay in [site/phase4/index.html](site/phase4/index.html) |
 | 5 | Flood-risk layer | – |
 | 6 | Dashboard | – |
 | 7 | Report, pitch, video script | – |
@@ -79,6 +79,10 @@ uv venv --python 3.12 .venv-ms && uv pip install --python .venv-ms/bin/python -r
 .venv/bin/python scripts/phase2_summary.py     # results/phase2.md
 .venv/bin/python scripts/phase3_maps.py       # Phase 3: link rain maps vs gauges / radar
 .venv/bin/python scripts/phase3_nowcast.py    # Phase 3: 0-60 min nowcasts, Netherlands
+.venv/bin/python scripts/phase4_storms.py     # Phase 4: IMERG storms (Algiers 2001, Ghardaia 2008), needs EARTHDATA_TOKEN
+.venv/bin/python scripts/phase4_rain_texture.py  # Phase 4: rain patchiness measured on Italian radar
+.venv/bin/python scripts/phase4_simulate.py   # Phase 4: simulated network -> signals -> AI/classical -> maps, scores
+.venv/bin/python scripts/export_explainer_phase4.py && .venv/bin/python scripts/export_phase4_explorer.py  # figures + replay page
 .venv/bin/python scripts/serve_site.py       # explainer PDF + Algeria map on http://localhost:8000
 ```
 

@@ -1,0 +1,18 @@
+{
+ "source": "OpenRainER RADadj, November 2021, ~1 km, 15 min",
+ "block_deg": 0.1,
+ "n_wet_pixels": 13150041,
+ "sigma_log_ratio": 0.5877061486244202,
+ "wet_share_mean": 0.9418634283664601,
+ "wet_share_median": 1.0,
+ "log_ratio_corr": {
+  "15min": 0.39440714049438547,
+  "30min": 0.22492747944799882,
+  "60min": 0.163021243774055
+ },
+ "spectral_slope_median": -3.8746359586246992,
+ "spectral_slope_iqr": [
+  -3.9436241025805043,
+  -3.8226611844434233
+ ]
+}
