@@ -1,105 +1,145 @@
-<title>Storm Over the Towers</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Storm Over the Towers · Live 3D</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a full-bleed night scene; one control rail at the bottom, a title card top-left,
-   a legend top-right. Deliberately single-theme (a storm at night), every colour set explicitly. */
+/* GIS workstation layout (after GeoLibre): top bar, layers panel left, map, status bar bottom.
+   Single dark theme, colours set explicitly. */
 :root {
-  --night: #070d14; --glass: rgba(10, 18, 27, 0.78); --edge: rgba(150, 180, 205, 0.22);
-  --ink: #e6eef4; --muted: #93a6b5; --accent: #7cc4ff; --warm: #ffb36b;
-  --op0: #3ccf7f; --op1: #ff6b6e; --op2: #ffb03b;
-  --font-display: "Newsreader", Georgia, serif;
-  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --bar: #0d1117; --panel: #111823; --edge: #233042; --ink: #dfe7ef; --muted: #8b9bab; --accent: #4ea1ff;
+  --warm: #ffb36b; --op0: #3ccf7f; --op1: #ff6b6e; --op2: #ffb03b;
+  --font: "Inter Tight", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
   color-scheme: dark;
 }
-html, body { height: 100%; }
-body { background: var(--night); color: var(--ink); font-family: var(--font-body); font-size: 14px; overflow: hidden; }
-#scene { position: fixed; inset: 0; }
-#flash { position: fixed; inset: 0; pointer-events: none; background: #dfeaff; opacity: 0; transition: opacity 60ms linear; mix-blend-mode: screen; }
-.card { position: fixed; background: var(--glass); border: 1px solid var(--edge); border-radius: 10px;
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-#title { top: calc(14px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px));
-  padding: 12px 16px; max-width: min(430px, calc(100vw - 32px)); display: grid; gap: 4px; }
-#title h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(22px, 3vw, 30px); margin: 0; line-height: 1.1; }
-#title .event { color: var(--muted); font-size: 13px; }
-#title .sim { font-size: 12px; color: var(--warm); letter-spacing: .02em; }
-#title .hint { font-size: 11.5px; color: var(--muted); }
-#legend { top: calc(14px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
-  padding: 10px 14px; display: grid; gap: 6px; font-size: 12.5px; color: var(--muted); min-width: 0; }
-#legend .row { display: flex; align-items: center; gap: 8px; }
-#legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px currentColor; }
-#legend .bar { width: 64px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, rgba(90,190,255,.35), #fff3d6, #ffb36b); }
-#legend .drop { width: 2px; height: 12px; background: linear-gradient(#ffffff00, #cfe6ff); display: inline-block; margin: 0 4px; }
-#rail { left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-  width: min(1120px, calc(100vw - 32px)); padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
-.seg { display: inline-flex; border: 1px solid var(--edge); border-radius: 7px; overflow: hidden; }
-.seg button { font: inherit; font-size: 13px; color: var(--ink); background: transparent; border: 0; padding: 6px 11px; cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--accent); color: #06121d; }
-.btn { font: inherit; font-size: 13px; color: var(--ink); background: transparent; border: 1px solid var(--edge);
-  border-radius: 7px; padding: 6px 12px; cursor: pointer; min-width: 64px; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bar); color: var(--ink); font-family: var(--font); font-size: 13px; display: grid;
+  grid-template-rows: auto 1fr auto; grid-template-columns: 250px 1fr; grid-template-areas: "top top" "side map" "foot foot"; }
+header { grid-area: top; display: flex; align-items: center; gap: 18px; padding: 8px 14px; border-bottom: 1px solid var(--edge); }
+header .brand { font-weight: 600; letter-spacing: .02em; }
+header .brand b { color: var(--accent); }
+header .event { color: var(--muted); }
+header .sim { margin-left: auto; color: var(--warm); font-size: 12px; }
+aside { grid-area: side; background: var(--panel); border-right: 1px solid var(--edge); overflow-y: auto; padding: 10px; display: grid;
+  gap: 14px; align-content: start; }
+aside h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+.layer { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--edge); border-radius: 6px; margin-bottom: 5px; }
+.layer input { accent-color: var(--accent); margin: 0; }
+.layer .tag { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.seg { display: flex; border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
+.seg button { flex: 1; font: inherit; color: var(--ink); background: transparent; border: 0; padding: 6px 4px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #04101c; }
+.places { display: flex; flex-wrap: wrap; gap: 5px; }
+.places button, .btn { font: inherit; font-size: 12px; color: var(--ink); background: #172131; border: 1px solid var(--edge);
+  border-radius: 6px; padding: 5px 8px; cursor: pointer; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.time { flex: 1 1 260px; display: flex; align-items: center; gap: 10px; min-width: 0; }
-.time input { flex: 1; min-width: 0; accent-color: var(--accent); }
-.clock { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 12.5px; white-space: nowrap; }
-.read { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.legend div { display: flex; align-items: center; gap: 8px; color: var(--muted); margin: 3px 0; }
+.legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px currentColor; }
+.legend .bar { width: 46px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, rgba(90,190,255,.45), #ffd9a0, #ff9a4d); }
+#map { grid-area: map; position: relative; min-height: 0; }
+#flash { position: absolute; inset: 0; pointer-events: none; background: #e8f0ff; opacity: 0; transition: opacity 70ms linear; mix-blend-mode: screen; z-index: 2; }
+#timebar { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(720px, calc(100% - 28px)); z-index: 3;
+  display: flex; gap: 10px; align-items: center; padding: 8px 12px; background: rgba(13, 17, 23, .82); border: 1px solid var(--edge);
+  border-radius: 8px; backdrop-filter: blur(6px); }
+#timebar input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.clock, .read { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+.read { color: var(--muted); }
 .read b { color: var(--ink); font-weight: 500; }
-#note { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(86px + env(safe-area-inset-bottom, 0px));
-  font-size: 11.5px; color: var(--muted); max-width: 360px; text-shadow: 0 1px 2px #000; }
-#err[hidden] { display: none; }
-#err { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
-@media (max-width: 720px) { #legend { display: none; } #note { display: none; } #rail { bottom: 10px; } }
+footer { grid-area: foot; display: flex; gap: 22px; padding: 5px 14px; border-top: 1px solid var(--edge); font-family: var(--mono);
+  font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; }
+footer .src { margin-left: auto; }
+.maplibregl-ctrl-attrib { font-size: 10px; }
+@media (max-width: 760px) { body { grid-template-columns: 1fr; grid-template-areas: "top" "map" "foot"; } aside { display: none; } }
 </style>
-
-<div id="scene"></div>
-<div id="flash"></div>
-<div id="err" hidden>This 3D view needs WebGL, which this browser has turned off.</div>
-
-<header class="card" id="title">
-  <h1>Storm Over the Towers</h1>
-  <div class="event" id="event"></div>
-  <div class="sim">Simulation: real towers and terrain, satellite storm, simulated links.</div>
-  <div class="hint">Heights ×2.5; towers drawn 140 m tall to read at city scale. Drag to pan; right-drag or Ctrl-drag to tilt and turn.</div>
+</head>
+<body>
+<header>
+  <span class="brand"><b>◆</b> Towers as Rain Gauges · 3D</span>
+  <span class="event" id="event"></span>
+  <span class="sim">Simulation: real tower sites, terrain, imagery and buildings; satellite storm; simulated links. Masts drawn 2.5× size.</span>
 </header>
 
-<aside class="card" id="legend" aria-label="Legend">
-  <div class="row"><i style="color:var(--op0);background:var(--op0)"></i>Mobilis tower</div>
-  <div class="row"><i style="color:var(--op1);background:var(--op1)"></i>Djezzy tower</div>
-  <div class="row"><i style="color:var(--op2);background:var(--op2)"></i>Ooredoo tower</div>
-  <div class="row"><span class="bar"></span>link: dry → heavy rain on its path</div>
-  <div class="row"><span class="drop"></span><span class="drop"></span>rain: denser where heavier</div>
+<aside aria-label="Layers and controls">
+  <section>
+    <h2>City</h2>
+    <div class="seg" id="cities"></div>
+  </section>
+  <section>
+    <h2>Rain shown</h2>
+    <div class="seg" id="views">
+      <button type="button" data-v="truth" aria-pressed="true">Simulated truth</button>
+      <button type="button" data-v="ai" aria-pressed="false">AI view</button>
+    </div>
+  </section>
+  <section>
+    <h2>Layers</h2>
+    <label class="layer"><input type="checkbox" data-l="rain" checked> Rain <span class="tag">PARTICLES</span></label>
+    <label class="layer"><input type="checkbox" data-l="shafts" checked> Rain shafts <span class="tag">COLUMNS</span></label>
+    <label class="layer"><input type="checkbox" data-l="links" checked> Microwave links <span class="tag">LINES</span></label>
+    <label class="layer"><input type="checkbox" data-l="towers" checked> Towers <span class="tag">3D MESH</span></label>
+    <label class="layer"><input type="checkbox" data-l="labels" checked> District names <span class="tag">TEXT</span></label>
+    <label class="layer"><input type="checkbox" data-l="buildings" checked> 3D buildings <span class="tag">OSM</span></label>
+    <label class="layer"><input type="checkbox" data-l="terrain" checked> Terrain <span class="tag">DEM</span></label>
+    <label class="layer"><input type="checkbox" data-l="satellite" checked> Satellite <span class="tag">RASTER</span></label>
+  </section>
+  <section>
+    <h2>Fly to</h2>
+    <div class="places" id="places"></div>
+  </section>
+  <section class="legend">
+    <h2>Legend</h2>
+    <div><i style="color:var(--op0);background:var(--op0)"></i>Mobilis tower</div>
+    <div><i style="color:var(--op1);background:var(--op1)"></i>Djezzy tower</div>
+    <div><i style="color:var(--op2);background:var(--op2)"></i>Ooredoo tower</div>
+    <div><span class="bar"></span>link: dry → heavy rain</div>
+  </section>
+  <section>
+    <button class="btn" id="orbit" type="button" aria-pressed="false">Start orbit</button>
+  </section>
 </aside>
 
-
-<nav class="card" id="rail" aria-label="Controls">
-  <div class="seg" id="cities" role="group" aria-label="City"></div>
-  <div class="seg" id="views" role="group" aria-label="Rain shown">
-    <button type="button" data-v="truth" aria-pressed="true">Simulated truth</button>
-    <button type="button" data-v="ai" aria-pressed="false">What the AI sees</button>
-  </div>
-  <div class="time">
+<div id="map">
+  <div id="flash"></div>
+  <div id="timebar">
     <button class="btn" id="play" type="button">Play</button>
     <input id="hour" type="range" min="0" max="0" value="0" aria-label="Hour">
     <span class="clock" id="clock">–</span>
+    <span class="read" id="readout"></span>
   </div>
-  <span class="read" id="readout"></span>
-  <button class="btn" id="orbit" type="button" aria-pressed="false">Orbit</button>
-</nav>
+</div>
 
-<script src="https://unpkg.com/deck.gl@8.9.35/dist.min.js"></script>
+<footer>
+  <span id="st-coords">Coords: –</span><span id="st-zoom">Zoom: –</span><span id="st-bearing">Bearing: –</span><span id="st-pitch">Pitch: –</span>
+  <span class="src">Imagery Esri · terrain AWS Terrain Tiles · buildings © OpenStreetMap via OpenFreeMap · towers OpenCelliD · rain NASA IMERG (simulated detail)</span>
+</footer>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/deck.gl@9.0.35/dist.min.js"></script>
 <script>
 const DATA = /*DATA*/null;
-const EX = 2.5, TOWER_H = 140, CLOUD_Z = 1900, MAX_DROPS = 16000;
+const EX = 1.5;                 // terrain exaggeration (MapLibre and our heights use the same)
+const MAST = 42, DISH = 34;     // mast height and dish height, metres (real scale)
+const TS = 2.5;                 // masts drawn 2.5x so they read among buildings
+const CLOUD = 1500, MAX_DROPS = 22000;
 const OP = [[60, 207, 127], [255, 107, 110], [255, 176, 59]];
+const PLACES = {
+  algiers: [["Kouba", 3.083, 36.727, 15.3, -15], ["Bab El Oued", 3.051, 36.792, 15.6, -30], ["Alger Centre", 3.058, 36.772, 15.4, 20],
+            ["El Harrach", 3.137, 36.716, 15.2, 40], ["Whole city", 3.07, 36.735, 12.6, -20]],
+  ghardaia: [["Ghardaïa", 3.672, 32.49, 15.2, 25], ["Beni Isguen", 3.692, 32.474, 15.3, -20], ["Bounoura", 3.701, 32.484, 15.1, 60],
+             ["El Atteuf", 3.745, 32.472, 15.2, -40], ["Whole valley", 3.69, 32.47, 12.8, 20]]};
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-let deckgl, city = 0, view = "truth", hour = 0, playing = null, orbiting = false;
-let C = null;                  // prepared data of the current city
-let T = 0;                     // scene clock, seconds
-let viewState;
+let city = 0, view = "truth", hour = 0, playing = null, orbiting = false, T = 0;
+const show = { rain: true, shafts: true, links: true, towers: true, labels: true };
+let C = null;
 
 const u8 = b => Uint8Array.from(atob(b), ch => ch.charCodeAt(0));
 
+/* ---------- elevation (to put drops, towers and links on the ground) ---------- */
 function decodeTerrain(c) {
   return new Promise(res => {
     const img = new Image();
@@ -107,12 +147,56 @@ function decodeTerrain(c) {
       const cv = document.createElement("canvas"); cv.width = img.width; cv.height = img.height;
       const ctx = cv.getContext("2d"); ctx.drawImage(img, 0, 0);
       const px = ctx.getImageData(0, 0, img.width, img.height).data, z = new Float32Array(img.width * img.height);
-      for (let i = 0; i < z.length; i++) z[i] = px[4 * i] * 256 + px[4 * i + 1] + px[4 * i + 2] / 256 - 32768 - c.zbase;
+      for (let i = 0; i < z.length; i++) z[i] = px[4 * i] * 256 + px[4 * i + 1] + px[4 * i + 2] / 256 - 32768;
       res({ z, w: img.width, h: img.height });
     };
     img.src = c.terrain;
   });
 }
+
+/* ---------- a lattice mast: 3 tapered legs, rings, braces, panel antennas, two dishes ---------- */
+function mastMesh() {
+  const P = [], N = [], I = [];
+  function box(a, b, w, d) {                  // beam from a to b, cross-section w x d
+    const ax = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(...ax), u = ax.map(v => v / L);
+    let t = Math.abs(u[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+    let s = [u[1] * t[2] - u[2] * t[1], u[2] * t[0] - u[0] * t[2], u[0] * t[1] - u[1] * t[0]];
+    const sl = Math.hypot(...s); s = s.map(v => v / sl);
+    const q = [u[1] * s[2] - u[2] * s[1], u[2] * s[0] - u[0] * s[2], u[0] * s[1] - u[1] * s[0]];
+    const corners = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([i, j]) => [s[0] * i * w / 2 + q[0] * j * d / 2,
+      s[1] * i * w / 2 + q[1] * j * d / 2, s[2] * i * w / 2 + q[2] * j * d / 2]);
+    const faces = [[0, 1], [1, 2], [2, 3], [3, 0]];
+    for (const [i, j] of faces) {             // 4 side faces with flat normals
+      const base = P.length / 3, c1 = corners[i], c2 = corners[j];
+      const n = [(c1[0] + c2[0]), (c1[1] + c2[1]), (c1[2] + c2[2])], nl = Math.hypot(...n) || 1;
+      for (const [p, c] of [[a, c1], [a, c2], [b, c2], [b, c1]]) { P.push(p[0] + c[0], p[1] + c[1], p[2] + c[2]); N.push(n[0] / nl, n[1] / nl, n[2] / nl); }
+      I.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    }
+  }
+  const legs = [0, 1, 2].map(k => { const ang = k * 2 * Math.PI / 3; return [Math.cos(ang), Math.sin(ang)]; });
+  const R = h => 2.6 - 2.0 * h / MAST;        // radius tapers with height
+  const at = (k, h) => [legs[k][0] * R(h), legs[k][1] * R(h), h];
+  const step = 6;
+  for (let k = 0; k < 3; k++) box(at(k, 0), at(k, MAST), 0.32, 0.32);
+  for (let h = 0; h < MAST; h += step) for (let k = 0; k < 3; k++) {
+    const k2 = (k + 1) % 3;
+    box(at(k, h + step), at(k2, h + step), 0.12, 0.12);            // ring
+    box(at(k, h), at(k2, h + step), 0.1, 0.1);                     // diagonal brace
+  }
+  for (let k = 0; k < 3; k++) {                                   // panel antennas near the top
+    const ang = (k + 0.5) * 2 * Math.PI / 3, r = R(MAST - 3) + 0.45;
+    box([Math.cos(ang) * r, Math.sin(ang) * r, MAST - 5], [Math.cos(ang) * r, Math.sin(ang) * r, MAST - 1.8], 0.5, 0.2);
+  }
+  for (const ang of [0.3, 2.4]) {                                  // two microwave dishes (short drums)
+    const r = R(DISH) + 0.5, cx = Math.cos(ang) * r, cy = Math.sin(ang) * r;
+    box([cx, cy, DISH], [cx + Math.cos(ang) * 0.5, cy + Math.sin(ang) * 0.5, DISH], 1.3, 1.3);
+  }
+  box([0, 0, MAST], [0, 0, MAST + 4], 0.12, 0.12);                 // lightning rod
+  const n = P.length / 3;
+  return { attributes: { positions: { value: new Float32Array(P), size: 3 }, normals: { value: new Float32Array(N), size: 3 },
+    texCoords: { value: new Float32Array(n * 2), size: 2 } }, indices: { value: new Uint32Array(I), size: 1 } };
+}
+const MAST_MESH = mastMesh();
 
 async function prepare(c) {
   if (c._prep) return c._prep;
@@ -123,165 +207,182 @@ async function prepare(c) {
     const y = Math.min(dem.h - 1, Math.max(0, Math.floor((lat1 - lat) / (lat1 - lat0) * dem.h)));
     return Math.max(0, dem.z[y * dem.w + x]) * EX;
   };
-  const n = c.ny * c.nx, H = c.hours.length;
+  const n = c.ny * c.nx;
   const fields = { truth: u8(c.truth), ai: u8(c.ai) }, links = { truth: u8(c.link_truth), ai: u8(c.link_ai) };
   const dx = (lon1 - lon0) / c.nx, dy = (lat1 - lat0) / c.ny;
   const cells = [];
   for (let y = 0; y < c.ny; y++) for (let x = 0; x < c.nx; x++) {
     const lo = lon0 + x * dx, la = lat0 + y * dy;
-    cells.push({ i: y * c.nx + x, lo, la, g: ground(lo + dx / 2, la + dy / 2),
-      poly: [[lo, la], [lo + dx, la], [lo + dx, la + dy], [lo, la + dy]] });
+    cells.push({ i: y * c.nx + x, lo, la, c: [lo + dx / 2, la + dy / 2], g: ground(lo + dx / 2, la + dy / 2) });
   }
-  const zb = e => Math.max(0, e - c.zbase) * EX;          // heights above the city's lowest point
-  const towers = c.sites.map(([lo, la, e, op]) => ({ p: [lo, la, zb(e)], op, ph: Math.random() * 6.28 }));
-  const lk = c.links.map(([a, b, ea, cc, d, eb], i) => ({ i, s: [a, b, zb(ea) + TOWER_H], t: [cc, d, zb(eb) + TOWER_H] }));
-  const labels = c.labels.map(([lo, la, name, e]) => ({ p: [lo, la, zb(e) + 260], name }));
-  // cloud puffs: one per 2x2 cells, jittered, at slightly different heights
-  const puffs = [];
-  for (let y = 0; y < c.ny; y += 2) for (let x = 0; x < c.nx; x += 2) puffs.push({ i: y * c.nx + x,
-    lo: lon0 + (x + 1 + (Math.random() - 0.5)) * dx, la: lat0 + (y + 1 + (Math.random() - 0.5)) * dy,
-    h: Math.random() * 260, s: Math.random() });
-  const mesh = await terrainMesh(c, dem);
-  c._prep = { dem, ground, n, H, fields, links, dx, dy, cells, towers, lk, labels, puffs, mesh, lon0, lat0, lon1, lat1 };
+  const towers = c.sites.map(([lo, la, , op]) => ({ p: [lo, la, ground(lo, la)], op, ph: Math.random() * 6.28,
+    rot: Math.random() * 360 }));
+  const lk = c.links.map(([a, b, , cc, d], i) => ({ i, s: [a, b, ground(a, b) + DISH * TS], t: [cc, d, ground(cc, d) + DISH * TS] }));
+  const labels = c.labels.map(([lo, la, name]) => ({ p: [lo, la, ground(lo, la) + 180], name }));
+  c._prep = { dem, ground, n, fields, links, dx, dy, cells, towers, lk, labels };
   return c._prep;
-}
-
-/* ---------- terrain: a mesh built from the decoded elevation, with the ground image draped on it ---------- */
-function terrainMesh(c, dem) {
-  const [lon0, lat0, lon1, lat1] = c.bounds;
-  const lonC = (lon0 + lon1) / 2, latC = (lat0 + lat1) / 2;
-  const mx = 111320 * Math.cos(latC * Math.PI / 180), my = 110540;
-  const s = 2, W = Math.floor((dem.w - 1) / s) + 1, H = Math.floor((dem.h - 1) / s) + 1;
-  const pos = new Float32Array(W * H * 3), nrm = new Float32Array(W * H * 3), uv = new Float32Array(W * H * 2);
-  const Z = (r, q) => Math.max(0, dem.z[Math.min(dem.h - 1, r * s) * dem.w + Math.min(dem.w - 1, q * s)]) * EX;
-  const ex = (lon1 - lon0) * mx / (W - 1), ey = (lat1 - lat0) * my / (H - 1);
-  for (let r = 0; r < H; r++) for (let q = 0; q < W; q++) {
-    const k = r * W + q, u = q / (W - 1), v = r / (H - 1);          // row 0 = north
-    pos[3 * k] = (lon0 + u * (lon1 - lon0) - lonC) * mx;
-    pos[3 * k + 1] = (lat1 - v * (lat1 - lat0) - latC) * my;
-    pos[3 * k + 2] = Z(r, q);
-    const gx = (Z(r, Math.min(W - 1, q + 1)) - Z(r, Math.max(0, q - 1))) / (2 * ex);
-    const gy = (Z(Math.max(0, r - 1), q) - Z(Math.min(H - 1, r + 1), q)) / (2 * ey);
-    const L = Math.hypot(gx, gy, 1);
-    nrm[3 * k] = -gx / L; nrm[3 * k + 1] = -gy / L; nrm[3 * k + 2] = 1 / L;
-    uv[2 * k] = u; uv[2 * k + 1] = v;
-  }
-  const idx = new Uint32Array((W - 1) * (H - 1) * 6); let t = 0;
-  for (let r = 0; r < H - 1; r++) for (let q = 0; q < W - 1; q++) {
-    const a = r * W + q, b = a + 1, d = a + W, e = d + 1;
-    idx[t++] = a; idx[t++] = d; idx[t++] = b; idx[t++] = b; idx[t++] = d; idx[t++] = e;
-  }
-  return new Promise(res => {
-    const img = new Image();
-    img.onload = () => res({ anchor: [lonC, latC, 0], texture: img,
-      mesh: { attributes: { positions: { value: pos, size: 3 }, normals: { value: nrm, size: 3 },
-                            texCoords: { value: uv, size: 2 } }, indices: { value: idx, size: 1 } } });
-    img.src = c.ground;
-  });
 }
 
 /* ---------- rain particles ---------- */
 const drops = { n: 0, x: new Float32Array(MAX_DROPS), y: new Float32Array(MAX_DROPS), z: new Float32Array(MAX_DROPS),
   v: new Float32Array(MAX_DROPS), g: new Float32Array(MAX_DROPS),
   src: new Float32Array(MAX_DROPS * 3), dst: new Float32Array(MAX_DROPS * 3) };
-let cdf = null, cdfTotal = 0;
+let cdf = null, cdfTotal = 0, dropView = null;
 
+// drops are spawned only over the part of the city in view, so close-ups get as much rain as overviews
 function buildCdf() {
   const P = C, f = P.fields[view], off = hour * P.n;
-  cdf = new Float32Array(P.n); let s = 0;
-  for (let i = 0; i < P.n; i++) { const r = f[off + i] / 4; s += r > 0.1 ? r : 0; cdf[i] = s; }
+  const b = map.getBounds(), padX = (b.getEast() - b.getWest()) * 0.15, padY = (b.getNorth() - b.getSouth()) * 0.15;
+  const W = b.getWest() - padX, E = b.getEast() + padX, S = b.getSouth() - padY, N = b.getNorth() + padY;
+  cdf = new Float32Array(P.n); let s = 0, nin = 0;
+  for (let i = 0; i < P.n; i++) {
+    const cl = P.cells[i], inside = cl.c[0] > W && cl.c[0] < E && cl.c[1] > S && cl.c[1] < N;
+    const r = f[off + i] / 4;
+    if (inside) { nin++; s += r > 0.1 ? r : 0; }
+    cdf[i] = s;
+  }
   cdfTotal = s;
-  const mean = s / P.n;                          // city-mean rain, mm/h
-  const target = reduced ? 0 : Math.min(MAX_DROPS, Math.round(2600 * Math.sqrt(mean) + (mean > 0.05 ? 400 : 0)));
-  drops.n = target;
+  const mean = nin ? s / nin : 0;
+  drops.n = reduced ? 0 : Math.min(MAX_DROPS, Math.round(6000 * Math.sqrt(mean) + (mean > 0.05 ? 600 : 0)));
   for (let k = 0; k < drops.n; k++) spawn(k, true);
 }
-
 function pickCell() {
   const r = Math.random() * cdfTotal; let lo = 0, hi = cdf.length - 1;
   while (lo < hi) { const m = (lo + hi) >> 1; if (cdf[m] < r) lo = m + 1; else hi = m; }
   return lo;
 }
-
 function spawn(k, anywhere) {
   if (cdfTotal <= 0) { drops.z[k] = -1e9; return; }
   const cell = C.cells[pickCell()];
-  drops.x[k] = cell.lo + Math.random() * C.dx;
-  drops.y[k] = cell.la + Math.random() * C.dy;
-  drops.g[k] = cell.g;
-  drops.z[k] = anywhere ? cell.g + Math.random() * (CLOUD_Z - cell.g) : CLOUD_Z - Math.random() * 120;
-  drops.v[k] = 420 + Math.random() * 260;        // m per second of scene time (stylised)
+  drops.x[k] = cell.lo + Math.random() * C.dx; drops.y[k] = cell.la + Math.random() * C.dy; drops.g[k] = cell.g;
+  drops.z[k] = anywhere ? cell.g + Math.random() * (CLOUD - cell.g) : CLOUD - Math.random() * 100;
+  drops.v[k] = 300 + Math.random() * 200;
 }
-
 function stepDrops(dt) {
   for (let k = 0; k < drops.n; k++) {
     drops.z[k] -= drops.v[k] * dt;
     if (drops.z[k] < drops.g[k]) spawn(k, false);
-    const j = 3 * k, len = 45 + drops.v[k] * 0.09;
+    const j = 3 * k, len = 14 + drops.v[k] * 0.05;
     drops.src[j] = drops.x[k]; drops.src[j + 1] = drops.y[k]; drops.src[j + 2] = drops.z[k] + len;
-    drops.dst[j] = drops.x[k] + 0.00004; drops.dst[j + 1] = drops.y[k] - 0.00002; drops.dst[j + 2] = drops.z[k];
+    drops.dst[j] = drops.x[k] + 0.000012; drops.dst[j + 1] = drops.y[k] - 0.000006; drops.dst[j + 2] = drops.z[k];
   }
 }
 
-/* ---------- layers ---------- */
+/* ---------- deck layers ---------- */
+let linkFade = 1;              // links fade out when zoomed out (1,700 lines would veil the city)
 function linkColor(mm) {
-  if (mm <= 0.1) return [90, 190, 255, 38];
+  if (mm <= 0.1) return [140, 210, 255, 55 * linkFade];
   const t = Math.min(1, Math.log1p(mm) / Math.log1p(15));
-  // cool blue (light rain) -> warm amber (heavy rain), never white
-  return [90 + 165 * t, 190 - 20 * t, 255 - 150 * t, 60 + 120 * t];
+  return [140 + 115 * t, 210 - 50 * t, 255 - 175 * t, (80 + 110 * t) * linkFade];
 }
-
-let flashBolt = null;
+const ADD = { blend: true, blendColorSrcFactor: "src-alpha", blendColorDstFactor: "one",
+  blendAlphaSrcFactor: "one", blendAlphaDstFactor: "one", depthWriteEnabled: false };
+let bolt = null;
 
 function layers() {
-  const c = DATA[city], P = C, f = P.fields[view], off = hour * P.n, lf = P.links[view], loff = hour * P.lk.length;
-  const ADD = { blendFunc: [770, 1], depthTest: true, depthMask: false };
-  const out = [
-    new deck.SimpleMeshLayer({ id: "terrain-" + c.key, data: [P.mesh.anchor], mesh: P.mesh.mesh, texture: P.mesh.texture,
-      getPosition: d => d, getColor: [255, 255, 255], material: { ambient: 0.55, diffuse: 0.65, shininess: 6 } }),
-    new deck.ColumnLayer({ id: "towers", data: P.towers, diskResolution: 6, radius: 16, extruded: true,
-      getPosition: d => d.p, getElevation: TOWER_H, getFillColor: d => [...OP[d.op].map(v => v * 0.55), 255],
-      material: { ambient: 0.6, diffuse: 0.6 } }),
-    new deck.ScatterplotLayer({ id: "beacons", data: P.towers, getPosition: d => [d.p[0], d.p[1], d.p[2] + TOWER_H + 6],
-      getRadius: 34, radiusMinPixels: 1.8, radiusMaxPixels: 7, parameters: ADD, billboard: true,
-      getFillColor: d => [...OP[d.op], 120 + 135 * (0.5 + 0.5 * Math.sin(T * 2.2 + d.ph))],
-      updateTriggers: { getFillColor: Math.round(T * 10) } }),
-    new deck.LineLayer({ id: "links", data: P.lk, getSourcePosition: d => d.s, getTargetPosition: d => d.t,
-      getColor: d => linkColor(lf[loff + d.i] / 4), getWidth: d => 0.8 + Math.min(1.6, (lf[loff + d.i] / 4) * 0.15),
-      widthUnits: "pixels", parameters: { depthMask: false }, updateTriggers: { getColor: [view, hour, city], getWidth: [view, hour, city] } }),
-    new deck.ScatterplotLayer({ id: "clouds", data: P.puffs, billboard: true, stroked: false,
-      getPosition: d => [d.lo, d.la, CLOUD_Z + d.h], getRadius: d => 260 + 180 * d.s,
-      getFillColor: d => { const r = f[off + d.i] / 4; return r < 0.5 ? [0, 0, 0, 0] : [120, 135, 152, Math.min(24, 4 + 7 * Math.log1p(r))]; },
-      parameters: { depthMask: false }, updateTriggers: { getFillColor: [view, hour, city] } }),
-    new deck.LineLayer({ id: "rain", data: { length: drops.n,
-        attributes: { getSourcePosition: { value: drops.src, size: 3 }, getTargetPosition: { value: drops.dst, size: 3 } } },
-      getColor: [205, 228, 255, 120], getWidth: 1.1, widthUnits: "pixels", parameters: ADD }),
-    new deck.TextLayer({ id: "labels", data: P.labels, getPosition: d => d.p, getText: d => d.name, getSize: 13,
-      getColor: [230, 238, 244, 230], fontFamily: "Public Sans, sans-serif", fontWeight: 600, billboard: true,
-      outlineWidth: 3, outlineColor: [7, 13, 20, 220], fontSettings: { sdf: true }, characterSet: "auto" }),
-  ];
-  if (flashBolt) out.push(new deck.PathLayer({ id: "bolt", data: [flashBolt], getPath: d => d, getColor: [235, 240, 255, 255],
-    getWidth: 2.5, widthUnits: "pixels", parameters: ADD }));
+  if (!C) return [];
+  const P = C, f = P.fields[view], off = hour * P.n, lf = P.links[view], loff = hour * P.lk.length;
+  const out = [];
+  if (show.towers) out.push(
+    new deck.SimpleMeshLayer({ id: "masts", sizeScale: TS, data: P.towers, mesh: MAST_MESH, getPosition: d => d.p,
+      getOrientation: d => [0, d.rot, 0], getColor: [176, 182, 188], material: { ambient: 0.45, diffuse: 0.7, shininess: 40, specularColor: [90, 90, 90] } }),
+    new deck.ScatterplotLayer({ id: "beacons", data: P.towers, getPosition: d => [d.p[0], d.p[1], d.p[2] + (MAST + 4.5) * TS],
+      getRadius: 3, radiusMinPixels: 2.2, radiusMaxPixels: 8, billboard: true, parameters: ADD,
+      getFillColor: d => [...OP[d.op], 110 + 145 * (0.5 + 0.5 * Math.sin(T * 2.4 + d.ph))],
+      updateTriggers: { getFillColor: Math.round(T * 10) } }));
+  if (show.links) out.push(new deck.LineLayer({ id: "links", data: P.lk, getSourcePosition: d => d.s, getTargetPosition: d => d.t,
+    getColor: d => linkColor(lf[loff + d.i] / 4), getWidth: d => 1 + Math.min(2.5, (lf[loff + d.i] / 4) * 0.2),
+    widthUnits: "pixels", parameters: { depthWriteEnabled: false },
+    updateTriggers: { getColor: [view, hour, city, linkFade.toFixed(2)], getWidth: [view, hour, city] } }));
+  if (show.shafts) out.push(new deck.ColumnLayer({ id: "shafts", data: P.cells, diskResolution: 12,
+    radius: Math.min(P.dx * 111320 * Math.cos(P.cells[0].c[1] * Math.PI / 180), P.dy * 110540) * 0.55, extruded: true,
+    getPosition: d => [d.c[0], d.c[1], d.g], getElevation: d => (f[off + d.i] / 4 > 6 ? CLOUD - d.g : 0),
+    getFillColor: d => { const r = f[off + d.i] / 4; return r > 6 ? [175, 186, 198, Math.min(26, 4 + 7 * Math.log1p(r - 6))] : [0, 0, 0, 0]; },
+    material: false, parameters: { depthWriteEnabled: false },
+    updateTriggers: { getElevation: [view, hour, city], getFillColor: [view, hour, city] } }));
+  if (show.rain) out.push(new deck.LineLayer({ id: "rain", data: { length: drops.n,
+      attributes: { getSourcePosition: { value: drops.src, size: 3 }, getTargetPosition: { value: drops.dst, size: 3 } } },
+    getColor: [215, 230, 250, 150], getWidth: 1, widthUnits: "pixels", parameters: ADD }));
+  if (show.labels) out.push(new deck.TextLayer({ id: "labels", data: P.labels, getPosition: d => d.p, getText: d => d.name,
+    getSize: 14, getColor: [245, 248, 252, 240], fontFamily: "Inter Tight, sans-serif", fontWeight: 600, billboard: true,
+    outlineWidth: 4, outlineColor: [10, 14, 20, 230], fontSettings: { sdf: true }, characterSet: "auto" }));
+  if (bolt) out.push(new deck.PathLayer({ id: "bolt", data: [bolt], getPath: d => d, getColor: [240, 244, 255, 255],
+    getWidth: 3, widthUnits: "pixels", parameters: ADD }));
   return out;
 }
+
+/* ---------- map ---------- */
+const map = new maplibregl.Map({
+  container: "map", hash: false, maxPitch: 85, maxZoom: 16.9,   // deck layers stop drawing beyond ~17 here antialias: true, attributionControl: { compact: true },
+  style: {
+    version: 8,
+    sources: {
+      sat: { type: "raster", tileSize: 256, maxzoom: 19, attribution: "Imagery © Esri, Maxar, Earthstar Geographics",
+        tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"] },
+      dem: { type: "raster-dem", encoding: "terrarium", tileSize: 256, maxzoom: 14, attribution: "Terrain: AWS Terrain Tiles",
+        tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"] },
+      omt: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "© OpenStreetMap contributors · OpenFreeMap" }
+    },
+    layers: [
+      { id: "bg", type: "background", paint: { "background-color": "#1b232c" } },
+      { id: "satellite", type: "raster", source: "sat",
+        paint: { "raster-brightness-max": 0.78, "raster-saturation": -0.25, "raster-contrast": 0.08 } },
+      { id: "buildings", type: "fill-extrusion", source: "omt", "source-layer": "building", minzoom: 13,
+        paint: { "fill-extrusion-color": ["interpolate", ["linear"], ["coalesce", ["get", "render_height"], 8], 0, "#c9c2b6", 40, "#e6e1d8"],
+          "fill-extrusion-height": ["coalesce", ["get", "render_height"], 8],
+          "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
+          "fill-extrusion-opacity": 0.92 } }
+    ],
+    sky: { "sky-color": "#4b5662", "horizon-color": "#8c959d", "fog-color": "#6b747c", "sky-horizon-blend": 0.6,
+      "horizon-fog-blend": 0.7, "fog-ground-blend": 0.75, "atmosphere-blend": 0.6 }
+  },
+  center: [3.06, 36.765], zoom: 14.8, pitch: 66, bearing: -25
+});
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");
+
+const overlay = new deck.MapboxOverlay({ interleaved: true, layers: [],
+  effects: [new deck.LightingEffect({ ambient: new deck.AmbientLight({ color: [210, 220, 235], intensity: 1.2 }),
+    sun: new deck.DirectionalLight({ color: [255, 236, 214], intensity: 1.5, direction: [-1, -1.5, -2.2] }) })] });
+map.addControl(overlay);
+
+function status(e) {
+  linkFade = Math.max(0.2, Math.min(1, (map.getZoom() - 12) / 2.5));
+  const c = map.getCenter();
+  document.getElementById("st-zoom").textContent = `Zoom: ${map.getZoom().toFixed(2)}`;
+  document.getElementById("st-bearing").textContent = `Bearing: ${map.getBearing().toFixed(1)}°`;
+  document.getElementById("st-pitch").textContent = `Pitch: ${map.getPitch().toFixed(1)}°`;
+  if (e && e.lngLat) document.getElementById("st-coords").textContent = `Coords: ${e.lngLat.lng.toFixed(5)}, ${e.lngLat.lat.toFixed(5)}`;
+}
+map.on("move", status);
+map.on("moveend", () => { if (C) buildCdf(); });
+map.on("mousemove", status);
 
 /* ---------- lightning ---------- */
 let nextFlash = 0;
 function maybeFlash(now) {
-  if (reduced || now < nextFlash) return;
-  const P = C, f = P.fields[view], off = hour * P.n;
-  let best = 0, bi = -1;
-  for (let i = 0; i < P.n; i++) if (f[off + i] > best) { best = f[off + i]; bi = i; }
+  if (reduced || now < nextFlash || !C) return;
+  const f = C.fields[view], off = hour * C.n; let best = 0, bi = 0;
+  for (let i = 0; i < C.n; i++) if (f[off + i] > best) { best = f[off + i]; bi = i; }
   const peak = best / 4;
   if (peak < 12) { nextFlash = now + 1500; return; }
-  const cell = P.cells[bi], path = [];
-  let x = cell.lo + P.dx / 2, y = cell.la + P.dy / 2;
-  for (let z = CLOUD_Z; z > cell.g; z -= 160) { path.push([x, y, z]); x += (Math.random() - 0.5) * 0.004; y += (Math.random() - 0.5) * 0.004; }
-  path.push([x, y, cell.g]);
-  flashBolt = path;
-  const el = document.getElementById("flash"); el.style.opacity = 0.32;
-  setTimeout(() => { el.style.opacity = 0; flashBolt = null; }, 110);
-  nextFlash = now + 1800 + Math.random() * 5200 / Math.max(1, peak / 15);
+  const cell = C.cells[bi], path = []; let x = cell.c[0], y = cell.c[1];
+  for (let z = CLOUD; z > cell.g; z -= 110) { path.push([x, y, z]); x += (Math.random() - .5) * .0025; y += (Math.random() - .5) * .0025; }
+  path.push([x, y, cell.g]); bolt = path;
+  const el = document.getElementById("flash"); el.style.opacity = 0.35;
+  if (map.getLayer("satellite")) map.setPaintProperty("satellite", "raster-brightness-max", 1);
+  setTimeout(() => { el.style.opacity = 0; bolt = null;
+    if (map.getLayer("satellite")) map.setPaintProperty("satellite", "raster-brightness-max", stormBrightness()); }, 120);
+  nextFlash = now + 2000 + Math.random() * 6000 / Math.max(1, peak / 15);
+}
+
+/* the scene darkens with the storm */
+function stormBrightness() {
+  if (!C) return 0.78;
+  const f = C.fields[view], off = hour * C.n; let s = 0;
+  for (let i = 0; i < C.n; i++) s += f[off + i];
+  const mean = s / C.n / 4;
+  return Math.max(0.45, 0.85 - 0.08 * Math.log1p(mean * 3));
 }
 
 /* ---------- loop ---------- */
@@ -289,10 +390,9 @@ let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
   if (C) {
-    stepDrops(dt);
-    maybeFlash(now);
-    if (orbiting) { viewState = { ...viewState, bearing: (viewState.bearing + dt * 4) % 360 }; deckgl.setProps({ viewState }); }
-    deckgl.setProps({ layers: layers() });
+    stepDrops(dt); maybeFlash(now);
+    if (orbiting) map.setBearing((map.getBearing() + dt * 5) % 360);
+    overlay.setProps({ layers: layers() });
   }
   requestAnimationFrame(frame);
 }
@@ -302,56 +402,62 @@ function setHour(h) {
   document.getElementById("hour").value = h;
   document.getElementById("clock").textContent = c.hours[h].replace("T", " ") + " UTC";
   buildCdf();
-  const P = C, f = P.fields[view], off = h * P.n; let s = 0, mx = 0;
-  for (let i = 0; i < P.n; i++) { s += f[off + i]; if (f[off + i] > mx) mx = f[off + i]; }
-  document.getElementById("readout").innerHTML = `city mean <b>${(s / P.n / 4).toFixed(1)}</b> · peak <b>${(mx / 4).toFixed(0)}</b> mm/h`;
+  const f = C.fields[view], off = h * C.n; let s = 0, mx = 0;
+  for (let i = 0; i < C.n; i++) { s += f[off + i]; if (f[off + i] > mx) mx = f[off + i]; }
+  document.getElementById("readout").innerHTML = `mean <b>${(s / C.n / 4).toFixed(1)}</b> · peak <b>${(mx / 4).toFixed(0)}</b> mm/h`;
+  if (map.getLayer("satellite")) map.setPaintProperty("satellite", "raster-brightness-max", stormBrightness());
 }
+
+function flyTo([, lon, lat, zoom, bearing]) { map.flyTo({ center: [lon, lat], zoom, bearing, pitch: zoom > 16 ? 72 : 66, duration: 2600, essential: true }); }
 
 async function setCity(i) {
   city = i; const c = DATA[i];
   document.querySelectorAll("#cities button").forEach((b, j) => b.setAttribute("aria-pressed", j === i));
   document.getElementById("event").textContent = `${c.name} · ${c.event}`;
   C = await prepare(c);
-  const [lon0, lat0, lon1, lat1] = c.bounds;
-  viewState = i === 0
-    ? { longitude: 3.045, latitude: 36.735, zoom: 12.6, pitch: 62, bearing: -24, maxPitch: 85 }   // Bab El Oued to Kouba
-    : { longitude: 3.665, latitude: 32.455, zoom: 12.7, pitch: 62, bearing: 18, maxPitch: 85 };   // the M'zab valley
-  deckgl.setProps({ viewState });
   document.getElementById("hour").max = c.hours.length - 1;
-  // open on the wettest hour
+  // a close-up of the real tower site nearest the first place
+  if (!PLACES[c.key].some(p => p[0] === "Tower close-up")) {
+    const [, lo0, la0] = PLACES[c.key][0];
+    let best = null, bd = 1e9;
+    for (const t of C.towers) { const d = (t.p[0] - lo0) ** 2 + (t.p[1] - la0) ** 2; if (d < bd) { bd = d; best = t; } }
+    if (best) PLACES[c.key].splice(1, 0, ["Tower close-up", best.p[0], best.p[1], 16.7, 25]);
+  }
+  document.getElementById("places").innerHTML = PLACES[c.key].map((p, k) => `<button type="button" data-k="${k}">${p[0]}</button>`).join("");
+  document.querySelectorAll("#places button").forEach(b => b.onclick = () => flyTo(PLACES[c.key][+b.dataset.k]));
   const f = C.fields.truth; let best = 0, bh = 0;
   for (let h = 0; h < c.hours.length; h++) { let s = 0; for (let k = 0; k < C.n; k++) s += f[h * C.n + k]; if (s > best) { best = s; bh = h; } }
   setHour(bh);
+  // a view named in the link (#whole-city, #kouba, ...) opens there; otherwise the first place
+  const tok = s => s.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const want = location.hash.slice(1), hit = PLACES[c.key].find(p => tok(p[0]) === want);
+  const target = hit || PLACES[c.key][0];
+  if (first) { first = false; map.jumpTo({ center: [target[1], target[2]], zoom: target[3], bearing: target[4], pitch: target[3] > 16 ? 72 : 66 }); }
+  else flyTo(target);
 }
+let first = true;
 
-function init() {
-  if (!DATA || !DATA.length) return;
-  const probe = document.createElement("canvas");
-  if (!(probe.getContext("webgl2") || probe.getContext("webgl"))) { document.getElementById("err").hidden = false; return; }
-  const lighting = new deck.LightingEffect({
-    ambient: new deck.AmbientLight({ color: [180, 200, 230], intensity: 1.1 }),
-    sun: new deck.DirectionalLight({ color: [255, 214, 170], intensity: 1.4, direction: [-1, -2, -2.5] }) });
-  deckgl = new deck.Deck({ parent: document.getElementById("scene"), controller: true, effects: [lighting],
-    initialViewState: { longitude: 3, latitude: 36.7, zoom: 11, pitch: 58 },
-    onViewStateChange: ({ viewState: vs }) => { viewState = vs; deckgl.setProps({ viewState }); },
-    layers: [], getTooltip: null });
-  document.getElementById("cities").innerHTML = DATA.map((c, i) =>
-    `<button type="button" aria-pressed="false" data-i="${i}">${c.name}</button>`).join("");
-  document.querySelectorAll("#cities button").forEach(b => b.onclick = () => setCity(+b.dataset.i));
-  document.querySelectorAll("#views button").forEach(b => b.onclick = () => {
-    view = b.dataset.v;
-    document.querySelectorAll("#views button").forEach(x => x.setAttribute("aria-pressed", x === b));
-    setHour(hour); });
-  document.getElementById("hour").oninput = e => setHour(+e.target.value);
-  document.getElementById("play").onclick = () => {
-    const btn = document.getElementById("play");
-    if (playing) { clearInterval(playing); playing = null; btn.textContent = "Play"; return; }
-    btn.textContent = "Pause";
-    playing = setInterval(() => setHour((hour + 1) % DATA[city].hours.length), 1600);
-  };
-  document.getElementById("orbit").onclick = e => { orbiting = !orbiting; e.target.setAttribute("aria-pressed", orbiting);
-    e.target.textContent = orbiting ? "Stop orbit" : "Orbit"; };
-  setCity(0).then(() => requestAnimationFrame(frame));
-}
-init();
+document.getElementById("cities").innerHTML = DATA.map((c, i) => `<button type="button" aria-pressed="false" data-i="${i}">${c.name}</button>`).join("");
+document.querySelectorAll("#cities button").forEach(b => b.onclick = () => setCity(+b.dataset.i));
+document.querySelectorAll("#views button").forEach(b => b.onclick = () => {
+  view = b.dataset.v; document.querySelectorAll("#views button").forEach(x => x.setAttribute("aria-pressed", x === b)); setHour(hour); });
+document.querySelectorAll("[data-l]").forEach(cb => cb.onchange = () => {
+  const l = cb.dataset.l;
+  if (l === "terrain") map.setTerrain(cb.checked ? { source: "dem", exaggeration: EX } : null);
+  else if (l === "satellite" || l === "buildings") map.setLayoutProperty(l, "visibility", cb.checked ? "visible" : "none");
+  else show[l] = cb.checked;
+});
+document.getElementById("hour").oninput = e => setHour(+e.target.value);
+document.getElementById("play").onclick = () => {
+  const btn = document.getElementById("play");
+  if (playing) { clearInterval(playing); playing = null; btn.textContent = "Play"; return; }
+  btn.textContent = "Pause"; playing = setInterval(() => setHour((hour + 1) % DATA[city].hours.length), 1800);
+};
+document.getElementById("orbit").onclick = e => { orbiting = !orbiting; e.target.setAttribute("aria-pressed", orbiting);
+  e.target.textContent = orbiting ? "Stop orbit" : "Start orbit"; };
+map.on("load", () => {
+  map.setTerrain({ source: "dem", exaggeration: EX });
+  setCity(0).then(() => requestAnimationFrame(frame)); status(); });
 </script>
+</body>
+</html>

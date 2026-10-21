@@ -1,14 +1,16 @@
-"""Data for the 3D storm view (site/storm3d/index.html): terrain, ground image, towers,
-links and hourly rain for Algiers and Ghardaia, packed into one self-contained page.
+"""Data for the 3D storm view (site/storm3d/index.html): elevation, towers, links and
+hourly rain for Algiers and Ghardaia, embedded in the page. The page itself streams
+satellite imagery (Esri), terrain (AWS Terrain Tiles) and 3D buildings (OpenStreetMap via
+OpenFreeMap) on MapLibre GL + deck.gl, GeoLibre's stack, so it needs internet.
 
     python scripts/export_storm3d.py
 
 Terrain: Copernicus GLO-30 DEM (public, no key), read straight from its cloud-optimised
-GeoTIFFs over the city box, resampled to ~60 m and encoded as a Terrarium PNG.
-Ground image: hillshade + sea + coast + commune borders, rendered here (PNG).
+GeoTIFFs over the city box, resampled to ~60 m and encoded as a Terrarium PNG; the page
+uses it to stand towers, links and raindrops on the ground.
 Rain: the Phase 4 hourly fields (simulated truth and AI map, 500 m), quantised to
 0.25 mm/h steps. Links: hourly rain along each link (truth and AI), mean of both
-directions. Everything is embedded, so the page loads no tiles from anywhere.
+directions.
 Also writes towers_<city>.geojson and links_<city>.geojson (3D coordinates) for GeoLibre
 or any GIS: GeoLibre (geolibre.app) is built on the same MapLibre + deck.gl engines.
 """
@@ -68,48 +70,6 @@ def terrarium(z):
     return np.dstack([r, g, b]).astype(np.uint8)
 
 
-def ground_image(z, bounds, geo, scale=3):
-    """Hillshaded land, dark sea, coast and commune borders. Rows north->south."""
-    from matplotlib.path import Path as MPath
-    ny, nx = z.shape
-    lon0, lat0, lon1, lat1 = bounds
-    # hillshade from the NW
-    dzdy, dzdx = np.gradient(z, 60.0, 60.0 * np.cos(np.radians((lat0 + lat1) / 2)))
-    slope = np.arctan(np.hypot(dzdx, dzdy) * 2.0)
-    aspect = np.arctan2(-dzdx, dzdy)
-    az, alt = np.radians(315), np.radians(40)
-    hs = np.clip(np.sin(alt) * np.cos(slope) + np.cos(alt) * np.sin(slope) * np.cos(az - aspect), 0, 1)
-    # land mask from the commune polygons
-    H, W = ny * scale, nx * scale
-    yy, xx = np.mgrid[0:H, 0:W]
-    lon = lon0 + (xx + 0.5) / W * (lon1 - lon0)
-    lat = lat1 - (yy + 0.5) / H * (lat1 - lat0)
-    pts = np.c_[lon.ravel(), lat.ravel()]
-    land = np.zeros(H * W, bool)
-    for ring in geo["land"]:
-        land ^= MPath(np.array(ring)).contains_points(pts)       # even-odd: holes cancel
-    land = land.reshape(H, W)
-    hsu = np.kron(hs, np.ones((scale, scale)))
-    zu = np.kron(z, np.ones((scale, scale)))
-    # land: dusk slate tinted by height; sea: deep navy
-    t = np.clip(zu / max(float(z.max()), 1.0), 0, 1)[..., None]
-    low, high = np.array([46, 58, 66]), np.array([92, 98, 96])
-    base = low * (1 - t) + high * t
-    shade = (0.45 + 0.75 * hsu)[..., None]
-    img = np.clip(base * shade, 0, 255)
-    sea = np.array([12, 24, 38]) + np.zeros_like(img)
-    img = np.where(land[..., None], img, sea)
-    from PIL import ImageDraw
-    im = Image.fromarray(img.astype(np.uint8))
-    d = ImageDraw.Draw(im, "RGBA")
-    px = lambda lo, la: ((lo - lon0) / (lon1 - lon0) * W, (lat1 - la) / (lat1 - lat0) * H)
-    for line in geo["borders"]:
-        d.line([px(*p) for p in line], fill=(170, 190, 205, 70), width=1)
-    for line in geo["coast"]:
-        d.line([px(*p) for p in line], fill=(190, 212, 228, 130), width=2)
-    return png_data_url(np.asarray(im))
-
-
 def city(key):
     import sys
     sys.path.insert(0, str(ROOT / "scripts"))
@@ -145,7 +105,7 @@ def city(key):
     return {
         "key": key, "name": meta["name"], "event": meta["event"],
         "bounds": [lon0, lat0, lon1, lat1], "zmax": float(dem.max()), "zbase": float(np.floor(dem.min())),
-        "terrain": png_data_url(terrarium(dem)), "ground": ground_image(dem, bounds, geo),
+        "terrain": png_data_url(terrarium(dem)),
         "hours": [str(pd.Timestamp(h))[:16] for h in z4["hours"]], "ny": ny, "nx": nx,
         "truth": b64_u8(q(truth)), "ai": b64_u8(q(np.where(np.isfinite(ai), ai, 0))),
         "sites": [[round(float(r.lon), 5), round(float(r.lat), 5), round(float(e), 1), ops.get(r.operator, 0)]
@@ -181,10 +141,6 @@ def main():
         geojson(c)
     html = (OUT / "template.html").read_text().replace("/*DATA*/null", json.dumps(cities, separators=(",", ":")))
     (OUT / "index.html").write_text(html)
-    # live version (local site): satellite imagery, terrain and 3D buildings streamed as map tiles
-    real = [{k: v for k, v in c.items() if k != "ground"} for c in cities]
-    (OUT / "real.html").write_text((OUT / "real_template.html").read_text()
-                                   .replace("/*DATA*/null", json.dumps(real, separators=(",", ":"))))
     print("wrote", OUT / "index.html", f"{len(html) / 1e6:.2f} MB")
 
 
