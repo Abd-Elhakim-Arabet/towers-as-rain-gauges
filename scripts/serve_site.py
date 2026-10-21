@@ -6,7 +6,6 @@
 Pages:
   /               opens the explainer PDF (the project write-up)
   /explainer.pdf  the ground-up explainer
-  /algeria/       Algeria tower map
   /replay/        Phase 4 storm replay (simulated Algerian network)
   /storm3d/       3D storm over the towers: satellite imagery, terrain, 3D buildings (needs internet)
 
@@ -19,8 +18,6 @@ import argparse
 import functools
 import http.server
 import shutil
-import subprocess
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,7 +29,6 @@ padding:.55rem max(16px,env(safe-area-inset-left,0px));background:#102029;color:
 font:500 14px/1.4 'IBM Plex Sans',system-ui,sans-serif">
 <strong style="letter-spacing:.04em">TOWERS AS RAIN GAUGES</strong>
 <a href="/explainer.pdf" style="color:#cde2fb">Explainer (PDF)</a>
-<a href="/algeria/" style="color:#cde2fb">Algeria towers</a>
 <a href="/replay/" style="color:#cde2fb">Storm replay (simulation)</a>
 <a href="/storm3d/" style="color:#cde2fb">3D storm</a>
 </nav>"""
@@ -46,16 +42,13 @@ def wrap(fragment: str) -> str:
 
 
 def build() -> None:
-    subprocess.run([sys.executable, str(ROOT / "scripts" / "build_site.py")], check=True)
     if OUT.exists():
         shutil.rmtree(OUT)
-    (OUT / "algeria").mkdir(parents=True)
     (OUT / "replay").mkdir(parents=True)
     (OUT / "storm3d").mkdir(parents=True)
     (OUT / "index.html").write_text('<!doctype html><meta charset="utf-8">'
                                     '<meta http-equiv="refresh" content="0; url=/explainer.pdf">'
                                     '<a href="/explainer.pdf">Explainer (PDF)</a>\n')
-    (OUT / "algeria" / "index.html").write_text(wrap((SITE / "algeria" / "index.html").read_text()))
     replay = SITE / "phase4" / "index.html"
     if replay.exists():
         (OUT / "replay" / "index.html").write_text(wrap(replay.read_text()))

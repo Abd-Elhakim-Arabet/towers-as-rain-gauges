@@ -84,7 +84,7 @@ uv venv --python 3.12 .venv-ms && uv pip install --python .venv-ms/bin/python -r
 .venv/bin/python scripts/phase4_simulate.py   # Phase 4: simulated network -> signals -> AI/classical -> maps, scores
 .venv/bin/python scripts/export_explainer_phase4.py && .venv/bin/python scripts/export_phase4_explorer.py  # figures + replay page
 .venv/bin/python scripts/export_storm3d.py  # 3D storm (satellite, terrain, 3D buildings, towers, links, rain; live tiles) + GeoJSON for GeoLibre
-.venv/bin/python scripts/serve_site.py       # explainer PDF + Algeria map on http://localhost:8000
+.venv/bin/python scripts/serve_site.py       # explainer PDF, storm replay, 3D storm on http://localhost:8000
 ```
 
 Exact versions are in `requirements.lock.txt`. See `docs/ENVIRONMENT.md` for machine-specific notes.
