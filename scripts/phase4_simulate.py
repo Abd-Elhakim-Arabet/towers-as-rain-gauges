@@ -1,7 +1,7 @@
 """Phase 4: the whole chain on a simulated Algerian network (SIMULATION, not validation).
 
 For each city (Algiers 2001, Ghardaia 2008):
-  1. storm: IMERG (scripts/phase4_storms.py) -> 1-min, 1-km rain   (targ.simrain)
+  1. storm: IMERG (scripts/phase4_storms.py) -> 1-min, 500-m rain   (targ.simrain)
   2. network: real OpenCelliD sites -> plausible microwave links   (targ.simnet)
   3. signals: real dry recordings + rain loss + wet antennas        (targ.simsignal)
   4. chain: reliability score -> AI (and classical) -> rain per link -> IDW maps

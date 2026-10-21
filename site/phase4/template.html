@@ -61,7 +61,7 @@ figcaption strong { color: var(--fg); font-weight: 600; }
 .ramp { display: inline-flex; align-items: center; gap: 0; }
 .ramp span { width: 26px; height: 10px; display: inline-block; }
 .ramp-labels { display: flex; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
-.ramp-labels span { width: 26px; text-align: left; }
+.ramp-labels > span { width: 26px; text-align: left; }
 .chart { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: grid; gap: 8px; }
 .chart h2, .facts h2 { font-family: var(--font-display); font-weight: 600; font-size: 20px; margin: 0; }
 .chart svg { width: 100%; height: auto; display: block; overflow: visible; }
@@ -99,7 +99,7 @@ figcaption strong { color: var(--fg); font-weight: 600; }
   </div>
 
   <div class="maps">
-    <figure><figcaption><strong>Simulated truth</strong><span>1-km squares</span></figcaption>
+    <figure><figcaption><strong>Simulated truth</strong><span id="res"></span></figcaption>
       <div class="mapbox"><canvas id="m0" width="720" height="400"></canvas><div class="tip" id="t0" hidden></div></div></figure>
     <figure><figcaption><strong>AI map, all links</strong><span id="n1"></span></figcaption>
       <div class="mapbox"><canvas id="m1" width="720" height="400"></canvas><div class="tip" id="t1" hidden></div></div></figure>
@@ -171,8 +171,8 @@ function drawMap(i, field, sparseOnly) {
   const c = DATA[city], cv = document.getElementById("m" + i), ctx = cv.getContext("2d");
   const W = cv.width, H = Math.round(W * c.ny / c.nx * Math.cos(((c.lat[0] + c.lat[1]) / 2) * Math.PI / 180) ** -1);
   if (cv.height !== H) cv.height = H;
-  const X = lon => (lon - c.lon[0] + 0.005) / (c.lon[1] - c.lon[0] + 0.01) * W;
-  const Y = lat => H - (lat - c.lat[0] + 0.005) / (c.lat[1] - c.lat[0] + 0.01) * H;
+  const X = lon => (lon - c.lon[0] + c.step / 2) / (c.lon[1] - c.lon[0] + c.step) * W;
+  const Y = lat => H - (lat - c.lat[0] + c.step / 2) / (c.lat[1] - c.lat[0] + c.step) * H;
   const g = c.geo;
   // ground: sea, then land
   ctx.fillStyle = css("--sea"); ctx.fillRect(0, 0, W, H);
@@ -182,7 +182,6 @@ function drawMap(i, field, sparseOnly) {
   ctx.save(); ctx.clip("evenodd");                     // rain only over land: no link measures the sea
   // rain (or AI minus truth)
   const cw = W / c.nx, ch = H / c.ny, off = hour * c.ny * c.nx;
-  ctx.globalAlpha = 0.9;
   for (let y = 0; y < c.ny; y++) for (let x = 0; x < c.nx; x++) {
     const idx = off + y * c.nx + x;
     const col = field === "diff" ? diffColor(diffAt(c, idx)) : colorFor(field[idx]);
@@ -291,6 +290,7 @@ function setCity(i) {
   document.getElementById("hour").max = c.hours.length - 1;
   document.getElementById("n1").textContent = `${c.scores.n_links} links`;
   document.getElementById("n2").textContent = `${c.scores.n_sparse} links`;
+  document.getElementById("res").textContent = `about ${Math.round(c.step * 111000 / 500) * 500}-m squares`;
   // open on the wettest hour
   let best = 0; c.series.truth.forEach((v, j) => { if (v !== null && v > c.series.truth[best]) best = j; });
   drawChart(); drawFacts(); setHour(best);

@@ -1,4 +1,4 @@
-"""Phase 4: 1-minute, ~1-km rain fields from half-hourly 0.1-degree IMERG.
+"""Phase 4: 1-minute, ~500-m rain fields from half-hourly 0.1-degree IMERG.
 
 Satellite rain is too coarse for links that are 1-10 km long and read every
 minute. We add the missing detail in three steps, all documented and tunable:
@@ -17,7 +17,9 @@ minute. We add the missing detail in three steps, all documented and tunable:
 Finally each IMERG cell's half-hour mean is restored (smooth rescaling), so the
 simulation keeps the satellite's amounts and only adds detail.
 
-The result is a plausible storm, not the real one at 1 km: it is the "truth" the
+Real radar shows the patchiness only down to 1 km; below that the same spectral law is
+extended (as RainFARM does), which is plausible but unchecked.
+The result is a plausible storm, not the real one at 500 m: it is the "truth" the
 simulated network is judged against.
 """
 
@@ -36,7 +38,7 @@ class TextureParams:
     slope: float = -3.87             # radially averaged power-spectrum slope, real radar
     tau_min: float = 20.0            # renewal time of the small-scale pattern (Lagrangian)
     wet_threshold: float = 0.1       # mm/h; below is dry
-    fine_deg: float = 0.01
+    fine_deg: float = 0.005           # ~500 m
     mass_passes: int = 6             # passes of the smooth mass correction
     seed: int = 0
 
@@ -144,8 +146,13 @@ def downscale(da: xr.DataArray, domain, p: TextureParams = TextureParams()):
 
 def texture_stats(fine: xr.DataArray, block_px: int = 10) -> dict:
     """The statistics measured on real radar by scripts/phase4_rain_texture.py, on a simulated
-    field: 15-min means, 10x10-pixel blocks with block mean >= 0.5 mm/h."""
+    field: first averaged to ~1 km (the radar's pixel), then 15-min means, 10x10-pixel blocks
+    with block mean >= 0.5 mm/h."""
     v = fine.values
+    k = max(1, int(round(0.01 / float(fine.lat.values[1] - fine.lat.values[0]))))
+    if k > 1:
+        ny_, nx_ = v.shape[1] // k * k, v.shape[2] // k * k
+        v = v[:, :ny_, :nx_].reshape(v.shape[0], ny_ // k, k, nx_ // k, k).mean((2, 4))
     T15 = v.shape[0] // 15
     v15 = v[:T15 * 15].reshape(T15, 15, *v.shape[1:]).mean(1)
     ny, nx = v15.shape[1] // block_px * block_px, v15.shape[2] // block_px * block_px

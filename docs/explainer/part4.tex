@@ -29,8 +29,8 @@ the national weather service (ONM): a pilot.
 \item \textbf{Real storms.} Two well-known Algerian flash floods, as seen by NASA's satellites.
 \item \textbf{Real towers, plausible links.} Real tower positions; the microwave links between them are built the way
 operators build them, with lengths and frequencies copied from real networks.
-\item \textbf{Rain at link scale.} The satellite sees 10-km squares every 30 minutes; links need 1\,km and 1 minute. We
-add the missing detail, with its strength measured on real radar.
+\item \textbf{Rain at link scale.} The satellite sees 10-km squares every 30 minutes; links are a few kilometres long and read
+every minute. We add the missing detail down to 500\,m, with its strength measured on real radar.
 \item \textbf{What each link would record.} The rain's signal loss, plus wet antennas, plus the noise, drift, gaps and
 faults of \emph{real} link recordings.
 \item \textbf{The chain.} Reliability score, AI and classical method, rain maps; then everything is compared with the
@@ -123,7 +123,7 @@ therefore repeats every map with only 50, 25, 10, 3 and 1\% of the links.
 \label{sec:p4_rain}
 %==========================================================
 A 5-km link inside one 10-km satellite square sees only part of it, and rain changes within minutes. So the satellite's
-squares are turned into 1-km squares, every minute, in three moves:
+squares are turned into 500-m squares, every minute, in three moves:
 \begin{enumerate}
 \item \textbf{Motion.} From each pair of satellite images we measure how the rain moved (optical flow, as in
 Section~\ref{sec:nowcast}). The typical speed was \PfourAlgSpeed\,km/h in Algiers and \PfourGhaSpeed\,km/h in Ghardaïa.
@@ -137,7 +137,14 @@ inside a 10-km square, how much of it is wet, and how fast the pattern changes.
 Finally, each satellite square's amount over each half-hour is restored exactly: the simulation only \emph{adds detail},
 it never changes the satellite's totals.
 
-How the simulated rain compares with real radar rain (15-minute rain in 1-km squares, inside raining 10-km squares):
+\begin{careful}
+\textbf{Detail below 1\,km is extrapolated.} The radar we measured has 1-km squares, so the patchiness is checked only down
+to 1\,km. Between 1\,km and 500\,m the same pattern law simply continues, as is standard practice. This makes the maps
+less blocky; it adds no measured information. (At 1 km the statistics are unchanged: 0.61 against 0.60.)
+\end{careful}
+
+How the simulated rain compares with real radar rain (15-minute rain in 1-km squares, inside raining 10-km squares; the
+simulation is averaged to 1\,km first, so both are compared at the same scale):
 \begin{center}\footnotesize
 \begin{tabular}{lccc}
 \toprule
@@ -218,7 +225,7 @@ The simulated recordings go through exactly the steps of Parts~2 and~3, with no 
 in Algiers and \PfourGhaReliable{} of \PfourGhaSub{} in Ghardaïa. The rest are dropped, mostly because their real recordings
 are faulty.
 \item The \textbf{AI} (average of five runs) and the \textbf{classical method} turn each kept sub-link into rain.
-\item \textbf{Hourly maps} by inverse-distance weighting (Section~\ref{sec:maps}), on the same 1-km squares as the truth.
+\item \textbf{Hourly maps} by inverse-distance weighting (Section~\ref{sec:maps}), on the same 500-m squares as the truth.
 \end{enumerate}
 Scores cover the storm days only (the three dry days before are needed for the dry level, not judged).
 
@@ -226,7 +233,7 @@ Scores cover the storm days only (the three dry days before are needed for the d
 \centering
 \includegraphics[width=0.92\textwidth]{fig_p4_steps_algiers.png}
 \caption{The wettest hour in Algiers (\PfourAlgHour{} UTC), from satellite to map. 1: the satellite's 10-km squares. 2: the
-simulated truth after Step~3. 3: the AI map from all links. 4: the AI map from only 3\% of the links (orange).}
+simulated truth after Step~3 (500-m squares). 3: the AI map from all links. 4: the AI map from only 3\% of the links (orange).}
 \label{fig:p4_steps}
 \end{figure}
 
@@ -241,7 +248,7 @@ satellite square covers most of it; the links add the detail inside.}
 \begin{center}\footnotesize\setlength{\tabcolsep}{4pt}
 \begin{tabular}{llcccc}
 \toprule
-& & \multicolumn{2}{c}{\textbf{per link}} & \multicolumn{2}{c}{\textbf{map (1-km squares)}}\\
+& & \multicolumn{2}{c}{\textbf{per link}} & \multicolumn{2}{c}{\textbf{map (500-m squares)}}\\
 \cmidrule(lr){3-4}\cmidrule(lr){5-6}
 City & method & hourly correlation & storm total & hourly correlation & storm total\\
 \midrule
@@ -325,7 +332,7 @@ Tower positions & OpenCelliD, sites = antennas within 150\,m & only public sourc
 Hubs (fibre) & 30\% of sites & unknown in Algeria; the density test covers 1--100\% of links\\
 Hop lengths & drawn from Gothenburg + Netherlands & real city networks; nearest-neighbour links would be 0.5\,km, far too short\\
 Frequency, polarisation & copied from a real link of similar length & keeps the real link between length and frequency\\
-Rain grid & 1\,km, 1 minute & the scale of a link and of its readings\\
+Rain grid & 500\,m, 1 minute & finer than a link and its readings; below 1\,km extrapolated\\
 Patchiness & strength 0.6, renewal 20 min & set so 15-min, 1-km statistics match real radar (Step~3 table)\\
 Satellite amounts & restored per square and half-hour & the simulation adds detail only\\
 Rain loss & ITU-R P.838, every 100\,m along the beam & standard formula; point by point for patchy rain\\

@@ -85,14 +85,16 @@ def city(c):
     sparse = set(z["sparse_ids"])
     city_dat = pd.read_csv(ROOT / "docs" / "explainer" / f"p4_city_{c}.dat", sep=" ")
     H, ny, nx = z["truth"].shape
+    h = float(z["lat"][1] - z["lat"][0]) / 2
     return {
         "key": c, "name": NAMES[c][0], "event": NAMES[c][1],
         "hours": [str(pd.Timestamp(h))[:16] for h in z["hours"]],
         "ny": ny, "nx": nx, "lat": [float(z["lat"][0]), float(z["lat"][-1])],
         "lon": [float(z["lon"][0]), float(z["lon"][-1])],
         "truth": q(z["truth"]), "ai": q(z["ai"]), "ai_sparse": q(z["ai_sparse"]),
-        "geo": geography(c, [float(z["lat"][0]) - 0.005, float(z["lat"][-1]) + 0.005],
-                         [float(z["lon"][0]) - 0.005, float(z["lon"][-1]) + 0.005]),
+        "step": float(z["lat"][1] - z["lat"][0]),
+        "geo": geography(c, [float(z["lat"][0]) - h, float(z["lat"][-1]) + h],
+                         [float(z["lon"][0]) - h, float(z["lon"][-1]) + h]),
         "links": [[round(a, 4), round(b, 4), round(cc, 4), round(d, 4), int(i in sparse)]
                   for a, b, cc, d, i in zip(links.site_0_lon, links.site_0_lat, links.site_1_lon,
                                             links.site_1_lat, links.link_id)],

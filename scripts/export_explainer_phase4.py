@@ -43,7 +43,7 @@ def cities():
 
 def extent(z):
     lat, lon = z["lat"], z["lon"]
-    d = 0.005
+    d = float(lat[1] - lat[0]) / 2
     return [lon[0] - d, lon[-1] + d, lat[0] - d, lat[-1] + d]
 
 
@@ -97,7 +97,7 @@ def fig_steps(c):
     fig, axes = plt.subplots(2, 2, figsize=(6.4, 3.9))
     axes = axes.ravel()
     panels = [("1. what the satellite saw (10-km cells)", None),
-              ("2. simulated truth (1-km cells)", truth[h]),
+              ("2. simulated truth (500-m cells)", truth[h]),
               (f"3. AI map from all {len(links)} links", z["ai"][h]),
               (f"4. AI map from {len(sparse)} links (3%, orange)", z["ai_sparse"][h])]
     for ax, (title, f) in zip(axes, panels):
@@ -253,7 +253,7 @@ def summary_md():
     L = ["# Phase 4: simulated Algerian network (SIMULATION, not validation)", "",
          "Real tower positions (OpenCelliD) + plausible microwave tree per operator (30% fibre hubs, hop lengths from",
          "Gothenburg/NL, frequency/polarisation from a real link of similar length) + IMERG storms downscaled to",
-         "1 km / 1 min (patchiness measured on Italian radar) + real dry recordings from eastern Italian links",
+         "500 m / 1 min (patchiness measured on Italian radar at 1 km) + real dry recordings from eastern Italian links",
          "(the AI = final recipe trained on western Italy never saw them) + wet antennas + -100 dBm floor + 1-dB rounding.",
          "", f"Real radar texture (Nov 2021): sigma {tex['sigma_log_ratio']:.2f}, wet {tex['wet_share_mean']:.2f}, "
          f"corr 15/30 min {tex['log_ratio_corr']['15min']:.2f}/{tex['log_ratio_corr']['30min']:.2f}", ""]
