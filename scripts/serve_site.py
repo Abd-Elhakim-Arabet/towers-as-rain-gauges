@@ -8,7 +8,8 @@ Pages:
   /explainer.pdf  the ground-up explainer
   /algeria/       Algeria tower map
   /replay/        Phase 4 storm replay (simulated Algerian network)
-  /storm3d/       3D storm over the towers (full screen, no menu bar)
+  /storm3d/       3D storm over the towers (self-contained, full screen)
+  /storm3d/live/  same, realistic: live satellite imagery, terrain, 3D buildings (needs internet)
 
 Listens on 127.0.0.1 only, so other machines on the lab network cannot open it.
 """
@@ -34,7 +35,8 @@ font:500 14px/1.4 'IBM Plex Sans',system-ui,sans-serif">
 <a href="/explainer.pdf" style="color:#cde2fb">Explainer (PDF)</a>
 <a href="/algeria/" style="color:#cde2fb">Algeria towers</a>
 <a href="/replay/" style="color:#cde2fb">Storm replay (simulation)</a>
-<a href="/storm3d/" style="color:#cde2fb">3D storm</a>
+<a href="/storm3d/live/" style="color:#cde2fb">3D storm (live)</a>
+<a href="/storm3d/" style="color:#cde2fb">3D storm (offline)</a>
 </nav>"""
 
 
@@ -66,6 +68,9 @@ def build() -> None:
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">"
             "<style>body{margin:0}[hidden]{display:none!important}</style></head><body>\n"
             + (s3d / "index.html").read_text() + "\n</body></html>\n")
+        if (s3d / "real.html").exists():
+            (OUT / "storm3d" / "live").mkdir(parents=True, exist_ok=True)
+            shutil.copy(s3d / "real.html", OUT / "storm3d" / "live" / "index.html")
         for g in s3d.glob("*.geojson"):
             shutil.copy(g, OUT / "storm3d" / g.name)
     pdf = ROOT / "docs" / "explainer" / "explainer.pdf"

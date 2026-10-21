@@ -181,6 +181,10 @@ def main():
         geojson(c)
     html = (OUT / "template.html").read_text().replace("/*DATA*/null", json.dumps(cities, separators=(",", ":")))
     (OUT / "index.html").write_text(html)
+    # live version (local site): satellite imagery, terrain and 3D buildings streamed as map tiles
+    real = [{k: v for k, v in c.items() if k != "ground"} for c in cities]
+    (OUT / "real.html").write_text((OUT / "real_template.html").read_text()
+                                   .replace("/*DATA*/null", json.dumps(real, separators=(",", ":"))))
     print("wrote", OUT / "index.html", f"{len(html) / 1e6:.2f} MB")
 
 
