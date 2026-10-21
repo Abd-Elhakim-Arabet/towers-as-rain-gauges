@@ -42,6 +42,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px currentColor; }
 .legend .bar { width: 46px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, rgba(90,190,255,.45), #ffd9a0, #ff9a4d); }
 #map { grid-area: map; position: relative; min-height: 0; }
+#nearrain { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 #flash { position: absolute; inset: 0; pointer-events: none; background: #e8f0ff; opacity: 0; transition: opacity 70ms linear; mix-blend-mode: screen; z-index: 2; }
 #timebar { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(720px, calc(100% - 28px)); z-index: 3;
   display: flex; gap: 10px; align-items: center; padding: 8px 12px; background: rgba(13, 17, 23, .82); border: 1px solid var(--edge);
@@ -104,6 +105,7 @@ footer .src { margin-left: auto; }
 </aside>
 
 <div id="map">
+  <canvas id="nearrain" aria-hidden="true"></canvas>
   <div id="flash"></div>
   <div id="timebar">
     <button class="btn" id="play" type="button">Play</button>
@@ -223,10 +225,29 @@ async function prepare(c) {
   return c._prep;
 }
 
-/* ---------- rain particles ---------- */
+/* ---------- rain: 3D streaks with wind, tail fade and splashes ---------- */
+// Wind blows the rain sideways; the horizontal speed is a fixed share of the (stylised) fall speed,
+// so streaks lean at a realistic angle. Direction: from the north-west, as in both storms' motion.
+const WIND = { e: 0.32, n: -0.22 };          // horizontal / vertical speed ratio, east and north parts
 const drops = { n: 0, x: new Float32Array(MAX_DROPS), y: new Float32Array(MAX_DROPS), z: new Float32Array(MAX_DROPS),
   v: new Float32Array(MAX_DROPS), g: new Float32Array(MAX_DROPS),
   src: new Float32Array(MAX_DROPS * 3), dst: new Float32Array(MAX_DROPS * 3) };
+const SPL = 3000, splash = { x: new Float32Array(SPL), y: new Float32Array(SPL), z: new Float32Array(SPL),
+  t: new Float32Array(SPL).fill(-9), next: 0 };
+let mPerLon = 90000;                         // metres per degree of longitude, set per city
+// rain streak: LineLayer whose alpha fades from the head (target) to the tail (source), like motion blur
+class RainLayer extends deck.LineLayer {
+  getShaders() {
+    const sh = super.getShaders();
+    sh.inject = { ...(sh.inject || {}),
+      "vs:#decl": "out float vAlong;",
+      "vs:#main-end": "vAlong = positions.x;",
+      "fs:#decl": "in float vAlong;",
+      "fs:DECKGL_FILTER_COLOR": "color.a *= vAlong * vAlong;" };
+    return sh;
+  }
+}
+RainLayer.layerName = "RainLayer";
 let cdf = null, cdfTotal = 0, dropView = null;
 
 // drops are spawned only over the part of the city in view, so close-ups get as much rain as overviews
@@ -254,17 +275,58 @@ function pickCell() {
 function spawn(k, anywhere) {
   if (cdfTotal <= 0) { drops.z[k] = -1e9; return; }
   const cell = C.cells[pickCell()];
-  drops.x[k] = cell.lo + Math.random() * C.dx; drops.y[k] = cell.la + Math.random() * C.dy; drops.g[k] = cell.g;
-  drops.z[k] = anywhere ? cell.g + Math.random() * (CLOUD - cell.g) : CLOUD - Math.random() * 100;
-  drops.v[k] = 300 + Math.random() * 200;
+  const z = anywhere ? cell.g + Math.random() * (CLOUD - cell.g) : CLOUD - Math.random() * 100;
+  // start up-wind, so the drop lands inside its cell
+  const drift = z - cell.g;
+  drops.x[k] = cell.lo + Math.random() * C.dx - WIND.e * drift / mPerLon;
+  drops.y[k] = cell.la + Math.random() * C.dy - WIND.n * drift / 110540;
+  drops.g[k] = cell.g; drops.z[k] = z;
+  drops.v[k] = 280 + Math.random() * 220;
 }
 function stepDrops(dt) {
+  const near = map.getZoom() > 15.2;            // splashes only show up close
   for (let k = 0; k < drops.n; k++) {
-    drops.z[k] -= drops.v[k] * dt;
-    if (drops.z[k] < drops.g[k]) spawn(k, false);
-    const j = 3 * k, len = 14 + drops.v[k] * 0.05;
-    drops.src[j] = drops.x[k]; drops.src[j + 1] = drops.y[k]; drops.src[j + 2] = drops.z[k] + len;
-    drops.dst[j] = drops.x[k] + 0.000012; drops.dst[j + 1] = drops.y[k] - 0.000006; drops.dst[j + 2] = drops.z[k];
+    const dz = drops.v[k] * dt;
+    drops.z[k] -= dz;
+    drops.x[k] += WIND.e * dz / mPerLon; drops.y[k] += WIND.n * dz / 110540;
+    if (drops.z[k] < drops.g[k]) {
+      if (near && Math.random() < 0.6) {
+        const i = splash.next; splash.next = (i + 1) % SPL;
+        splash.x[i] = drops.x[k]; splash.y[i] = drops.y[k]; splash.z[i] = drops.g[k] + 0.5; splash.t[i] = T;
+      }
+      spawn(k, false);
+    }
+    const j = 3 * k, len = 10 + drops.v[k] * 0.07;  // streak = the last fraction of a second of fall
+    drops.src[j] = drops.x[k] - WIND.e * len / mPerLon; drops.src[j + 1] = drops.y[k] - WIND.n * len / 110540;
+    drops.src[j + 2] = drops.z[k] + len;
+    drops.dst[j] = drops.x[k]; drops.dst[j + 1] = drops.y[k]; drops.dst[j + 2] = drops.z[k];
+  }
+}
+
+/* near-camera rain: a screen-space layer of big soft streaks in front of the scene (depth cue) */
+const nearCv = document.getElementById("nearrain"), nctx = nearCv.getContext("2d");
+let near = [], intensity = 0;
+function resizeNear() { const r = nearCv.getBoundingClientRect(); nearCv.width = r.width; nearCv.height = r.height; }
+addEventListener("resize", resizeNear);
+function stepNear(dt) {
+  const W = nearCv.width, H = nearCv.height;
+  nctx.clearRect(0, 0, W, H);
+  if (reduced || !show.rain) return;
+  const pitchF = Math.max(0, Math.min(1, (map.getPitch() - 35) / 35));   // looking down from above: little near rain
+  const want = Math.round(Math.min(900, 240 * Math.sqrt(intensity)) * pitchF);
+  while (near.length < want) near.push({ x: Math.random() * W, y: Math.random() * H, s: 0.4 + Math.random() * 0.6 });
+  near.length = Math.min(near.length, want);
+  // the wind seen on screen depends on which way the camera faces
+  const b = map.getBearing() * Math.PI / 180, sx = WIND.e * Math.cos(b) - WIND.n * Math.sin(b);
+  nctx.lineCap = "round";
+  for (const d of near) {
+    const sp = (900 + 1700 * d.s) * dt, len = 18 + 70 * d.s;
+    d.y += sp; d.x += sx * sp;
+    if (d.y > H + len) { d.y = -len; d.x = Math.random() * W; }
+    if (d.x < -50) d.x += W + 100; if (d.x > W + 50) d.x -= W + 100;
+    nctx.strokeStyle = `rgba(222, 232, 246, ${0.05 + 0.16 * d.s})`;
+    nctx.lineWidth = 0.6 + 1.6 * d.s;
+    nctx.beginPath(); nctx.moveTo(d.x - sx * len, d.y - len); nctx.lineTo(d.x, d.y); nctx.stroke();
   }
 }
 
@@ -300,9 +362,18 @@ function layers() {
     getFillColor: d => { const r = f[off + d.i] / 4; return r > 6 ? [175, 186, 198, Math.min(26, 4 + 7 * Math.log1p(r - 6))] : [0, 0, 0, 0]; },
     material: false, parameters: { depthWriteEnabled: false },
     updateTriggers: { getElevation: [view, hour, city], getFillColor: [view, hour, city] } }));
-  if (show.rain) out.push(new deck.LineLayer({ id: "rain", data: { length: drops.n,
-      attributes: { getSourcePosition: { value: drops.src, size: 3 }, getTargetPosition: { value: drops.dst, size: 3 } } },
-    getColor: [215, 230, 250, 150], getWidth: 1, widthUnits: "pixels", parameters: ADD }));
+  if (show.rain) {
+    out.push(new RainLayer({ id: "rain", data: { length: drops.n,
+        attributes: { getSourcePosition: { value: drops.src, size: 3 }, getTargetPosition: { value: drops.dst, size: 3 } } },
+      getColor: [214, 228, 248, 190], getWidth: 1.2, widthUnits: "pixels", parameters: ADD }));
+    // splashes: thin rings that widen and fade in a third of a second
+    out.push(new deck.ScatterplotLayer({ id: "splashes", data: { length: SPL }, stroked: true, filled: false,
+      getPosition: (_, { index: i }) => [splash.x[i], splash.y[i], splash.z[i]],
+      getRadius: (_, { index: i }) => { const a = (T - splash.t[i]) / 0.35; return a >= 0 && a < 1 ? 0.6 + 2.6 * a : 0; },
+      getLineColor: (_, { index: i }) => { const a = (T - splash.t[i]) / 0.35; return [225, 235, 250, a >= 0 && a < 1 ? 170 * (1 - a) : 0]; },
+      lineWidthUnits: "pixels", getLineWidth: 1, radiusUnits: "meters", parameters: { depthWriteEnabled: false },
+      updateTriggers: { getPosition: T, getRadius: T, getLineColor: T } }));
+  }
   if (show.labels) out.push(new deck.TextLayer({ id: "labels", data: P.labels, getPosition: d => d.p, getText: d => d.name,
     getSize: 14, getColor: [245, 248, 252, 240], fontFamily: "Inter Tight, sans-serif", fontWeight: 600, billboard: true,
     outlineWidth: 4, outlineColor: [10, 14, 20, 230], fontSettings: { sdf: true }, characterSet: "auto" }));
@@ -313,7 +384,8 @@ function layers() {
 
 /* ---------- map ---------- */
 const map = new maplibregl.Map({
-  container: "map", hash: false, maxPitch: 85, maxZoom: 16.9,   // deck layers stop drawing beyond ~17 here antialias: true, attributionControl: { compact: true },
+  // maxZoom 16.9: deck layers stop drawing beyond ~17 in this setup
+  container: "map", hash: false, maxPitch: 85, maxZoom: 16.9, antialias: true, attributionControl: { compact: true },
   style: {
     version: 8,
     sources: {
@@ -390,7 +462,7 @@ let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
   if (C) {
-    stepDrops(dt); maybeFlash(now);
+    stepDrops(dt); stepNear(dt); maybeFlash(now);
     if (orbiting) map.setBearing((map.getBearing() + dt * 5) % 360);
     overlay.setProps({ layers: layers() });
   }
@@ -406,6 +478,20 @@ function setHour(h) {
   for (let i = 0; i < C.n; i++) { s += f[off + i]; if (f[off + i] > mx) mx = f[off + i]; }
   document.getElementById("readout").innerHTML = `mean <b>${(s / C.n / 4).toFixed(1)}</b> · peak <b>${(mx / 4).toFixed(0)}</b> mm/h`;
   if (map.getLayer("satellite")) map.setPaintProperty("satellite", "raster-brightness-max", stormBrightness());
+  wetAtmosphere(s / C.n / 4);
+}
+
+/* heavier rain: thicker grey fog, a darker and less saturated city */
+function wetAtmosphere(mean) {
+  intensity = mean;
+  const w = Math.min(1, Math.log1p(mean) / Math.log1p(10));
+  const mix = (a, b) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * w)).join(",")})`;
+  map.setSky({ "sky-color": mix([88, 100, 112], [52, 58, 66]), "horizon-color": mix([150, 160, 168], [104, 110, 116]),
+    "fog-color": mix([120, 128, 136], [86, 92, 98]), "sky-horizon-blend": 0.6, "horizon-fog-blend": 0.6 + 0.3 * w,
+    "fog-ground-blend": 0.86 - 0.24 * w, "atmosphere-blend": 0.6 });
+  if (map.getLayer("satellite")) map.setPaintProperty("satellite", "raster-saturation", -0.15 - 0.35 * w);
+  if (map.getLayer("buildings")) map.setPaintProperty("buildings", "fill-extrusion-color",
+    ["interpolate", ["linear"], ["coalesce", ["get", "render_height"], 8], 0, mix([205, 198, 186], [150, 148, 144]), 40, mix([230, 225, 216], [178, 176, 172])]);
 }
 
 function flyTo([, lon, lat, zoom, bearing]) { map.flyTo({ center: [lon, lat], zoom, bearing, pitch: zoom > 16 ? 72 : 66, duration: 2600, essential: true }); }
@@ -415,6 +501,7 @@ async function setCity(i) {
   document.querySelectorAll("#cities button").forEach((b, j) => b.setAttribute("aria-pressed", j === i));
   document.getElementById("event").textContent = `${c.name} · ${c.event}`;
   C = await prepare(c);
+  mPerLon = 111320 * Math.cos((c.bounds[1] + c.bounds[3]) / 2 * Math.PI / 180);
   document.getElementById("hour").max = c.hours.length - 1;
   // a close-up of the real tower site nearest the first place
   if (!PLACES[c.key].some(p => p[0] === "Tower close-up")) {
@@ -456,6 +543,7 @@ document.getElementById("play").onclick = () => {
 document.getElementById("orbit").onclick = e => { orbiting = !orbiting; e.target.setAttribute("aria-pressed", orbiting);
   e.target.textContent = orbiting ? "Stop orbit" : "Start orbit"; };
 map.on("load", () => {
+  resizeNear();
   map.setTerrain({ source: "dem", exaggeration: EX });
   setCity(0).then(() => requestAnimationFrame(frame)); status(); });
 </script>
