@@ -23,6 +23,55 @@ NAMES = {"algiers": ("Algiers", "Bab El Oued flood, 9–10 Nov 2001"),
          "ghardaia": ("Ghardaïa", "M'zab valley flood, 29 Sep – 1 Oct 2008")}
 
 
+# communes to label: name in the boundary file -> name shown (the usual local spelling)
+LABELS = {"algiers": {"Bab Al Wadi": "Bab El Oued", "Central Algiers": "Alger Centre", "Bouzareah": "Bouzaréah",
+                      "El Harrach": "El Harrach", "Bab Ezzouar": "Bab Ezzouar", "Cheraga": "Chéraga",
+                      "Baraki": "Baraki", "Burj Al Kifan": "Bordj El Kiffan", "Kouba": "Kouba"},
+          "ghardaia": {"Ghardaia": "Ghardaïa", "Bounoura": "Bounoura", "El Atteuf": "El Atteuf"}}
+COMMUNES = ROOT / "data" / "raw" / "boundaries" / "dza_adm3_communes.geojson"   # geoBoundaries ADM3 (from OSM)
+
+
+def geography(c, lat, lon):
+    """Commune borders, coastline and labels clipped to the map box (rounded, simplified ~30 m)."""
+    from shapely.geometry import box, shape
+    from shapely.ops import linemerge, unary_union
+    B = box(lon[0], lat[0], lon[1], lat[1])
+    feats = [f for f in json.loads(COMMUNES.read_text())["features"]
+             if f["geometry"] and shape(f["geometry"]).intersects(B)]
+    polys = [shape(f["geometry"]).buffer(0) for f in feats]
+    land = unary_union(polys).intersection(B).simplify(0.0003)
+
+    def rings(g):
+        out = []
+        for poly in getattr(g, "geoms", [g]):
+            if poly.is_empty or poly.geom_type != "Polygon":
+                continue
+            out.append([[round(x, 4), round(y, 4)] for x, y in poly.exterior.coords])
+            out += [[[round(x, 4), round(y, 4)] for x, y in r.coords] for r in poly.interiors]
+        return out
+
+    def lines(g):
+        out = []
+        for ln in getattr(g, "geoms", [g]):
+            if ln.is_empty or ln.geom_type != "LineString":
+                continue
+            out.append([[round(x, 4), round(y, 4)] for x, y in ln.coords])
+        return out
+    # coastline = edge of the land that is not the edge of the box
+    coast = land.boundary.difference(B.exterior.buffer(1e-4))
+    borders = unary_union([pl.boundary for pl in polys]).intersection(B).difference(coast.buffer(2e-4))
+    if borders.geom_type == "MultiLineString":
+        borders = linemerge(borders)
+    borders = borders.simplify(0.0003)
+    labels = []
+    for f, pl in zip(feats, polys):
+        name = f["properties"].get("shapeName")
+        if name in LABELS[c]:
+            pt = pl.intersection(B).representative_point()
+            labels.append([round(pt.x, 4), round(pt.y, 4), LABELS[c][name]])
+    return {"land": rings(land), "coast": lines(coast.simplify(0.0003)), "borders": lines(borders), "labels": labels}
+
+
 def q(a, nd=1):
     """Round to nd decimals; NaN -> None (JSON null)."""
     a = np.round(np.asarray(a, float), nd)
@@ -42,6 +91,8 @@ def city(c):
         "ny": ny, "nx": nx, "lat": [float(z["lat"][0]), float(z["lat"][-1])],
         "lon": [float(z["lon"][0]), float(z["lon"][-1])],
         "truth": q(z["truth"]), "ai": q(z["ai"]), "ai_sparse": q(z["ai_sparse"]),
+        "geo": geography(c, [float(z["lat"][0]) - 0.005, float(z["lat"][-1]) + 0.005],
+                         [float(z["lon"][0]) - 0.005, float(z["lon"][-1]) + 0.005]),
         "links": [[round(a, 4), round(b, 4), round(cc, 4), round(d, 4), int(i in sparse)]
                   for a, b, cc, d, i in zip(links.site_0_lon, links.site_0_lat, links.site_1_lon,
                                             links.site_1_lat, links.link_id)],
