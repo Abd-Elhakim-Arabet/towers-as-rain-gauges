@@ -2,16 +2,16 @@
  "city": "algiers",
  "event": "Bab El Oued flood",
  "fibre_share": 0.3,
- "n_sites": 2434,
- "n_links": 1705,
- "n_sub_links": 3410,
- "n_reliable": 2458,
+ "n_sites": 3408,
+ "n_links": 2385,
+ "n_sub_links": 4770,
+ "n_reliable": 3424,
  "link_length_km_pct": [
-  0.83,
+  0.81,
   1.89,
-  3.6,
-  6.37,
-  13.59
+  3.63,
+  6.28,
+  13.51
  ],
  "ai_threshold": 0.45,
  "texture_check": {
@@ -26,415 +26,415 @@
  ],
  "links": {
   "ai": {
-   "hourly_r": 0.8576340420368892,
-   "bias_pct": -22.584055972172568,
-   "rmse_mm_h": 0.9728706870318082
+   "hourly_r": 0.8566816784108094,
+   "bias_pct": -22.76381479961227,
+   "rmse_mm_h": 0.9327995715422963
   },
   "classical": {
-   "hourly_r": 0.6598369770868476,
-   "bias_pct": -13.349068543427311,
-   "rmse_mm_h": 1.585026401499301
+   "hourly_r": 0.7163113675377369,
+   "bias_pct": -13.294752160573308,
+   "rmse_mm_h": 1.3279816994512865
   }
  },
  "maps": {
   "0.01": {
-   "n_links": 17,
+   "n_links": 24,
    "ai": {
-    "covered_share": 0.9134808853118712,
-    "pixel_hourly_r": 0.8271543833917211,
-    "pixel_hourly_rmse": 1.1381397348436126,
-    "event_total_r": 0.7236506207890073,
-    "event_total_bias_pct": -25.87648648905063,
-    "city_mean_hourly_r": 0.9756116670741808,
+    "covered_share": 0.9464788732394366,
+    "pixel_hourly_r": 0.812397619621471,
+    "pixel_hourly_rmse": 1.1366297262014544,
+    "event_total_r": 0.5259409391678007,
+    "event_total_bias_pct": -23.462837953208115,
+    "city_mean_hourly_r": 0.9734207913316196,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 34.100204018792965,
+    "city_total_est_mm": 34.95576884910753,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.0744466800804829,
-      "hourly_r": 0.9196330358985038,
-      "total_bias_pct": -23.453289718096247
+      "share_of_city": 0.09014084507042254,
+      "hourly_r": 0.9072401185096091,
+      "total_bias_pct": -27.175811063454848
      },
      "1-2km": {
-      "share_of_city": 0.16498993963782696,
-      "hourly_r": 0.8936743846335834,
-      "total_bias_pct": -25.60679511172537
+      "share_of_city": 0.17303822937625754,
+      "hourly_r": 0.8756506161295229,
+      "total_bias_pct": -28.28809031550643
      },
      "2-5km": {
-      "share_of_city": 0.38672032193158956,
-      "hourly_r": 0.8260983739261414,
-      "total_bias_pct": -26.141284572011457
+      "share_of_city": 0.4169014084507042,
+      "hourly_r": 0.7983272812811875,
+      "total_bias_pct": -22.836324011997345
      },
      "5-10km": {
-      "share_of_city": 0.28732394366197184,
-      "hourly_r": 0.7597396744197585,
-      "total_bias_pct": -26.303704839060906
+      "share_of_city": 0.2663983903420523,
+      "hourly_r": 0.7540485142073863,
+      "total_bias_pct": -19.720353567335636
      }
     }
    },
    "classical": {
-    "covered_share": 0.9134808853118712,
-    "pixel_hourly_r": 0.8258175237273905,
-    "pixel_hourly_rmse": 1.0728823699925936,
-    "event_total_r": 0.6510461992870377,
-    "event_total_bias_pct": -18.231604147738512,
-    "city_mean_hourly_r": 0.9858564044974379,
+    "covered_share": 0.9464788732394366,
+    "pixel_hourly_r": 0.8304663780220991,
+    "pixel_hourly_rmse": 1.041759642602247,
+    "event_total_r": 0.6940502206401297,
+    "event_total_bias_pct": -16.374025625161725,
+    "city_mean_hourly_r": 0.9823023975406284,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 37.61719930396528,
+    "city_total_est_mm": 38.193344930154254,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.0744466800804829,
-      "hourly_r": 0.9204149207878364,
-      "total_bias_pct": -12.753297510696715
+      "share_of_city": 0.09014084507042254,
+      "hourly_r": 0.907434716569045,
+      "total_bias_pct": -18.749699614385428
      },
      "1-2km": {
-      "share_of_city": 0.16498993963782696,
-      "hourly_r": 0.9007095184840926,
-      "total_bias_pct": -15.679713417027974
+      "share_of_city": 0.17303822937625754,
+      "hourly_r": 0.890074442564527,
+      "total_bias_pct": -19.914637783729162
      },
      "2-5km": {
-      "share_of_city": 0.38672032193158956,
-      "hourly_r": 0.8307718878488506,
-      "total_bias_pct": -17.038641448581128
+      "share_of_city": 0.4169014084507042,
+      "hourly_r": 0.8186469246281602,
+      "total_bias_pct": -13.676052618899547
      },
      "5-10km": {
-      "share_of_city": 0.28732394366197184,
-      "hourly_r": 0.7398105550298041,
-      "total_bias_pct": -22.790657875033094
+      "share_of_city": 0.2663983903420523,
+      "hourly_r": 0.7725485166941293,
+      "total_bias_pct": -17.19550301272339
      }
     }
    }
   },
   "0.03": {
-   "n_links": 51,
+   "n_links": 72,
    "ai": {
-    "covered_share": 0.9766599597585514,
-    "pixel_hourly_r": 0.8395984031132919,
-    "pixel_hourly_rmse": 1.1603598405021387,
-    "event_total_r": 0.6426770482690914,
-    "event_total_bias_pct": -33.93179826791916,
-    "city_mean_hourly_r": 0.9754600457089844,
+    "covered_share": 0.9919517102615694,
+    "pixel_hourly_r": 0.7712358135746791,
+    "pixel_hourly_rmse": 1.149546110982164,
+    "event_total_r": 0.6351221990380016,
+    "event_total_bias_pct": -20.055330691371665,
+    "city_mean_hourly_r": 0.9382041482023832,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 30.16365936145069,
+    "city_total_est_mm": 36.401423772824536,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.1891348088531187,
-      "hourly_r": 0.9098374248041458,
-      "total_bias_pct": -27.585373837156002
+      "share_of_city": 0.254728370221328,
+      "hourly_r": 0.8509570703821624,
+      "total_bias_pct": -17.687131055706562
      },
      "1-2km": {
-      "share_of_city": 0.2631790744466801,
-      "hourly_r": 0.8856513623438949,
-      "total_bias_pct": -29.22274456990128
+      "share_of_city": 0.2507042253521127,
+      "hourly_r": 0.8685292962410147,
+      "total_bias_pct": -19.029364241927972
      },
      "2-5km": {
-      "share_of_city": 0.3299798792756539,
-      "hourly_r": 0.8066786998995021,
-      "total_bias_pct": -35.29266613447436
+      "share_of_city": 0.2885311871227364,
+      "hourly_r": 0.7498850419820436,
+      "total_bias_pct": -20.772665950304503
      },
      "5-10km": {
-      "share_of_city": 0.19436619718309858,
-      "hourly_r": 0.7698374933403075,
-      "total_bias_pct": -41.74978004955998
+      "share_of_city": 0.19798792756539235,
+      "hourly_r": 0.5947523522035851,
+      "total_bias_pct": -22.86586972157799
      }
     }
    },
    "classical": {
-    "covered_share": 0.9766599597585514,
-    "pixel_hourly_r": 0.8494199827372086,
-    "pixel_hourly_rmse": 1.0326408685952013,
-    "event_total_r": 0.7080118658541735,
-    "event_total_bias_pct": -22.402674301349677,
-    "city_mean_hourly_r": 0.9868499237082576,
+    "covered_share": 0.9919517102615694,
+    "pixel_hourly_r": 0.6790244447481422,
+    "pixel_hourly_rmse": 1.4108193488458398,
+    "event_total_r": 0.5874874556686489,
+    "event_total_bias_pct": -5.1404578188858245,
+    "city_mean_hourly_r": 0.9310246929851582,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 35.42731962382281,
+    "city_total_est_mm": 43.19265341508117,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.1891348088531187,
-      "hourly_r": 0.9097257849970173,
-      "total_bias_pct": -17.51909691008857
+      "share_of_city": 0.254728370221328,
+      "hourly_r": 0.7511563320835213,
+      "total_bias_pct": -3.790650242322946
      },
      "1-2km": {
-      "share_of_city": 0.2631790744466801,
-      "hourly_r": 0.887155817251055,
-      "total_bias_pct": -18.906597432458348
+      "share_of_city": 0.2507042253521127,
+      "hourly_r": 0.8108125868138018,
+      "total_bias_pct": -6.148409609108485
      },
      "2-5km": {
-      "share_of_city": 0.3299798792756539,
-      "hourly_r": 0.818134753694649,
-      "total_bias_pct": -22.15124389446903
+      "share_of_city": 0.2885311871227364,
+      "hourly_r": 0.6805146306250057,
+      "total_bias_pct": -6.105123731261763
      },
      "5-10km": {
-      "share_of_city": 0.19436619718309858,
-      "hourly_r": 0.8003551753017893,
-      "total_bias_pct": -30.33997140848844
+      "share_of_city": 0.19798792756539235,
+      "hourly_r": 0.49131208427319056,
+      "total_bias_pct": -4.211735581930432
      }
     }
    }
   },
   "0.10": {
-   "n_links": 170,
+   "n_links": 238,
    "ai": {
     "covered_share": 1.0,
-    "pixel_hourly_r": 0.9076879496474755,
-    "pixel_hourly_rmse": 0.9354296107544082,
-    "event_total_r": 0.7744473308531684,
-    "event_total_bias_pct": -25.683068823807297,
-    "city_mean_hourly_r": 0.9833172676633745,
+    "pixel_hourly_r": 0.9112271611737998,
+    "pixel_hourly_rmse": 0.8987697475930676,
+    "event_total_r": 0.8440465335170294,
+    "event_total_bias_pct": -22.051119539435337,
+    "city_mean_hourly_r": 0.9812260037630014,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 33.84422204318302,
+    "city_total_est_mm": 35.49822599738882,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.4100603621730382,
-      "hourly_r": 0.9431229645628337,
-      "total_bias_pct": -24.26410772194285
+      "share_of_city": 0.5010060362173038,
+      "hourly_r": 0.944683118043012,
+      "total_bias_pct": -22.435154586353136
      },
      "1-2km": {
-      "share_of_city": 0.2414486921529175,
-      "hourly_r": 0.9203028111420576,
-      "total_bias_pct": -25.12020938672911
+      "share_of_city": 0.2317907444668008,
+      "hourly_r": 0.9141640100630481,
+      "total_bias_pct": -22.592661840687445
      },
      "2-5km": {
-      "share_of_city": 0.26961770623742454,
-      "hourly_r": 0.8318455388151565,
-      "total_bias_pct": -26.990075403572877
+      "share_of_city": 0.20643863179074445,
+      "hourly_r": 0.8505245265924044,
+      "total_bias_pct": -18.296756173319505
      },
      "5-10km": {
-      "share_of_city": 0.07887323943661972,
-      "hourly_r": 0.8405013187729394,
-      "total_bias_pct": -31.11398459469542
+      "share_of_city": 0.060764587525150904,
+      "hourly_r": 0.7546369119293923,
+      "total_bias_pct": -28.662557195186057
      }
     }
    },
    "classical": {
     "covered_share": 1.0,
-    "pixel_hourly_r": 0.9110765001341276,
-    "pixel_hourly_rmse": 0.7912898360127251,
-    "event_total_r": 0.8353105211563607,
-    "event_total_bias_pct": -11.36447064330046,
-    "city_mean_hourly_r": 0.9916431003593522,
+    "pixel_hourly_r": 0.8921044828321064,
+    "pixel_hourly_rmse": 0.8321890325681043,
+    "event_total_r": 0.811026836495422,
+    "event_total_bias_pct": -10.4788297225337,
+    "city_mean_hourly_r": 0.9925487090831852,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 40.3649678341964,
+    "city_total_est_mm": 40.76829218436227,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.4100603621730382,
-      "hourly_r": 0.9502545428689824,
-      "total_bias_pct": -12.640759470098805
+      "share_of_city": 0.5010060362173038,
+      "hourly_r": 0.9117429400686288,
+      "total_bias_pct": -11.233031653351377
      },
      "1-2km": {
-      "share_of_city": 0.2414486921529175,
-      "hourly_r": 0.9204858754007647,
-      "total_bias_pct": -9.472328680048514
+      "share_of_city": 0.2317907444668008,
+      "hourly_r": 0.9182070537500489,
+      "total_bias_pct": -10.429383681077443
      },
      "2-5km": {
-      "share_of_city": 0.26961770623742454,
-      "hourly_r": 0.8397765516023302,
-      "total_bias_pct": -9.276427862302539
+      "share_of_city": 0.20643863179074445,
+      "hourly_r": 0.8452162990395056,
+      "total_bias_pct": -4.958798399770281
      },
      "5-10km": {
-      "share_of_city": 0.07887323943661972,
-      "hourly_r": 0.8349859583247884,
-      "total_bias_pct": -17.985267179726428
+      "share_of_city": 0.060764587525150904,
+      "hourly_r": 0.7378498501982126,
+      "total_bias_pct": -21.725361575738468
      }
     }
    }
   },
   "0.25": {
-   "n_links": 426,
+   "n_links": 596,
    "ai": {
     "covered_share": 1.0,
-    "pixel_hourly_r": 0.9163771978264684,
-    "pixel_hourly_rmse": 0.908571404921716,
-    "event_total_r": 0.793801544301531,
-    "event_total_bias_pct": -24.170197751465892,
-    "city_mean_hourly_r": 0.976741697240161,
+    "pixel_hourly_r": 0.8989991898516969,
+    "pixel_hourly_rmse": 0.967767047021479,
+    "event_total_r": 0.6295545545186126,
+    "event_total_bias_pct": -27.326325863156818,
+    "city_mean_hourly_r": 0.9740744358135367,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 34.53318946533933,
+    "city_total_est_mm": 33.09587634007646,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.572635814889336,
-      "hourly_r": 0.9420436144605857,
-      "total_bias_pct": -23.630553288301883
+      "share_of_city": 0.6229376257545272,
+      "hourly_r": 0.9326132855857362,
+      "total_bias_pct": -25.016181019345506
      },
      "1-2km": {
-      "share_of_city": 0.2080482897384306,
-      "hourly_r": 0.9087137909085493,
-      "total_bias_pct": -23.33776700608128
+      "share_of_city": 0.1806841046277666,
+      "hourly_r": 0.8787981704724749,
+      "total_bias_pct": -28.42187935049525
      },
      "2-5km": {
-      "share_of_city": 0.16096579476861167,
-      "hourly_r": 0.854497855749726,
-      "total_bias_pct": -22.84618363949791
+      "share_of_city": 0.13279678068410464,
+      "hourly_r": 0.7751244430898295,
+      "total_bias_pct": -30.244858690207764
      },
      "5-10km": {
-      "share_of_city": 0.05835010060362173,
-      "hourly_r": 0.7517677431016515,
-      "total_bias_pct": -35.41248685748975
+      "share_of_city": 0.0635814889336016,
+      "hourly_r": 0.7368971630445488,
+      "total_bias_pct": -40.500534374119965
      }
     }
    },
    "classical": {
     "covered_share": 1.0,
-    "pixel_hourly_r": 0.8946115373517429,
-    "pixel_hourly_rmse": 0.8392994626080442,
-    "event_total_r": 0.7781404079397306,
-    "event_total_bias_pct": -13.628789195831526,
-    "city_mean_hourly_r": 0.9919305082268868,
+    "pixel_hourly_r": 0.8875690738076001,
+    "pixel_hourly_rmse": 0.8810520776234294,
+    "event_total_r": 0.6211573407035889,
+    "event_total_bias_pct": -17.05815686619916,
+    "city_mean_hourly_r": 0.9832990128127533,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 39.33378828122652,
+    "city_total_est_mm": 37.7720407888756,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.572635814889336,
-      "hourly_r": 0.9050362273876404,
-      "total_bias_pct": -13.738431151353502
+      "share_of_city": 0.6229376257545272,
+      "hourly_r": 0.9265182819570977,
+      "total_bias_pct": -15.336722939295711
      },
      "1-2km": {
-      "share_of_city": 0.2080482897384306,
-      "hourly_r": 0.9053586471190979,
-      "total_bias_pct": -11.97059220684531
+      "share_of_city": 0.1806841046277666,
+      "hourly_r": 0.8566129675056825,
+      "total_bias_pct": -17.52274525844856
      },
      "2-5km": {
-      "share_of_city": 0.16096579476861167,
-      "hourly_r": 0.8623626264256526,
-      "total_bias_pct": -10.23909111240675
+      "share_of_city": 0.13279678068410464,
+      "hourly_r": 0.7482084088180896,
+      "total_bias_pct": -19.166344828400184
      },
      "5-10km": {
-      "share_of_city": 0.05835010060362173,
-      "hourly_r": 0.7815850278532759,
-      "total_bias_pct": -27.012602332837698
+      "share_of_city": 0.0635814889336016,
+      "hourly_r": 0.7232076788807565,
+      "total_bias_pct": -27.926513306984944
      }
     }
    }
   },
   "0.50": {
-   "n_links": 852,
+   "n_links": 1192,
    "ai": {
     "covered_share": 1.0,
-    "pixel_hourly_r": 0.9248576474106992,
-    "pixel_hourly_rmse": 0.897667565930526,
-    "event_total_r": 0.8051808949615229,
-    "event_total_bias_pct": -24.401927315483853,
-    "city_mean_hourly_r": 0.9764722665851601,
+    "pixel_hourly_r": 0.9181781564934849,
+    "pixel_hourly_rmse": 0.926153560432816,
+    "event_total_r": 0.7226186986134947,
+    "event_total_bias_pct": -26.85808292610996,
+    "city_mean_hourly_r": 0.9763164523910073,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 34.42765891268506,
+    "city_total_est_mm": 33.30911601077809,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.6684104627766599,
-      "hourly_r": 0.944793544674149,
-      "total_bias_pct": -23.90881590900811
+      "share_of_city": 0.6780684104627767,
+      "hourly_r": 0.942045699441446,
+      "total_bias_pct": -24.88759768971207
      },
      "1-2km": {
-      "share_of_city": 0.16941649899396377,
-      "hourly_r": 0.9051454271587932,
-      "total_bias_pct": -26.068528600502717
+      "share_of_city": 0.1448692152917505,
+      "hourly_r": 0.8911309926043264,
+      "total_bias_pct": -28.71054019582577
      },
      "2-5km": {
-      "share_of_city": 0.11951710261569416,
-      "hourly_r": 0.8413297725597559,
-      "total_bias_pct": -23.193918740307375
+      "share_of_city": 0.12515090543259558,
+      "hourly_r": 0.8232483035074911,
+      "total_bias_pct": -30.3488264222346
      },
      "5-10km": {
-      "share_of_city": 0.04265593561368209,
-      "hourly_r": 0.7803458333810877,
-      "total_bias_pct": -28.758201640204984
+      "share_of_city": 0.05191146881287726,
+      "hourly_r": 0.7399903990314837,
+      "total_bias_pct": -38.928723294105495
      }
     }
    },
    "classical": {
     "covered_share": 1.0,
-    "pixel_hourly_r": 0.9204525510336558,
-    "pixel_hourly_rmse": 0.7752909348631355,
-    "event_total_r": 0.7958739521199115,
-    "event_total_bias_pct": -12.711663678187012,
-    "city_mean_hourly_r": 0.9901159878470377,
+    "pixel_hourly_r": 0.9110014315377727,
+    "pixel_hourly_rmse": 0.814239082900809,
+    "event_total_r": 0.7330584179943954,
+    "event_total_bias_pct": -14.695694455687692,
+    "city_mean_hourly_r": 0.9884232921081493,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 39.75145084034162,
+    "city_total_est_mm": 38.84791543984123,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.6684104627766599,
-      "hourly_r": 0.936212162826022,
-      "total_bias_pct": -13.6929922125407
+      "share_of_city": 0.6780684104627767,
+      "hourly_r": 0.9300915425376799,
+      "total_bias_pct": -13.616224902346474
      },
      "1-2km": {
-      "share_of_city": 0.16941649899396377,
-      "hourly_r": 0.9117641527272012,
-      "total_bias_pct": -12.986497240073291
+      "share_of_city": 0.1448692152917505,
+      "hourly_r": 0.900028882478193,
+      "total_bias_pct": -15.411447532721578
      },
      "2-5km": {
-      "share_of_city": 0.11951710261569416,
-      "hourly_r": 0.8548483490107979,
-      "total_bias_pct": -6.45393803941362
+      "share_of_city": 0.12515090543259558,
+      "hourly_r": 0.8319551576041245,
+      "total_bias_pct": -14.397534591613459
      },
      "5-10km": {
-      "share_of_city": 0.04265593561368209,
-      "hourly_r": 0.8048024301035142,
-      "total_bias_pct": -13.427134660596252
+      "share_of_city": 0.05191146881287726,
+      "hourly_r": 0.7458939490457499,
+      "total_bias_pct": -26.708159023520363
      }
     }
    }
   },
   "1.00": {
-   "n_links": 1705,
+   "n_links": 2385,
    "ai": {
     "covered_share": 1.0,
-    "pixel_hourly_r": 0.9159835422591179,
-    "pixel_hourly_rmse": 0.8967172743145119,
-    "event_total_r": 0.7919676265387279,
-    "event_total_bias_pct": -23.673581282448787,
-    "city_mean_hourly_r": 0.9769319613580877,
+    "pixel_hourly_r": 0.9221191340188563,
+    "pixel_hourly_rmse": 0.9113595843255219,
+    "event_total_r": 0.751807992266471,
+    "event_total_bias_pct": -25.778893314514185,
+    "city_mean_hourly_r": 0.9755771506861928,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 34.75935055382496,
+    "city_total_est_mm": 33.80058319414376,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.7360160965794769,
-      "hourly_r": 0.9382283154902413,
-      "total_bias_pct": -23.573283149618675
+      "share_of_city": 0.7468812877263582,
+      "hourly_r": 0.9424603434209344,
+      "total_bias_pct": -24.902951666852424
      },
      "1-2km": {
-      "share_of_city": 0.11951710261569416,
-      "hourly_r": 0.8765507966306114,
-      "total_bias_pct": -24.36655737021207
+      "share_of_city": 0.10100603621730382,
+      "hourly_r": 0.8894622141384388,
+      "total_bias_pct": -27.2021392593204
      },
      "2-5km": {
-      "share_of_city": 0.11106639839034205,
-      "hourly_r": 0.8058020827953394,
-      "total_bias_pct": -22.244765926400444
+      "share_of_city": 0.10945674044265594,
+      "hourly_r": 0.8160163221764288,
+      "total_bias_pct": -27.297398548485997
      },
      "5-10km": {
-      "share_of_city": 0.03340040241448692,
-      "hourly_r": 0.7536950681971499,
-      "total_bias_pct": -27.848781798927845
+      "share_of_city": 0.04265593561368209,
+      "hourly_r": 0.7473820904503578,
+      "total_bias_pct": -33.527399120881775
      }
     }
    },
    "classical": {
     "covered_share": 1.0,
-    "pixel_hourly_r": 0.9088767918173492,
-    "pixel_hourly_rmse": 0.7944392172171362,
-    "event_total_r": 0.7904647979552646,
-    "event_total_bias_pct": -11.995623942575895,
-    "city_mean_hourly_r": 0.9906334181695469,
+    "pixel_hourly_r": 0.9215032883222999,
+    "pixel_hourly_rmse": 0.7798280189634532,
+    "event_total_r": 0.7821028002967033,
+    "event_total_bias_pct": -13.733237393160936,
+    "city_mean_hourly_r": 0.9880662497869948,
     "city_total_truth_mm": 45.5403938293457,
-    "city_total_est_mm": 40.07753814535033,
+    "city_total_est_mm": 39.2862221623559,
     "by_distance": {
      "0-1km": {
-      "share_of_city": 0.7360160965794769,
-      "hourly_r": 0.9238000201454106,
-      "total_bias_pct": -12.723229775317545
+      "share_of_city": 0.7468812877263582,
+      "hourly_r": 0.9407126364713728,
+      "total_bias_pct": -14.216156217179321
      },
      "1-2km": {
-      "share_of_city": 0.11951710261569416,
-      "hourly_r": 0.8926818696891712,
-      "total_bias_pct": -11.606354365035475
+      "share_of_city": 0.10100603621730382,
+      "hourly_r": 0.8988058309970963,
+      "total_bias_pct": -13.412524317580521
      },
      "2-5km": {
-      "share_of_city": 0.11106639839034205,
-      "hourly_r": 0.8352357711724444,
-      "total_bias_pct": -6.493544270749063
+      "share_of_city": 0.10945674044265594,
+      "hourly_r": 0.8276807499831104,
+      "total_bias_pct": -8.552803123995389
      },
      "5-10km": {
-      "share_of_city": 0.03340040241448692,
-      "hourly_r": 0.7847061604128736,
-      "total_bias_pct": -15.220840704040606
+      "share_of_city": 0.04265593561368209,
+      "hourly_r": 0.7553165240215308,
+      "total_bias_pct": -18.601117952856317
      }
     }
    }
