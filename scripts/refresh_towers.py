@@ -43,7 +43,12 @@ def main(commit: bool):
     out = subprocess.run([PY, "scripts/fetch_opencellid_area.py", "algiers"], cwd=ROOT, timeout=900,
                          capture_output=True, text=True).stdout
     after = n_tiles()
-    api = "working, daily quota used" if "Daily limit" in out else ("working" if "tile" in out or after > before else "no answer")
+    if "Daily limit" in out:
+        api = "working, daily quota used"
+    elif "unreachable" in out:
+        api = "unreachable (server down, will retry)"
+    else:
+        api = "working" if after > before or "requests" in out else "no answer"
     # also rebuild when earlier fetches were never built in (tower file older than the newest tile)
     sites = ROOT / "data" / "processed" / "algeria_sites.csv"
     newest = max((t.stat().st_mtime for t in TILES.glob("tile_*.json")), default=0)
