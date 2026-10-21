@@ -83,6 +83,7 @@ uv venv --python 3.12 .venv-ms && uv pip install --python .venv-ms/bin/python -r
 .venv/bin/python scripts/phase4_rain_texture.py  # Phase 4: rain patchiness measured on Italian radar
 .venv/bin/python scripts/phase4_simulate.py   # Phase 4: simulated network -> signals -> AI/classical -> maps, scores
 .venv/bin/python scripts/export_explainer_phase4.py && .venv/bin/python scripts/export_phase4_explorer.py  # figures + replay page
+.venv/bin/python scripts/export_storm3d.py  # 3D storm scene (Copernicus DEM terrain, towers, links, rain) + GeoJSON for GeoLibre
 .venv/bin/python scripts/serve_site.py       # explainer PDF + Algeria map on http://localhost:8000
 ```
 
