@@ -9,22 +9,22 @@ Real radar texture (Nov 2021): sigma 0.59, wet 0.94, corr 15/30 min 0.39/0.22
 
 ## Bab El Oued flood (algiers)
 
-IMERG city total 49 mm, peak 4.0 mm/h at 2001-11-10T07:00; 3408 sites -> 2385 links (4770 sub-links), median length 3.6 km; reliability keeps 3424.
+IMERG city total 49 mm, peak 4.0 mm/h at 2001-11-10T07:00; 4092 sites -> 2864 links (5728 sub-links), median length 3.6 km; reliability keeps 4079.
 Simulated texture: sigma 0.69, wet 0.91, corr 15/30 min 0.60/0.33.
 
 | method | link hourly r | link total bias | map hourly r | map total bias | city-mean hourly r |
 |---|---|---|---|---|---|
-| ai | 0.86 | -23% | 0.92 | -26% | 0.98 |
-| classical | 0.72 | -13% | 0.92 | -14% | 0.99 |
+| ai | 0.87 | -24% | 0.94 | -26% | 0.98 |
+| classical | 0.70 | -13% | 0.93 | -14% | 0.99 |
 
 | share of links | n links | AI map r | classical map r | covered |
 |---|---|---|---|---|
-| 1% | 24 | 0.81 | 0.83 | 95% |
-| 3% | 72 | 0.77 | 0.68 | 99% |
-| 10% | 238 | 0.91 | 0.89 | 100% |
-| 25% | 596 | 0.90 | 0.89 | 100% |
-| 50% | 1192 | 0.92 | 0.91 | 100% |
-| 100% | 2385 | 0.92 | 0.92 | 100% |
+| 1% | 29 | 0.83 | 0.83 | 100% |
+| 3% | 86 | 0.87 | 0.88 | 100% |
+| 10% | 286 | 0.91 | 0.83 | 100% |
+| 25% | 716 | 0.92 | 0.90 | 100% |
+| 50% | 1432 | 0.93 | 0.93 | 100% |
+| 100% | 2864 | 0.94 | 0.93 | 100% |
 
 ## Ghardaia (M'zab) flood (ghardaia)
 
