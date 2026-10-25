@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flood Risk Replay</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+/* Phase 5 page: its own page, same dark GIS look as the 3D storm. Colours: dataviz reference palette (dark steps). */
+:root {
+  --bar: #0d1117; --panel: #111823; --edge: #233042; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --accent: #3987e5; --warn: #fab219;
+  --s-truth: #f0efec; --s-ai: #3987e5; --s-classical: #d95926; --s-ai_sparse: #199e70; --s-imerg: #c98500;
+  --h1: #fdd0a2; --h2: #fd8d3c; --h3: #e6550d; --h4: #a63603;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; margin: 0; }
+body { background: var(--bar); color: var(--ink); font-family: var(--font); font-size: 13px; display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: 260px minmax(0, 1fr) 380px;
+  grid-template-areas: "top top top" "side map info" "foot foot foot"; }
+header { grid-area: top; display: flex; align-items: center; gap: 16px; padding: 8px 14px; border-bottom: 1px solid var(--edge); flex-wrap: wrap; }
+header .brand { font-weight: 600; }
+header .brand b { color: var(--accent); }
+header .event { color: var(--ink2); }
+header .sim { margin-left: auto; color: var(--warn); font-size: 12px; }
+aside, #info { background: var(--panel); overflow-y: auto; padding: 10px; display: grid; gap: 14px; align-content: start; }
+aside { grid-area: side; border-right: 1px solid var(--edge); }
+#info { grid-area: info; border-left: 1px solid var(--edge); }
+h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
+.seg button { flex: 1 1 auto; font: inherit; font-size: 12px; color: var(--ink); background: transparent; border: 0; padding: 6px 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #04101c; }
+.layer { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 1px solid var(--edge); border-radius: 6px; margin-bottom: 5px; }
+.layer input { accent-color: var(--accent); margin: 0; }
+.note { color: var(--ink2); line-height: 1.45; margin: 0; }
+.legend .row { display: flex; align-items: center; gap: 8px; color: var(--ink2); margin: 3px 0; }
+.legend .sw { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+.ramp { height: 8px; border-radius: 2px; background: linear-gradient(90deg, #cde2fb, #6da7ec, #2a78d6, #184f95, #0d366b); }
+.ramp-l { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-top: 2px; }
+#map { grid-area: map; position: relative; min-height: 0; }
+#timebar { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(640px, calc(100% - 28px)); z-index: 3;
+  display: flex; gap: 10px; align-items: center; padding: 8px 12px; background: rgba(13, 17, 23, .85); border: 1px solid var(--edge); border-radius: 8px; }
+#timebar input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.btn { font: inherit; font-size: 12px; color: var(--ink); background: #172131; border: 1px solid var(--edge); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.clock { font-variant-numeric: tabular-nums; white-space: nowrap; }
+#chart { width: 100%; height: 230px; display: block; }
+#chart text { fill: var(--muted); font-size: 11px; font-family: var(--font); }
+.chart-wrap { position: relative; }
+#tip { position: absolute; pointer-events: none; background: #0d1117; border: 1px solid var(--edge); border-radius: 6px; padding: 6px 8px;
+  font-size: 12px; line-height: 1.5; display: none; white-space: nowrap; z-index: 2; }
+#tip .k { display: inline-block; width: 10px; height: 2px; vertical-align: middle; margin-right: 6px; }
+#tip b { font-variant-numeric: tabular-nums; font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; }
+.chips span { display: inline-flex; align-items: center; gap: 6px; color: var(--ink2); font-size: 12px; }
+.chips i { width: 14px; height: 2px; display: inline-block; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--grid); }
+th { color: var(--muted); font-weight: 500; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+footer { grid-area: foot; display: flex; gap: 22px; padding: 5px 14px; border-top: 1px solid var(--edge); font-size: 11.5px; color: var(--muted); overflow: hidden; white-space: nowrap; }
+footer .src { margin-left: auto; }
+@media (max-width: 1100px) {
+  body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 55vh auto auto auto;
+    grid-template-areas: "top" "map" "side" "info" "foot"; height: auto; }
+  aside, #info { border: 0; border-top: 1px solid var(--edge); padding: 12px 16px; }
+  footer { white-space: normal; flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+<header>
+  <span class="brand"><b>◆</b> Towers as Rain Gauges · Flood risk</span>
+  <span class="event" id="event"></span>
+  <span class="sim">Simulation: real terrain, land cover and soil; simulated storms and tower rain (Phases 4–5).</span>
+</header>
+
+<aside aria-label="Controls">
+  <section><h2>City</h2><div class="seg" id="cities"></div></section>
+  <section>
+    <h2>Storm version</h2>
+    <div class="seg" id="scens">
+      <button type="button" data-v="gauge" aria-pressed="true">Matched to gauge</button>
+      <button type="button" data-v="satellite" aria-pressed="false">As satellite saw it</button>
+    </div>
+    <p class="note" id="scen-note" style="margin-top:6px"></p>
+  </section>
+  <section>
+    <h2>Rain that drives the flood</h2>
+    <div class="seg" id="srcs"></div>
+  </section>
+  <section>
+    <h2>Map shows</h2>
+    <div class="seg" id="modes">
+      <button type="button" data-v="depth" aria-pressed="true">Water depth, hour by hour</button>
+      <button type="button" data-v="hazard" aria-pressed="false">Worst danger</button>
+    </div>
+  </section>
+  <section>
+    <h2>Layers</h2>
+    <label class="layer"><input type="checkbox" data-l="basin" checked> Checked basin outline</label>
+    <label class="layer"><input type="checkbox" data-l="towers" checked> Area covered by tower rain</label>
+    <label class="layer"><input type="checkbox" data-l="zone" checked> Town the alarm is about</label>
+  </section>
+  <section class="legend" id="legend"></section>
+</aside>
+
+<div id="map">
+  <div id="timebar">
+    <button class="btn" id="play" type="button">Play</button>
+    <input id="hour" type="range" min="0" max="0" value="0" aria-label="Hour">
+    <span class="clock" id="clock">–</span>
+  </div>
+</div>
+
+<section id="info" aria-label="Results">
+  <section>
+    <h2 id="chart-title">Flow out of the basin</h2>
+    <div class="chart-wrap"><svg id="chart" role="img" aria-label="Flow out of the basin over time, one line per rain source"></svg><div id="tip"></div></div>
+    <div class="chips" id="chips"></div>
+    <p class="note" id="obs-note" style="margin-top:6px"></p>
+  </section>
+  <section>
+    <h2>Would the alarm have come in time?</h2>
+    <table id="alarms"><thead><tr><th>Rain used</th><th class="num">Alarm (UTC)</th><th class="num">Before the town floods</th></tr></thead><tbody></tbody></table>
+    <p class="note" id="alarm-note" style="margin-top:6px"></p>
+  </section>
+  <section>
+    <h2 id="risk-title">Built-up land in danger, by commune</h2>
+    <table id="risk"><thead><tr><th>Commune</th><th class="num">Hectares</th><th class="num">Share of its built land</th></tr></thead><tbody></tbody></table>
+  </section>
+</section>
+
+<footer>
+  <span id="st">–</span>
+  <span class="src">Imagery Esri · terrain Copernicus GLO-30 · land cover ESA WorldCover · soil HYSOGs250m · communes geoBoundaries · rain NASA IMERG + simulated tower maps</span>
+</footer>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+const DATA = /*DATA*/null;
+const SRC_LABEL = {truth: "True rain", ai: "Towers + AI", classical: "Towers, classical", ai_sparse: "Few towers + AI", imerg: "Satellite only"};
+const HAZ = [["low", "var(--h1)"], ["moderate (danger for some)", "var(--h2)"], ["significant (danger for most)", "var(--h3)"], ["extreme (danger for all)", "var(--h4)"]];
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let city = DATA[0], scen = "gauge", src = "truth", mode = "depth", hour = 0, timer = null;
+
+const map = new maplibregl.Map({
+  container: "map", attributionControl: {compact: true},
+  style: {version: 8, sources: {sat: {type: "raster", tileSize: 256, maxzoom: 19, attribution: "Imagery © Esri",
+    tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"]}},
+    layers: [{id: "sat", type: "raster", source: "sat", paint: {"raster-saturation": -0.5, "raster-brightness-max": 0.7}}]},
+  bounds: city.view, fitBoundsOptions: {padding: 20}
+});
+map.addControl(new maplibregl.NavigationControl({showCompass: false}), "top-right");
+map.addControl(new maplibregl.ScaleControl({unit: "metric"}), "bottom-left");
+
+function corners(b) { return [[b[0], b[3]], [b[2], b[3]], [b[2], b[1]], [b[0], b[1]]]; }
+function frameURL() {
+  const s = city.runs[scen][src];
+  return mode === "hazard" ? s.hazard : s.frames[Math.min(hour, s.frames.length - 1)];
+}
+function setOverlay() {
+  const url = frameURL(), coordinates = corners(mode === "hazard" ? city.full_bounds : city.bounds);
+  const ov = map.getSource("ov");
+  if (ov) ov.updateImage({url, coordinates});
+  else {
+    map.addSource("ov", {type: "image", url, coordinates});
+    map.addLayer({id: "ov", type: "raster", source: "ov", paint: {"raster-resampling": "nearest", "raster-fade-duration": 0, "raster-opacity": 0.9}});
+  }
+}
+function setVectors() {
+  const add = (id, data, paint) => {
+    if (map.getSource(id)) map.getSource(id).setData(data);
+    else { map.addSource(id, {type: "geojson", data}); map.addLayer({id, type: "line", source: id, paint}); }
+  };
+  add("basin", city.basin, {"line-color": "#f0efec", "line-width": 1.6});
+  add("towers", city.towerbox, {"line-color": "#3987e5", "line-width": 1.4, "line-dasharray": [3, 2]});
+  add("zone", city.zone, {"line-color": "#fab219", "line-width": 1.2, "line-dasharray": [1, 1.5]});
+  document.querySelectorAll("[data-l]").forEach(cb => map.setLayoutProperty(cb.dataset.l, "visibility", cb.checked ? "visible" : "none"));
+}
+
+function seg(el, items, cur, onpick) {
+  el.innerHTML = "";
+  items.forEach(([v, label]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.dataset.v = v; b.textContent = label; b.setAttribute("aria-pressed", v === cur);
+    b.onclick = () => { el.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); onpick(v); };
+    el.appendChild(b);
+  });
+}
+
+function legend() {
+  const L = document.getElementById("legend");
+  if (mode === "depth") {
+    L.innerHTML = `<h2>Water depth</h2><div class="ramp"></div><div class="ramp-l"><span>5 cm</span><span>30 cm</span><span>1 m</span><span>2 m+</span></div>`;
+  } else {
+    L.innerHTML = `<h2>Worst danger to people</h2>` + HAZ.map(([t, c]) => `<div class="row"><span class="sw" style="background:${c}"></span>${t}</div>`).join("") +
+      `<p class="note">Depth × (speed + 0.5) + debris (UK DEFRA rating).</p>`;
+  }
+  L.innerHTML += `<h2 style="margin-top:10px">Outlines</h2>
+    <div class="row"><span class="sw" style="height:2px;background:#f0efec"></span>checked basin</div>
+    <div class="row"><span class="sw" style="height:2px;background:#3987e5"></span>tower rain available</div>
+    <div class="row"><span class="sw" style="height:2px;background:#fab219"></span>town for the alarm</div>`;
+}
+
+// ---------- chart: flow out of the basin, one line per source
+const SVGNS = "http://www.w3.org/2000/svg";
+function chart() {
+  const svg = document.getElementById("chart"), W = svg.clientWidth || 360, H = 230, m = {l: 44, r: 10, t: 10, b: 26};
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = "";
+  const runs = city.runs[scen], keys = city.sources, n = runs.truth.q.length, dt = city.q_step_h;
+  const obs = city.observed && scen === "gauge" ? city.observed : null;
+  let ymax = Math.max(...keys.map(k => Math.max(...runs[k].q)), obs ? obs.peak : 0) * 1.08 || 1;
+  const x = i => m.l + (W - m.l - m.r) * i / (n - 1), y = v => H - m.b - (H - m.t - m.b) * v / ymax;
+  const el = (tag, at) => { const e = document.createElementNS(SVGNS, tag); for (const k in at) e.setAttribute(k, at[k]); svg.appendChild(e); return e; };
+  const step = Math.pow(10, Math.floor(Math.log10(ymax / 4))), nice = [1, 2, 5, 10].map(s => s * step).find(s => ymax / s <= 5);
+  for (let v = 0; v <= ymax; v += nice) {
+    el("line", {x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: v ? css("--grid") : css("--axis"), "stroke-width": 1});
+    el("text", {x: m.l - 6, y: y(v) + 4, "text-anchor": "end"}).textContent = v;
+  }
+  const hrs = n * dt;
+  for (let h = 0; h <= hrs; h += 12) el("text", {x: x(h / dt), y: H - 8, "text-anchor": "middle"}).textContent = city.hourLabels[h] || "";
+  el("text", {x: 4, y: 12}).textContent = "m³/s";
+  if (obs) {
+    el("line", {x1: m.l, x2: W - m.r, y1: y(obs.peak), y2: y(obs.peak), stroke: css("--warn"), "stroke-dasharray": "4 3", "stroke-width": 1});
+    el("text", {x: W - m.r, y: y(obs.peak) - 4, "text-anchor": "end", fill: css("--warn")}).textContent = obs.label;
+  }
+  [...keys].reverse().forEach(k => {
+    const d = runs[k].q.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+    el("path", {d, fill: "none", stroke: css(`--s-${k}`), "stroke-width": k === "truth" ? 2.5 : 2, "stroke-linejoin": "round"});
+  });
+  const cur = el("line", {x1: 0, x2: 0, y1: m.t, y2: H - m.b, stroke: css("--ink2"), "stroke-width": 1, id: "cursor"});
+  const placeCursor = () => { const xx = x(Math.min(hour / dt, n - 1)); cur.setAttribute("x1", xx); cur.setAttribute("x2", xx); };
+  placeCursor(); chart.placeCursor = placeCursor;
+  const hit = el("rect", {x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent"});
+  const tip = document.getElementById("tip");
+  hit.addEventListener("pointermove", ev => {
+    const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * W / r.width;
+    const i = Math.max(0, Math.min(n - 1, Math.round((px - m.l) / (W - m.l - m.r) * (n - 1))));
+    const hh = Math.floor(i * dt);
+    tip.innerHTML = `<div style="color:var(--muted)">${city.hourLabels[hh] || ""} +${Math.round((i * dt - hh) * 60)} min</div>` +
+      keys.map(k => `<div><span class="k" style="background:${css(`--s-${k}`)}"></span>${SRC_LABEL[k]} <b>${runs[k].q[i].toFixed(1)}</b> m³/s</div>`).join("");
+    tip.style.display = "block";
+    const left = (ev.clientX - r.left) + 14;
+    tip.style.left = Math.min(left, r.width - tip.offsetWidth - 4) + "px"; tip.style.top = "8px";
+  });
+  hit.addEventListener("pointerleave", () => tip.style.display = "none");
+  document.getElementById("chips").innerHTML = keys.map(k => `<span><i style="background:${css(`--s-${k}`)}"></i>${SRC_LABEL[k]}</span>`).join("");
+  document.getElementById("chart-title").textContent = `Flow out of ${city.basinName}`;
+  document.getElementById("obs-note").textContent = scen === "gauge" ? city.obsNote : "Satellite-strength storm: much milder than the real one, so no observed value applies.";
+}
+
+function tables() {
+  const runs = city.runs[scen];
+  const fmtLead = v => v === null ? "–" : (v >= 0 ? `${Math.round(v)} min before` : `${Math.round(-v)} min late`);
+  document.querySelector("#alarms tbody").innerHTML = city.sources.map(k => {
+    const a = runs[k].alarm;
+    return `<tr><td><span style="display:inline-block;width:10px;height:2px;margin-right:6px;vertical-align:middle;background:${css(`--s-${k}`)}"></span>${SRC_LABEL[k]}</td>` +
+      `<td class="num">${a.time ? a.time.slice(5).replace("T", " ") : "none"}</td><td class="num">${fmtLead(a.lead)}</td></tr>`;
+  }).join("");
+  document.getElementById("alarm-note").textContent = runs.truth.alarm.flood
+    ? `The town floods (${city.alarmHa} ha of built-up land under 30 cm) at ${runs.truth.alarm.flood.slice(5).replace("T", " ")} with the true rain. Alarm = rain over the basin passes the flash-flood threshold, plus the time to get the data (towers 5 min, satellite 4 h).`
+    : "With this storm the town never reaches the flood level, so no alarm is needed.";
+  const rows = runs[src].risk;
+  document.getElementById("risk-title").textContent = `Built-up land in significant or extreme danger (${SRC_LABEL[src]})`;
+  document.querySelector("#risk tbody").innerHTML = rows.length ? rows.map(r =>
+    `<tr><td>${r.commune}</td><td class="num">${r.ha.toFixed(1)}</td><td class="num">${(100 * r.share).toFixed(1)}%</td></tr>`).join("")
+    : `<tr><td colspan="3">none</td></tr>`;
+}
+
+function setHour(h) {
+  hour = h;
+  document.getElementById("hour").value = h;
+  document.getElementById("clock").textContent = city.hourLabels[h] + " UTC";
+  if (mode === "depth") setOverlay();
+  if (chart.placeCursor) chart.placeCursor();
+}
+function refresh(full) {
+  document.getElementById("event").textContent = city.event;
+  document.getElementById("scen-note").textContent = scen === "gauge" ? city.gaugeNote : "Every rain map exactly as Phase 4 simulated it from the satellite.";
+  const hr = document.getElementById("hour");
+  hr.max = city.runs[scen].truth.frames.length - 1;
+  if (hour > +hr.max) hour = +hr.max;
+  if (full) { map.fitBounds(city.view, {padding: 20, duration: 600}); setVectors(); }
+  legend(); setOverlay(); chart(); tables(); setHour(hour);
+  document.getElementById("st").textContent = `${city.name}: grid ${city.grid[0]}×${city.grid[1]} cells of ${city.cell[0]}×${city.cell[1]} m · basin ${city.basinArea} km² · tower rain covers ${city.towerShare} of it`;
+}
+
+map.on("load", () => {
+  seg(document.getElementById("cities"), DATA.map(c => [c.key, c.name]), city.key, v => { city = DATA.find(c => c.key === v); hour = city.startHour; if (!city.mapSources.includes(src)) src = "truth"; srcButtons(); refresh(true); });
+  const srcButtons = () => seg(document.getElementById("srcs"), city.mapSources.map(k => [k, SRC_LABEL[k]]), src, v => { src = v; refresh(false); });
+  srcButtons();
+  document.querySelectorAll("#scens button").forEach(b => b.onclick = () => {
+    document.querySelectorAll("#scens button").forEach(x => x.setAttribute("aria-pressed", x === b)); scen = b.dataset.v; refresh(false); });
+  document.querySelectorAll("#modes button").forEach(b => b.onclick = () => {
+    document.querySelectorAll("#modes button").forEach(x => x.setAttribute("aria-pressed", x === b)); mode = b.dataset.v; refresh(false); });
+  document.querySelectorAll("[data-l]").forEach(cb => cb.onchange = () => map.setLayoutProperty(cb.dataset.l, "visibility", cb.checked ? "visible" : "none"));
+  document.getElementById("hour").oninput = e => setHour(+e.target.value);
+  document.getElementById("play").onclick = e => {
+    if (timer) { clearInterval(timer); timer = null; e.target.textContent = "Play"; return; }
+    e.target.textContent = "Pause";
+    timer = setInterval(() => { const mx = +document.getElementById("hour").max; setHour(hour >= mx ? 0 : hour + 1); }, 450);
+  };
+  hour = city.startHour;
+  refresh(true);
+});
+window.addEventListener("resize", () => chart());
+</script>
+</body>
+</html>

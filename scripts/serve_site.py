@@ -8,6 +8,7 @@ Pages:
   /explainer.pdf  the ground-up explainer
   /replay/        Phase 4 storm replay (simulated Algerian network)
   /storm3d/       3D storm over the towers: satellite imagery, terrain, 3D buildings (needs internet)
+  /flood/         Phase 5 flood risk: water depth, danger, basin flow and alarms (needs internet for imagery)
 
 Listens on 127.0.0.1 only, so other machines on the lab network cannot open it.
 """
@@ -31,6 +32,7 @@ font:500 14px/1.4 'IBM Plex Sans',system-ui,sans-serif">
 <a href="/explainer.pdf" style="color:#cde2fb">Explainer (PDF)</a>
 <a href="/replay/" style="color:#cde2fb">Storm replay (simulation)</a>
 <a href="/storm3d/" style="color:#cde2fb">3D storm</a>
+<a href="/flood/" style="color:#cde2fb">Flood risk (simulation)</a>
 </nav>"""
 
 
@@ -57,6 +59,10 @@ def build() -> None:
         shutil.copy(s3d / "index.html", OUT / "storm3d" / "index.html")
         for g in s3d.glob("*.geojson"):
             shutil.copy(g, OUT / "storm3d" / g.name)
+    flood = SITE / "flood" / "index.html"
+    if flood.exists():                         # Phase 5: full-screen app, its own complete page
+        (OUT / "flood").mkdir(parents=True)
+        shutil.copy(flood, OUT / "flood" / "index.html")
     pdf = ROOT / "docs" / "explainer" / "explainer.pdf"
     if pdf.exists():
         shutil.copy(pdf, OUT / "explainer.pdf")
