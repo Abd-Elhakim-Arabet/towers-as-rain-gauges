@@ -1,0 +1,74 @@
+%==========================================================
+% Glossary and sources for Part 5 (flood risk). Added after the earlier appendices; nothing above is changed.
+%==========================================================
+\section{More words, from Part 5}
+\small
+\begin{description}[leftmargin=3.2cm,style=nextline,itemsep=0.25em]
+\item[Basin (catchment)] All the land whose rain drains through one point, the \emph{outlet}. Its edge follows the ridges.
+\item[Curve number (CN)] One number per piece of ground, from 30 to 100, saying how much of a storm runs off instead of
+soaking in. 100 means all of it (water, concrete).
+\item[D8] The simplest way to find where water flows on a terrain grid: each cell drains to the lowest of its eight
+neighbours.
+\item[Debris factor] An extra term in the hazard rating for the branches, cars and rubble that deep water carries.
+\item[Exposure] What stands in the water's way. Here, the built-up share of every cell.
+\item[Flash-flood threshold] The rain over a given number of hours that is just enough to flood a place. Alarms compare
+the measured rain with it (the idea behind the WMO Flash Flood Guidance System).
+\item[Flood marks] Traces left by the water (mud lines, debris) from which engineers estimate depth and flow afterwards.
+\item[Gauge-matched storm] Our second version of each storm: every rain map multiplied by one number, so the storm total
+over the basin matches the rain gauge record.
+\item[Hazard rating] Depth $\times$ (speed $+\,0.5$) $+$ debris factor (UK DEFRA). Above 2 the water is dangerous for
+everyone, including emergency crews.
+\item[HYSOGs250m] A worldwide map of soil hydrologic groups A--D at 250\,m (NASA ORNL DAAC). A drains fastest, D slowest.
+\item[Hydrograph] The flow past a point, plotted against time.
+\item[Latency] The time between rain falling and the rain map being available. Minutes for towers, about 4 hours for the
+first satellite estimate.
+\item[Local-inertial equations] A simplified form of the shallow-water equations that keeps the water's momentum but
+drops a small term. Accurate for floods spreading over land, and fast to compute.
+\item[Manning's $n$] A roughness number for the ground. Higher $n$ means slower water: about 0.015 for smooth concrete,
+0.1 for woods.
+\item[m\textsuperscript{3}/s] Cubic metres of water passing per second. One m\textsuperscript{3}/s is one tonne of water
+every second.
+\item[Pit filling] Raising the bottom of closed dips in a terrain grid so that water can drain. Most dips in a 30-m map are
+errors, but some are real (underpasses, reservoirs).
+\item[Rain-on-grid] Flood modelling in which rain falls on every cell of the terrain grid and the model moves it, with no
+separate river model.
+\item[Runoff] The part of the rain that flows over the ground instead of soaking in.
+\item[Surface model (DSM)] A terrain map that includes buildings and trees. Copernicus GLO-30 is one. A bare-earth map
+(DTM) removes them.
+\item[WorldCover] The European Space Agency's 10-m map of what covers the ground (trees, crops, built-up, bare, water),
+for 2021.
+\end{description}
+\normalsize
+
+\section{Sources for Part 5}
+\small
+\begin{itemize}
+\item W. Menad, J. Douvinet, G. Beltrando, G. Arnaud-Fassetta (2012), \emph{Évaluer l'influence de l'urbanisation face à
+un aléa météorologique remarquable: les inondations des 9--10 novembre 2001 à Bab-el-Oued}, Géomorphologie 18(3),
+337--350. Rain at Bouzaréah, flood marks and volumes of the Koriche flood.
+\item P. D. Bates, M. S. Horritt, T. J. Fewtrell (2010), \emph{A simple inertial formulation of the shallow water
+equations for efficient two-dimensional flood inundation modelling}, Journal of Hydrology 387, 33--45.
+\item G. A. M. de Almeida, P. Bates, J. E. Freer, M. Souvignet (2012), \emph{Improving the stability of a simple formulation
+of the shallow water equations for 2-D flood modeling}, Water Resources Research 48, W05528.
+\item J. Shaw et al. (2021), \emph{LISFLOOD-FP 8.0}, Geoscientific Model Development 14, 3577--3602; and LISFLOOD-FP 8.1
+(2023), GMD 16, 2391--2413. The reference local-inertial flood model.
+\item USDA NRCS (1986), \emph{Urban hydrology for small watersheds}, Technical Release 55. Curve-number tables.
+\item H. H. Jaafar, F. A. Ahmad, N. El Beyrouthy (2019), \emph{GCN250, new global gridded curve numbers for hydrologic
+modeling and design}, Scientific Data 6, 145.
+\item D. Ross et al. (2018), \emph{HYSOGs250m, global gridded hydrologic soil groups for curve-number-based runoff
+modeling}, ORNL DAAC, doi:10.3334/ORNLDAAC/1566.
+\item D. Zanaga et al. (2022), \emph{ESA WorldCover 10\,m 2021 v200}, doi:10.5281/zenodo.7254221.
+\item European Space Agency, \emph{Copernicus DEM GLO-30}, doi:10.5270/ESA-c5d3d65.
+\item R. Barnes, C. Lehman, D. Mulla (2014), \emph{Priority-flood: an optimal depression-filling and watershed-labeling
+algorithm for digital elevation models}, Computers \& Geosciences 62, 117--127.
+\item HR Wallingford for DEFRA/Environment Agency (2006), \emph{Flood risks to people, Phase 2}, R\&D Technical Report
+FD2321/TR2. The hazard rating.
+\item WMO, \emph{Flash Flood Guidance System with global coverage}, \url{https://wmo.int/node/25418}.
+\item R. Pastorek, M. Fencl, J. Rieckermann, V. Bareš (2019), \emph{Commercial microwave links for urban drainage
+modelling: the effect of link characteristics and their position on runoff simulations}, Journal of Environmental
+Management 251, 109522.
+\item International Charter ``Space and Major Disasters'', activation \emph{Floods in Algeria}, October 2008.
+\end{itemize}
+All Part 5 numbers are in \texttt{results/phase5/} of the project repository; the plan and the research notes behind
+each choice are in \texttt{docs/phase5/}.
+\normalsize

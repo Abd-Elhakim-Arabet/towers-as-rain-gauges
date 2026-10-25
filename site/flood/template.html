@@ -36,7 +36,7 @@ h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: va
 .note { color: var(--ink2); line-height: 1.45; margin: 0; }
 .legend .row { display: flex; align-items: center; gap: 8px; color: var(--ink2); margin: 3px 0; }
 .legend .sw { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
-.ramp { height: 8px; border-radius: 2px; background: linear-gradient(90deg, #cde2fb, #6da7ec, #2a78d6, #184f95, #0d366b); }
+.ramp { height: 8px; border-radius: 2px; background: linear-gradient(90deg, #b7d3f6, #5598e7, #2a78d6, #1c5cab, #104281); }
 .ramp-l { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-top: 2px; }
 #map { grid-area: map; position: relative; min-height: 0; }
 #timebar { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(640px, calc(100% - 28px)); z-index: 3;
@@ -193,7 +193,7 @@ function seg(el, items, cur, onpick) {
 function legend() {
   const L = document.getElementById("legend");
   if (mode === "depth") {
-    L.innerHTML = `<h2>Water depth</h2><div class="ramp"></div><div class="ramp-l"><span>5 cm</span><span>30 cm</span><span>1 m</span><span>2 m+</span></div>`;
+    L.innerHTML = `<h2>Water depth</h2><div class="ramp"></div><div class="ramp-l"><span>10 cm</span><span>30 cm</span><span>1 m</span><span>2 m+</span></div>`;
   } else {
     L.innerHTML = `<h2>Worst danger to people</h2>` + HAZ.map(([t, c]) => `<div class="row"><span class="sw" style="background:${c}"></span>${t}</div>`).join("") +
       `<p class="note">Depth × (speed + 0.5) + debris (UK DEFRA rating).</p>`;
@@ -220,7 +220,8 @@ function chart() {
     el("text", {x: m.l - 6, y: y(v) + 4, "text-anchor": "end"}).textContent = v;
   }
   const hrs = n * dt;
-  for (let h = 0; h <= hrs; h += 12) el("text", {x: x(h / dt), y: H - 8, "text-anchor": "middle"}).textContent = city.hourLabels[h] || "";
+  const tickH = hrs > 60 ? 24 : 12;
+  for (let h = 0; h <= hrs; h += tickH) el("text", {x: x(h / dt), y: H - 8, "text-anchor": "middle"}).textContent = city.hourLabels[h] || "";
   el("text", {x: 4, y: 12}).textContent = "m³/s";
   if (obs) {
     el("line", {x1: m.l, x2: W - m.r, y1: y(obs.peak), y2: y(obs.peak), stroke: css("--warn"), "stroke-dasharray": "4 3", "stroke-width": 1});
@@ -253,7 +254,9 @@ function chart() {
 
 function tables() {
   const runs = city.runs[scen];
-  const fmtLead = v => v === null ? "–" : (v >= 0 ? `${Math.round(v)} min before` : `${Math.round(-v)} min late`);
+  const dur = m => m >= 60 ? `${Math.floor(m / 60)} h ${String(Math.round(m % 60)).padStart(2, "0")}` : `${Math.round(m)} min`;
+  const fmtLead = v => v === null ? "–" : v > 360 ? `${dur(v)} before: too early, a false alarm in practice`
+    : (v >= 0 ? `${dur(v)} before` : `${dur(-v)} late`);
   document.querySelector("#alarms tbody").innerHTML = city.sources.map(k => {
     const a = runs[k].alarm;
     return `<tr><td><span style="display:inline-block;width:10px;height:2px;margin-right:6px;vertical-align:middle;background:${css(`--s-${k}`)}"></span>${SRC_LABEL[k]}</td>` +
@@ -283,7 +286,7 @@ function refresh(full) {
   hr.max = city.runs[scen].truth.frames.length - 1;
   if (hour > +hr.max) hour = +hr.max;
   if (full) { map.fitBounds(city.view, {padding: 20, duration: 600}); setVectors(); }
-  legend(); setOverlay(); chart(); tables(); setHour(hour);
+  legend(); if (mode === "hazard") setOverlay(); chart(); tables(); setHour(hour);
   document.getElementById("st").textContent = `${city.name}: grid ${city.grid[0]}×${city.grid[1]} cells of ${city.cell[0]}×${city.cell[1]} m · basin ${city.basinArea} km² · tower rain covers ${city.towerShare} of it`;
 }
 

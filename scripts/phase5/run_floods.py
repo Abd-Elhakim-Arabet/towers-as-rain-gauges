@@ -160,19 +160,21 @@ def rain_thresholds(S, city, out_dir, force=False):
     return out
 
 
-def alarm_time(fields, area, thresholds, hours0):
-    """First time the rain over `area`, summed over any threshold duration, reaches that duration's threshold.
-    Returns seconds since the start (end of the hour in which it happens), or nan."""
-    series = np.array([fields[h][area].mean() for h in range(fields.shape[0])])
+def alarm_time(fields, areas, thresholds, hours0):
+    """First time the mean rain over any of `areas` (the town; the basin), summed over any threshold duration,
+    reaches that duration's threshold. Two areas because a town floods two ways: from rain on the town itself, and
+    from the stream that drains the basin. Returns seconds since the start (end of that hour), or nan."""
     best = np.inf
-    for T, th in thresholds.items():
-        if th["threshold_mm"] is None:
-            continue
-        T = int(T)
-        roll = np.convolve(series, np.ones(T), "full")[: series.size]
-        i = np.flatnonzero(roll >= th["threshold_mm"])
-        if i.size:
-            best = min(best, (i[0] + 1) * 3600.0)
+    for area in areas:
+        series = np.array([fields[h][area].mean() for h in range(fields.shape[0])])
+        for T, th in thresholds.items():
+            if th["threshold_mm"] is None:
+                continue
+            T = int(T)
+            roll = np.convolve(series, np.ones(T), "full")[: series.size]
+            i = np.flatnonzero(roll >= th["threshold_mm"])
+            if i.size:
+                best = min(best, (i[0] + 1) * 3600.0)
     return float(best) if np.isfinite(best) else float("nan")
 
 
@@ -199,7 +201,7 @@ def city_runs(key, force=False):
           f"gauge-matched factor {factor:.2f}", flush=True)
 
     thresholds = rain_thresholds(S, city, out_dir, force)
-    area = bmask | S["zone"]
+    areas = (S["zone"] & (g.built > 0.2), bmask)      # the town's built-up land; the basin
     tbox = _tower_box(p4, g)
     summary = {"city": city.name, "dem": g.dem_source, "grid": [int(g.z.shape[0]), int(g.z.shape[1])],
                "cell_m": [round(g.dx, 1), round(g.dy, 1)],
@@ -222,7 +224,7 @@ def city_runs(key, force=False):
             sc[s] = summarise(S, runs[s], hours0, None if s == "truth" else runs["truth"])
             if s == "truth":
                 tflood = sc[s]["zone_flood_s"]
-            ta = alarm_time(fields[s] * k, area, thresholds, hours0)
+            ta = alarm_time(fields[s] * k, areas, thresholds, hours0)
             lat_s = config.LATENCY_MIN[s] * 60.0
             sc[s]["alarm_time"] = None if np.isnan(ta) else str(hours0 + pd.Timedelta(seconds=ta + lat_s))[:16]
             sc[s]["alarm_lead_min"] = (None if (np.isnan(ta) or tflood is None) else (tflood - ta - lat_s) / 60.0)

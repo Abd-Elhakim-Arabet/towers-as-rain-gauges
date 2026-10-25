@@ -29,8 +29,8 @@ OUT = ROOT / "site" / "flood"
 MAP_SOURCES = ("truth", "ai", "classical", "imerg")
 EVENTS = {"algiers": "Bab El Oued flood, 9–10 Nov 2001", "ghardaia": "M'zab valley flood, 29 Sep – 1 Oct 2008"}
 # depth bins (m) -> sequential blue ramp (dataviz reference, steps 100..700)
-DEPTH_EDGES = [0.05, 0.1, 0.2, 0.3, 0.5, 1.0, 2.0]
-DEPTH_RGB = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
+DEPTH_EDGES = [0.1, 0.2, 0.3, 0.5, 1.0, 2.0]          # thinner sheets of water are not drawn
+DEPTH_RGB = ["#b7d3f6", "#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#104281"]
 HAZ_RGB = ["#fdd0a2", "#fd8d3c", "#e6550d", "#a63603"]
 
 
@@ -50,7 +50,7 @@ def png(idx: np.ndarray, colours) -> str:
 
 def depth_png(h):
     h = np.asarray(h, np.float32)
-    idx = np.digitize(h, DEPTH_EDGES)          # 0 below 5 cm
+    idx = np.digitize(h, DEPTH_EDGES)          # 0 below 10 cm
     return png(idx, DEPTH_RGB)
 
 

@@ -1,0 +1,1664 @@
+{
+ "city": "Algiers",
+ "dem": "Copernicus GLO-30 (surface)",
+ "grid": [
+  612,
+  1260
+ ],
+ "cell_m": [
+  24.8,
+  30.9
+ ],
+ "basins": {
+  "koriche": {
+   "lat": 36.79097222222222,
+   "lon": 3.05125,
+   "area_km2": 9.057177105901609,
+   "area_km2_ref": 10.2,
+   "cn_mean": 84.80119871686645,
+   "built_share": 0.558210015296936,
+   "tower_box_share": 1.0
+  }
+ },
+ "filled_pits_Mm3": 71.45761910975723,
+ "tower_box_share_domain": 1.0,
+ "basin_true_total_mm": 72.3259506225586,
+ "gauge_total_mm": 263.0,
+ "gauge_note": "Bouzareah, 19:30 9 Nov to 10:30 10 Nov 2001 (Menad et al. 2012)",
+ "gauge_factor": 3.6363158414950694,
+ "observed": {
+  "koriche": {
+   "peak_m3s": 143.0,
+   "peak_range_m3s": [
+    90.0,
+    140.0
+   ],
+   "peak_model_m3s": 88.7,
+   "volume_Mm3": 1.8,
+   "src": "Menad et al. 2012: flood marks 143 m3/s, 1.8 Mm3; plausible 9-14 m3/s/km2; their RuiCells model 88.7 m3/s"
+  }
+ },
+ "thresholds": {
+  "1": {
+   "threshold_mm": 45.120795494103014,
+   "depths_mm": [
+    10.0,
+    20.0,
+    30.0,
+    45.0,
+    60.0,
+    80.0,
+    110.0,
+    150.0
+   ],
+   "town_wet_ha": [
+    0.0,
+    1.1638558419039424,
+    1.8689655869362851,
+    4.978244692891904,
+    7.679749488618366,
+    10.321787198979221,
+    13.167712070720853,
+    15.138621229802713
+   ]
+  },
+  "3": {
+   "threshold_mm": 49.64227024877022,
+   "depths_mm": [
+    10.0,
+    20.0,
+    30.0,
+    45.0,
+    60.0,
+    80.0,
+    110.0,
+    150.0
+   ],
+   "town_wet_ha": [
+    0.0,
+    1.0873981590920092,
+    1.8689655869362851,
+    4.2901255475845055,
+    6.583856031942501,
+    8.699185257925064,
+    10.984420453813671,
+    13.116740280660485
+   ]
+  },
+  "6": {
+   "threshold_mm": 51.531159144281844,
+   "depths_mm": [
+    10.0,
+    20.0,
+    30.0,
+    45.0,
+    60.0,
+    80.0,
+    110.0,
+    150.0
+   ],
+   "town_wet_ha": [
+    0.0,
+    1.0873981590920092,
+    1.8689655869362851,
+    4.001285411504484,
+    6.29501589586248,
+    7.90912253477555,
+    9.370313808064752,
+    10.500188457354653
+   ]
+  },
+  "12": {
+   "threshold_mm": 54.140527654587686,
+   "depths_mm": [
+    10.0,
+    20.0,
+    30.0,
+    45.0,
+    60.0,
+    80.0,
+    110.0,
+    150.0
+   ],
+   "town_wet_ha": [
+    0.0,
+    1.0873981590920092,
+    1.792507904124352,
+    3.695454680256751,
+    5.83626979899088,
+    6.906677358357944,
+    7.8326648519636155,
+    8.699185257925064
+   ]
+  },
+  "24": {
+   "threshold_mm": 56.531159144281844,
+   "depths_mm": [
+    10.0,
+    20.0,
+    30.0,
+    45.0,
+    60.0,
+    80.0,
+    110.0,
+    150.0
+   ],
+   "town_wet_ha": [
+    0.0,
+    1.0873981590920092,
+    1.792507904124352,
+    3.236708583385152,
+    5.530439067743147,
+    6.371473578674413,
+    6.906677358357944,
+    7.433385840457622
+   ]
+  }
+ },
+ "alarm_ha": 5.0,
+ "latency_min": {
+  "truth": 0,
+  "ai": 5,
+  "classical": 5,
+  "ai_sparse": 5,
+  "classical_sparse": 5,
+  "imerg": 240
+ },
+ "hours0": "2001-11-09 00:00:00",
+ "scenarios": {
+  "satellite": {
+   "truth": {
+    "koriche": {
+     "peak_m3s": 9.026174736022949,
+     "peak_time": "2001-11-10 09:54",
+     "volume_Mm3": 0.26037345111423543
+    },
+    "built_ha_wet": 229.53446036079123,
+    "built_ha_significant": 53.69028434271372,
+    "zone_built_ha_wet": 6.3714735786744,
+    "zone_flood_time": "2001-11-10 06:06",
+    "zone_flood_s": 108373.1242212367,
+    "budget": {
+     "rain_m3": 26806529.113501474,
+     "runoff_m3": 15720896.923007501,
+     "soaked_m3": 11085632.190493973,
+     "edge_m3": 1088339.2028391147,
+     "sea_m3": 8679319.959202928,
+     "drain_m3": 0.0,
+     "stored_m3": 5953185.76907424,
+     "error_m3": 51.991891217418015,
+     "error_frac": 3.3071835196201805e-06
+    },
+    "communes_top": [
+     {
+      "commune": "Bachdjarah",
+      "built_ha_at_risk": 13.031787365205238,
+      "built_ha": 280.761107432922,
+      "share": 0.046415928061968925
+     },
+     {
+      "commune": "Kouba",
+      "built_ha_at_risk": 6.515893668930927,
+      "built_ha": 709.4508420246544,
+      "share": 0.00918441882503889
+     },
+     {
+      "commune": "Bir Mourad Rais",
+      "built_ha_at_risk": 3.984294818045736,
+      "built_ha": 309.7385695803684,
+      "share": 0.012863411952355918
+     },
+     {
+      "commune": "Hydra",
+      "built_ha_at_risk": 3.347147466216629,
+      "built_ha": 315.1160938857523,
+      "share": 0.010621950230920805
+     },
+     {
+      "commune": "Birkhadem",
+      "built_ha_at_risk": 3.0158308319635543,
+      "built_ha": 669.7862945955868,
+      "share": 0.00450267623613364
+     },
+     {
+      "commune": "Djasr Kasentina",
+      "built_ha_at_risk": 2.6845142324593825,
+      "built_ha": 822.7356421292243,
+      "share": 0.003262912283114307
+     },
+     {
+      "commune": "El Madania",
+      "built_ha_at_risk": 2.4551411806056582,
+      "built_ha": 117.7958039726929,
+      "share": 0.02084234835032666
+     },
+     {
+      "commune": "Bouzareah",
+      "built_ha_at_risk": 2.115329251616999,
+      "built_ha": 623.835228400267,
+      "share": 0.003390846100566406
+     },
+     {
+      "commune": "Saoula",
+      "built_ha_at_risk": 1.8010032182281777,
+      "built_ha": 614.4649150097703,
+      "share": 0.0029310106634803405
+     },
+     {
+      "commune": "El Biar",
+      "built_ha_at_risk": 1.2063323349501074,
+      "built_ha": 289.7916101961009,
+      "share": 0.00416275796988666
+     }
+    ],
+    "alarm_time": "2001-11-10 07:00",
+    "alarm_lead_min": -53.78126297938822,
+    "model_alarm_lead_min": 0.0
+   },
+   "ai": {
+    "koriche": {
+     "peak_m3s": 2.8809983491897584,
+     "peak_time": "2001-11-10 10:13",
+     "volume_Mm3": 0.08108245706031707,
+     "peak_err": -0.6808173524835656,
+     "volume_err": -0.6885916873884995,
+     "q_r": 0.9823762988794053
+    },
+    "built_ha_wet": 147.7927017305177,
+    "built_ha_significant": 30.18379435480064,
+    "zone_built_ha_wet": 3.542539314632885,
+    "zone_flood_time": null,
+    "zone_flood_s": null,
+    "budget": {
+     "rain_m3": 20001880.250082824,
+     "runoff_m3": 10334160.519658193,
+     "soaked_m3": 9667719.730424631,
+     "edge_m3": 424034.8581088578,
+     "sea_m3": 5136017.6450392725,
+     "drain_m3": 0.0,
+     "stored_m3": 4774047.194432414,
+     "error_m3": 60.822077648714185,
+     "error_frac": 5.885536375500958e-06
+    },
+    "communes_top": [
+     {
+      "commune": "Bachdjarah",
+      "built_ha_at_risk": 8.597241745023505,
+      "built_ha": 280.761107432922,
+      "share": 0.030621199010185243
+     },
+     {
+      "commune": "Kouba",
+      "built_ha_at_risk": 3.0922885204720285,
+      "built_ha": 709.4508420246544,
+      "share": 0.004358707238470748
+     },
+     {
+      "commune": "Birkhadem",
+      "built_ha_at_risk": 2.6165518215968686,
+      "built_ha": 669.7862945955868,
+      "share": 0.0039065472714348804
+     },
+     {
+      "commune": "Bouzareah",
+      "built_ha_at_risk": 1.902946796639948,
+      "built_ha": 623.835228400267,
+      "share": 0.003050399704934543
+     },
+     {
+      "commune": "Djasr Kasentina",
+      "built_ha_at_risk": 1.3677430072722954,
+      "built_ha": 822.7356421292243,
+      "share": 0.0016624331525647805
+     },
+     {
+      "commune": "El Biar",
+      "built_ha_at_risk": 1.1978370367965976,
+      "built_ha": 289.7916101961009,
+      "share": 0.004133442772846411
+     },
+     {
+      "commune": "Ben Aknoun",
+      "built_ha_at_risk": 1.0449216791478888,
+      "built_ha": 238.54797191471803,
+      "share": 0.0043803419109404666
+     },
+     {
+      "commune": "Bab Al Wadi",
+      "built_ha_at_risk": 1.0449216688941145,
+      "built_ha": 106.85385965646108,
+      "share": 0.00977897918010238
+     },
+     {
+      "commune": "Central Algiers",
+      "built_ha_at_risk": 1.0024451786962203,
+      "built_ha": 314.4024880581493,
+      "share": 0.0031884136314812377
+     },
+     {
+      "commune": "El Madania",
+      "built_ha_at_risk": 0.85802511350448,
+      "built_ha": 117.7958039726929,
+      "share": 0.007284004052499061
+     }
+    ],
+    "csi_wet": 0.6507876496534342,
+    "csi_wet_built": 0.6497772828507795,
+    "commune_spearman": 0.9320233289456084,
+    "commune_top5_overlap": 3,
+    "alarm_time": null,
+    "alarm_lead_min": null,
+    "model_alarm_lead_min": null
+   },
+   "classical": {
+    "koriche": {
+     "peak_m3s": 6.55680251121521,
+     "peak_time": "2001-11-10 10:10",
+     "volume_Mm3": 0.18268725045886394,
+     "peak_err": -0.2735790406264367,
+     "volume_err": -0.2983645234294171,
+     "q_r": 0.9839065071250956
+    },
+    "built_ha_wet": 191.50950595271468,
+    "built_ha_significant": 33.454484155294956,
+    "zone_built_ha_wet": 6.295015895862467,
+    "zone_flood_time": "2001-11-10 08:43",
+    "zone_flood_s": 117795.46738716423,
+    "budget": {
+     "rain_m3": 23206556.821879894,
+     "runoff_m3": 12681265.848908259,
+     "soaked_m3": 10525290.972971635,
+     "edge_m3": 740464.4935174193,
+     "sea_m3": 6237067.279663562,
+     "drain_m3": 0.0,
+     "stored_m3": 5703483.555378707,
+     "error_m3": 250.52034857030958,
+     "error_frac": 1.975515311761066e-05
+    },
+    "communes_top": [
+     {
+      "commune": "Bachdjarah",
+      "built_ha_at_risk": 9.234389105967074,
+      "built_ha": 280.761107432922,
+      "share": 0.03289055663870148
+     },
+     {
+      "commune": "Kouba",
+      "built_ha_at_risk": 3.3216615689078277,
+      "built_ha": 709.4508420246544,
+      "share": 0.0046820179385908675
+     },
+     {
+      "commune": "Birkhadem",
+      "built_ha_at_risk": 2.8459248700326683,
+      "built_ha": 669.7862945955868,
+      "share": 0.004249004336153253
+     },
+     {
+      "commune": "Bouzareah",
+      "built_ha_at_risk": 1.9709091835769879,
+      "built_ha": 623.835228400267,
+      "share": 0.0031593425536917694
+     },
+     {
+      "commune": "Djasr Kasentina",
+      "built_ha_at_risk": 1.5376489726211062,
+      "built_ha": 822.7356421292243,
+      "share": 0.001868946589747467
+     },
+     {
+      "commune": "El Biar",
+      "built_ha_at_risk": 1.1978370367965976,
+      "built_ha": 289.7916101961009,
+      "share": 0.004133442772846411
+     },
+     {
+      "commune": "Saoula",
+      "built_ha_at_risk": 1.1553605557131692,
+      "built_ha": 614.4649150097703,
+      "share": 0.0018802709926811663
+     },
+     {
+      "commune": "Central Algiers",
+      "built_ha_at_risk": 1.0789028615081535,
+      "built_ha": 314.4024880581493,
+      "share": 0.0034315977210352374
+     },
+     {
+      "commune": "Ben Aknoun",
+      "built_ha_at_risk": 1.0449216791478888,
+      "built_ha": 238.54797191471803,
+      "share": 0.0043803419109404666
+     },
+     {
+      "commune": "Bab Al Wadi",
+      "built_ha_at_risk": 1.0449216688941145,
+      "built_ha": 106.85385965646108,
+      "share": 0.00977897918010238
+     }
+    ],
+    "csi_wet": 0.8185337829399275,
+    "csi_wet_built": 0.8279005524861879,
+    "commune_spearman": 0.9324935526206416,
+    "commune_top5_overlap": 3,
+    "alarm_time": null,
+    "alarm_lead_min": null,
+    "model_alarm_lead_min": -162.0390527654587
+   },
+   "ai_sparse": {
+    "koriche": {
+     "peak_m3s": 2.4703826904296875,
+     "peak_time": "2001-11-10 09:44",
+     "volume_Mm3": 0.06855523681531256,
+     "peak_err": -0.7263090109954851,
+     "volume_err": -0.7367041972907029,
+     "q_r": 0.9617711884886693
+    },
+    "built_ha_wet": 140.91151024440381,
+    "built_ha_significant": 28.059969833512834,
+    "zone_built_ha_wet": 3.542539314632885,
+    "zone_flood_time": null,
+    "zone_flood_s": null,
+    "budget": {
+     "rain_m3": 20291037.976117976,
+     "runoff_m3": 10372917.803829389,
+     "soaked_m3": 9918120.172288587,
+     "edge_m3": 532845.1119694181,
+     "sea_m3": 4950739.114513432,
+     "drain_m3": 0.0,
+     "stored_m3": 4889302.016053206,
+     "error_m3": 31.5612933319062,
+     "error_frac": 3.042663012354601e-06
+    },
+    "communes_top": [
+     {
+      "commune": "Bachdjarah",
+      "built_ha_at_risk": 8.359373394446616,
+      "built_ha": 280.761107432922,
+      "share": 0.029773972153332502
+     },
+     {
+      "commune": "Kouba",
+      "built_ha_at_risk": 3.0922885204720285,
+      "built_ha": 709.4508420246544,
+      "share": 0.004358707238470748
+     },
+     {
+      "commune": "Bouzareah",
+      "built_ha_at_risk": 1.9709091835769879,
+      "built_ha": 623.835228400267,
+      "share": 0.0031593425536917694
+     },
+     {
+      "commune": "Djasr Kasentina",
+      "built_ha_at_risk": 1.8179938122565802,
+      "built_ha": 822.7356421292243,
+      "share": 0.0022096937572215133
+     },
+     {
+      "commune": "El Biar",
+      "built_ha_at_risk": 1.1978370367965976,
+      "built_ha": 289.7916101961009,
+      "share": 0.004133442772846411
+     },
+     {
+      "commune": "Ben Aknoun",
+      "built_ha_at_risk": 1.0449216791478888,
+      "built_ha": 238.54797191471803,
+      "share": 0.0043803419109404666
+     },
+     {
+      "commune": "Bab Al Wadi",
+      "built_ha_at_risk": 1.0449216688941145,
+      "built_ha": 106.85385965646108,
+      "share": 0.00977897918010238
+     },
+     {
+      "commune": "El Madania",
+      "built_ha_at_risk": 0.85802511350448,
+      "built_ha": 117.7958039726929,
+      "share": 0.007284004052499061
+     },
+     {
+      "commune": "Saoula",
+      "built_ha_at_risk": 0.7900627334032895,
+      "built_ha": 614.4649150097703,
+      "share": 0.0012857735472020027
+     },
+     {
+      "commune": "Central Algiers",
+      "built_ha_at_risk": 0.7730721302604207,
+      "built_ha": 314.4024880581493,
+      "share": 0.0024588613628192396
+     }
+    ],
+    "csi_wet": 0.651347267690758,
+    "csi_wet_built": 0.6198553948832035,
+    "commune_spearman": 0.9083246047441297,
+    "commune_top5_overlap": 2,
+    "alarm_time": null,
+    "alarm_lead_min": null,
+    "model_alarm_lead_min": null
+   },
+   "imerg": {
+    "koriche": {
+     "peak_m3s": 9.280435689290364,
+     "peak_time": "2001-11-10 09:38",
+     "volume_Mm3": 0.19530305473138637,
+     "peak_err": 0.028169292164561544,
+     "volume_err": -0.24991179440295663,
+     "q_r": 0.9068847376850474
+    },
+    "built_ha_wet": 206.33380117191473,
+    "built_ha_significant": 45.9340771353952,
+    "zone_built_ha_wet": 6.3714735786744,
+    "zone_flood_time": "2001-11-10 09:05",
+    "zone_flood_s": 119118.74916133183,
+    "budget": {
+     "rain_m3": 26773320.590234928,
+     "runoff_m3": 15823132.083478041,
+     "soaked_m3": 10950188.506756887,
+     "edge_m3": 884893.4702284222,
+     "sea_m3": 9117020.527727542,
+     "drain_m3": 0.0,
+     "stored_m3": 5821050.227935231,
+     "error_m3": 167.85758684482425,
+     "error_frac": 1.0608366659600552e-05
+    },
+    "communes_top": [
+     {
+      "commune": "Bachdjarah",
+      "built_ha_at_risk": 11.477147810518472,
+      "built_ha": 280.761107432922,
+      "share": 0.040878695469815145
+     },
+     {
+      "commune": "Kouba",
+      "built_ha_at_risk": 3.8143888612417376,
+      "built_ha": 709.4508420246544,
+      "share": 0.005376537224702007
+     },
+     {
+      "commune": "Bir Mourad Rais",
+      "built_ha_at_risk": 3.7719123676259185,
+      "built_ha": 309.7385695803684,
+      "share": 0.012177729020754756
+     },
+     {
+      "commune": "Birkhadem",
+      "built_ha_at_risk": 3.3641380625236463,
+      "built_ha": 669.7862945955868,
+      "share": 0.005022703643936002
+     },
+     {
+      "commune": "Bouzareah",
+      "built_ha_at_risk": 2.1917869344289316,
+      "built_ha": 623.835228400267,
+      "share": 0.003513406801423261
+     },
+     {
+      "commune": "Djasr Kasentina",
+      "built_ha_at_risk": 2.0473668692371927,
+      "built_ha": 822.7356421292243,
+      "share": 0.002488486901987917
+     },
+     {
+      "commune": "El Madania",
+      "built_ha_at_risk": 2.0303762666639775,
+      "built_ha": 117.7958039726929,
+      "share": 0.017236405696884192
+     },
+     {
+      "commune": "Saoula",
+      "built_ha_at_risk": 1.9709091784501012,
+      "built_ha": 614.4649150097703,
+      "share": 0.0032075210973091326
+     },
+     {
+      "commune": "Hydra",
+      "built_ha_at_risk": 1.6990596272840164,
+      "built_ha": 315.1160938857523,
+      "share": 0.005391852908344387
+     },
+     {
+      "commune": "El Biar",
+      "built_ha_at_risk": 1.2063323349501074,
+      "built_ha": 289.7916101961009,
+      "share": 0.00416275796988666
+     }
+    ],
+    "csi_wet": 0.8379590352684523,
+    "csi_wet_built": 0.8516513264753655,
+    "commune_spearman": 0.9677838189006664,
+    "commune_top5_overlap": 4,
+    "alarm_time": "2001-11-10 13:00",
+    "alarm_lead_min": -413.7812629793882,
+    "model_alarm_lead_min": -419.0937490015853
+   }
+  },
+  "gauge": {
+   "truth": {
+    "koriche": {
+     "peak_m3s": 62.06930914470471,
+     "peak_time": "2001-11-10 03:19",
+     "volume_Mm3": 1.8361426227764441
+    },
+    "built_ha_wet": 1310.943435810871,
+    "built_ha_significant": 303.3755919999636,
+    "zone_built_ha_wet": 9.676144539312457,
+    "zone_flood_time": "2001-11-09 21:29",
+    "zone_flood_s": 77348.83850695098,
+    "budget": {
+     "rain_m3": 97477004.49731953,
+     "runoff_m3": 79512536.99303506,
+     "soaked_m3": 17964467.50428447,
+     "edge_m3": 12136263.421934498,
+     "sea_m3": 54061301.5751592,
+     "drain_m3": 0.0,
+     "stored_m3": 13315287.99738437,
+     "error_m3": -316.00144300609827,
+     "error_frac": -3.974234189430763e-06
+    },
+    "communes_top": [
+     {
+      "commune": "El Harrach",
+      "built_ha_at_risk": 67.7245166729956,
+      "built_ha": 570.7141282015886,
+      "share": 0.11866626972492583
+     },
+     {
+      "commune": "Bachdjarah",
+      "built_ha_at_risk": 25.75774395188162,
+      "built_ha": 280.761107432922,
+      "share": 0.09174256430098861
+     },
+     {
+      "commune": "Kouba",
+      "built_ha_at_risk": 24.160627873956937,
+      "built_ha": 709.4508420246544,
+      "share": 0.03405539389453191
+     },
+     {
+      "commune": "Baraki",
+      "built_ha_at_risk": 19.862007072082267,
+      "built_ha": 996.9402254794206,
+      "share": 0.0199229668584501
+     },
+     {
+      "commune": "Bir Mourad Rais",
+      "built_ha_at_risk": 17.440847047632722,
+      "built_ha": 309.7385695803684,
+      "share": 0.056308283050643185
+     },
+     {
+      "commune": "Birkhadem",
+      "built_ha_at_risk": 15.94567458571707,
+      "built_ha": 669.7862945955868,
+      "share": 0.023807107900505754
+     },
+     {
+      "commune": "Saoula",
+      "built_ha_at_risk": 12.258715252604102,
+      "built_ha": 614.4649150097703,
+      "share": 0.019950228163001273
+     },
+     {
+      "commune": "Djasr Kasentina",
+      "built_ha_at_risk": 9.531724548175777,
+      "built_ha": 822.7356421292243,
+      "share": 0.011585403694809981
+     },
+     {
+      "commune": "Hydra",
+      "built_ha_at_risk": 9.115454905044194,
+      "built_ha": 315.1160938857523,
+      "share": 0.028927290868073118
+     },
+     {
+      "commune": "Bab Al Wadi",
+      "built_ha_at_risk": 6.787743189905338,
+      "built_ha": 106.85385965646108,
+      "share": 0.0635236126399942
+     }
+    ],
+    "alarm_time": "2001-11-09 21:00",
+    "alarm_lead_min": 29.147308449183036,
+    "model_alarm_lead_min": 0.0
+   },
+   "ai": {
+    "koriche": {
+     "peak_m3s": 31.911592602524305,
+     "peak_time": "2001-11-10 03:32",
+     "volume_Mm3": 1.0053450455015371,
+     "peak_err": -0.48587163217609675,
+     "volume_err": -0.45246897869984204,
+     "q_r": 0.9895269277270646
+    },
+    "built_ha_wet": 1067.0859028128223,
+    "built_ha_significant": 171.46909785695448,
+    "zone_built_ha_wet": 7.909122534775529,
+    "zone_flood_time": "2001-11-09 22:01",
+    "zone_flood_s": 79285.4599524902,
+    "budget": {
+     "rain_m3": 72733152.81952347,
+     "runoff_m3": 55940041.08020534,
+     "soaked_m3": 16793111.739318125,
+     "edge_m3": 7851217.041891321,
+     "sea_m3": 35477966.923020355,
+     "drain_m3": 0.0,
+     "stored_m3": 12611196.563813249,
+     "error_m3": -339.44851958192885,
+     "error_frac": -6.068077767322991e-06
+    },
+    "communes_top": [
+     {
+      "commune": "Bachdjarah",
+      "built_ha_at_risk": 22.359624704149375,
+      "built_ha": 280.761107432922,
+      "share": 0.07963932365344235
+     },
+     {
+      "commune": "El Harrach",
+      "built_ha_at_risk": 21.934859826095824,
+      "built_ha": 570.7141282015886,
+      "share": 0.03843405786223669
+     },
+     {
+      "commune": "Kouba",
+      "built_ha_at_risk": 17.007586843512712,
+      "built_ha": 709.4508420246544,
+      "share": 0.02397288978469022
+     },
+     {
+      "commune": "Bir Mourad Rais",
+      "built_ha_at_risk": 15.079154168932192,
+      "built_ha": 309.7385695803684,
+      "share": 0.04868348875427856
+     },
+     {
+      "commune": "Birkhadem",
+      "built_ha_at_risk": 9.94799411896126,
+      "built_ha": 669.7862945955868,
+      "share": 0.014852489815378803
+     },
+     {
+      "commune": "Saoula",
+      "built_ha_at_risk": 9.115454936944827,
+      "built_ha": 614.4649150097703,
+      "share": 0.014834785053268481
+     },
+     {
+      "commune": "Hydra",
+      "built_ha_at_risk": 7.204012818225903,
+      "built_ha": 315.1160938857523,
+      "share": 0.022861456326752294
+     },
+     {
+      "commune": "Djasr Kasentina",
+      "built_ha_at_risk": 5.623887401548897,
+      "built_ha": 822.7356421292243,
+      "share": 0.006835594708154836
+     },
+     {
+      "commune": "El Madania",
+      "built_ha_at_risk": 5.029216530803219,
+      "built_ha": 117.7958039726929,
+      "share": 0.042694360590034924
+     },
+     {
+      "commune": "Bourouba",
+      "built_ha_at_risk": 4.969749435183843,
+      "built_ha": 264.8239285464007,
+      "share": 0.01876624012966818
+     }
+    ],
+    "csi_wet": 0.8008782022682979,
+    "csi_wet_built": 0.80965,
+    "commune_spearman": 0.9237737092113548,
+    "commune_top5_overlap": 4,
+    "alarm_time": "2001-11-09 22:05",
+    "alarm_lead_min": -35.852691550816964,
+    "model_alarm_lead_min": -37.2770240923203
+   },
+   "classical": {
+    "koriche": {
+     "peak_m3s": 44.34878832976908,
+     "peak_time": "2001-11-10 03:26",
+     "volume_Mm3": 1.4989727516779752,
+     "peak_err": -0.285495699229116,
+     "volume_err": -0.18362945607603842,
+     "q_r": 0.9951813930737474
+    },
+    "built_ha_wet": 1191.525029871491,
+    "built_ha_significant": 207.08988293202077,
+    "zone_built_ha_wet": 8.512288699687137,
+    "zone_flood_time": "2001-11-09 21:08",
+    "zone_flood_s": 76104.92582925376,
+    "budget": {
+     "rain_m3": 84386368.62122048,
+     "runoff_m3": 66852926.52039909,
+     "soaked_m3": 17533442.10082139,
+     "edge_m3": 10180344.183706772,
+     "sea_m3": 42835751.301207535,
+     "drain_m3": 0.0,
+     "stored_m3": 13837570.886226501,
+     "error_m3": -739.8507417179644,
+     "error_frac": -1.1066841501579006e-05
+    },
+    "communes_top": [
+     {
+      "commune": "El Harrach",
+      "built_ha_at_risk": 35.12805780779736,
+      "built_ha": 570.7141282015886,
+      "share": 0.06155105695121214
+     },
+     {
+      "commune": "Bachdjarah",
+      "built_ha_at_risk": 23.047743851165745,
+      "built_ha": 280.761107432922,
+      "share": 0.08209022988225743
+     },
+     {
+      "commune": "Kouba",
+      "built_ha_at_risk": 18.83407594366905,
+      "built_ha": 709.4508420246544,
+      "share": 0.02654740093044324
+     },
+     {
+      "commune": "Bir Mourad Rais",
+      "built_ha_at_risk": 15.716301528736455,
+      "built_ha": 309.7385695803684,
+      "share": 0.050740537576669215
+     },
+     {
+      "commune": "Birkhadem",
+      "built_ha_at_risk": 11.910407981598564,
+      "built_ha": 669.7862945955868,
+      "share": 0.017782400263639316
+     },
+     {
+      "commune": "Saoula",
+      "built_ha_at_risk": 10.270815486391799,
+      "built_ha": 614.4649150097703,
+      "share": 0.016715056035751834
+     },
+     {
+      "commune": "Hydra",
+      "built_ha_at_risk": 7.560815340673309,
+      "built_ha": 315.1160938857523,
+      "share": 0.023993745439782388
+     },
+     {
+      "commune": "Djasr Kasentina",
+      "built_ha_at_risk": 6.312006550843876,
+      "built_ha": 822.7356421292243,
+      "share": 0.007671974116143215
+     },
+     {
+      "commune": "Bab Al Wadi",
+      "built_ha_at_risk": 5.547429665189469,
+      "built_ha": 106.85385965646108,
+      "share": 0.05191604386612379
+     },
+     {
+      "commune": "Bourouba",
+      "built_ha_at_risk": 5.479467327242695,
+      "built_ha": 264.8239285464007,
+      "share": 0.020690982711868575
+     }
+    ],
+    "csi_wet": 0.8595272173230528,
+    "csi_wet_built": 0.8646888921525432,
+    "commune_spearman": 0.9467484521319244,
+    "commune_top5_overlap": 4,
+    "alarm_time": "2001-11-09 20:05",
+    "alarm_lead_min": 84.14730844918304,
+    "model_alarm_lead_min": 15.731877961620436
+   },
+   "ai_sparse": {
+    "koriche": {
+     "peak_m3s": 35.61218018770014,
+     "peak_time": "2001-11-10 03:20",
+     "volume_Mm3": 0.9689883564954408,
+     "peak_err": -0.4262513844857526,
+     "volume_err": -0.47226955876105814,
+     "q_r": 0.9559356064588342
+    },
+    "built_ha_wet": 1087.542580754511,
+    "built_ha_significant": 156.90815687880428,
+    "zone_built_ha_wet": 8.05354260281554,
+    "zone_flood_time": "2001-11-09 21:09",
+    "zone_flood_s": 76157.40993552242,
+    "budget": {
+     "rain_m3": 73784621.54898123,
+     "runoff_m3": 56740256.72345812,
+     "soaked_m3": 17044364.825523116,
+     "edge_m3": 8750037.35176848,
+     "sea_m3": 35195517.668596864,
+     "drain_m3": 0.0,
+     "stored_m3": 12795311.993622081,
+     "error_m3": -610.2905293051153,
+     "error_frac": -1.0755864787139798e-05
+    },
+    "communes_top": [
+     {
+      "commune": "El Harrach",
+      "built_ha_at_risk": 21.47611372181873,
+      "built_ha": 570.7141282015886,
+      "share": 0.03763024719484937
+     },
+     {
+      "commune": "Bachdjarah",
+      "built_ha_at_risk": 21.348684227869285,
+      "built_ha": 280.761107432922,
+      "share": 0.0760386095605133
+     },
+     {
+      "commune": "Kouba",
+      "built_ha_at_risk": 15.733292125043475,
+      "built_ha": 709.4508420246544,
+      "share": 0.022176719221508403
+     },
+     {
+      "commune": "Saoula",
+      "built_ha_at_risk": 9.089969042484299,
+      "built_ha": 614.4649150097703,
+      "share": 0.014793308487498857
+     },
+     {
+      "commune": "Birkhadem",
+      "built_ha_at_risk": 8.002570854909584,
+      "built_ha": 669.7862945955868,
+      "share": 0.011947946560688422
+     },
+     {
+      "commune": "Bir Mourad Rais",
+      "built_ha_at_risk": 6.006175775163114,
+      "built_ha": 309.7385695803684,
+      "share": 0.01939111355521606
+     },
+     {
+      "commune": "Djasr Kasentina",
+      "built_ha_at_risk": 5.700345084930484,
+      "built_ha": 822.7356421292243,
+      "share": 0.006928525753640743
+     },
+     {
+      "commune": "Bourouba",
+      "built_ha_at_risk": 5.479467327242695,
+      "built_ha": 264.8239285464007,
+      "share": 0.020690982711868575
+     },
+     {
+      "commune": "Bab Al Wadi",
+      "built_ha_at_risk": 4.935768202694006,
+      "built_ha": 106.85385965646108,
+      "share": 0.046191763391258626
+     },
+     {
+      "commune": "Baba Hassen",
+      "built_ha_at_risk": 4.774357584488965,
+      "built_ha": 329.4901380293795,
+      "share": 0.014490138044930654
+     }
+    ],
+    "csi_wet": 0.7996723505387757,
+    "csi_wet_built": 0.8045562364103578,
+    "commune_spearman": 0.9566844516678578,
+    "commune_top5_overlap": 3,
+    "alarm_time": "2001-11-09 20:05",
+    "alarm_lead_min": 84.14730844918304,
+    "model_alarm_lead_min": 14.857142857142753
+   },
+   "imerg": {
+    "koriche": {
+     "peak_m3s": 47.36388619366697,
+     "peak_time": "2001-11-10 09:05",
+     "volume_Mm3": 1.5647543062345655,
+     "peak_err": -0.2369193914621216,
+     "volume_err": -0.1478035056620549,
+     "q_r": 0.9558882570453012
+    },
+    "built_ha_wet": 1198.9159393242883,
+    "built_ha_significant": 239.7882854001254,
+    "zone_built_ha_wet": 8.622727575113109,
+    "zone_flood_time": "2001-11-09 21:04",
+    "zone_flood_s": 75851.24900884672,
+    "budget": {
+     "rain_m3": 97356248.17834745,
+     "runoff_m3": 79479235.05763385,
+     "soaked_m3": 17877013.120713606,
+     "edge_m3": 11034001.22841673,
+     "sea_m3": 54852576.8882417,
+     "drain_m3": 0.0,
+     "stored_m3": 13592623.194579473,
+     "error_m3": 33.746395947411656,
+     "error_frac": 4.2459386936651663e-07
+    },
+    "communes_top": [
+     {
+      "commune": "El Harrach",
+      "built_ha_at_risk": 59.169751455197336,
+      "built_ha": 570.7141282015886,
+      "share": 0.10367668948664488
+     },
+     {
+      "commune": "Bachdjarah",
+      "built_ha_at_risk": 22.97128616835381,
+      "built_ha": 280.761107432922,
+      "share": 0.08181790696862097
+     },
+     {
+      "commune": "Kouba",
+      "built_ha_at_risk": 18.681160574627267,
+      "built_ha": 709.4508420246544,
+      "share": 0.026331860458878798
+     },
+     {
+      "commune": "Bir Mourad Rais",
+      "built_ha_at_risk": 15.639843845924522,
+      "built_ha": 309.7385695803684,
+      "share": 0.05049369171915939
+     },
+     {
+      "commune": "Birkhadem",
+      "built_ha_at_risk": 12.734451899640732,
+      "built_ha": 669.7862945955868,
+      "share": 0.019012708982541548
+     },
+     {
+      "commune": "Saoula",
+      "built_ha_at_risk": 11.171317092942441,
+      "built_ha": 614.4649150097703,
+      "share": 0.01818056136332017
+     },
+     {
+      "commune": "Hydra",
+      "built_ha_at_risk": 7.195517521781356,
+      "built_ha": 315.1160938857523,
+      "share": 0.02283449706757962
+     },
+     {
+      "commune": "Djasr Kasentina",
+      "built_ha_at_risk": 6.227053573296357,
+      "built_ha": 822.7356421292243,
+      "share": 0.007568717403783383
+     },
+     {
+      "commune": "Bourouba",
+      "built_ha_at_risk": 6.057147602251008,
+      "built_ha": 264.8239285464007,
+      "share": 0.022872357628324038
+     },
+     {
+      "commune": "Bab Al Wadi",
+      "built_ha_at_risk": 5.7003450308133345,
+      "built_ha": 106.85385965646108,
+      "share": 0.053347113984840086
+     }
+    ],
+    "csi_wet": 0.8220820611112349,
+    "csi_wet_built": 0.8351558752997602,
+    "commune_spearman": 0.9558866706832206,
+    "commune_top5_overlap": 4,
+    "alarm_time": "2001-11-10 01:00",
+    "alarm_lead_min": -210.85269155081696,
+    "model_alarm_lead_min": -215.04017503159557
+   }
+  }
+ },
+ "sensitivity": {
+  "wet_soil_amc3": {
+   "koriche": {
+    "peak_m3s": 67.00291449263779,
+    "peak_time": "2001-11-10 03:18",
+    "volume_Mm3": 2.0562815989439307,
+    "peak_err": 0.07948542389010904,
+    "volume_err": 0.11989208977383958,
+    "q_r": 0.9956566773942792
+   },
+   "built_ha_wet": 1392.0565423766454,
+   "built_ha_significant": 328.48769332464866,
+   "zone_built_ha_wet": 9.786583417017047,
+   "zone_flood_time": "2001-11-09 20:16",
+   "zone_flood_s": 72967.73369358211,
+   "budget": {
+    "rain_m3": 97477004.32789935,
+    "runoff_m3": 88355247.31754819,
+    "soaked_m3": 9121757.010351166,
+    "edge_m3": 14629108.967360971,
+    "sea_m3": 59663866.03407016,
+    "drain_m3": 0.0,
+    "stored_m3": 14062634.079256857,
+    "error_m3": -361.7631398010999,
+    "error_frac": -4.0944160169788844e-06
+   },
+   "communes_top": [
+    {
+     "commune": "El Harrach",
+     "built_ha_at_risk": 74.835081211533,
+     "built_ha": 570.7141282015886,
+     "share": 0.13112533493318326
+    },
+    {
+     "commune": "Bachdjarah",
+     "built_ha_at_risk": 25.978621702733566,
+     "built_ha": 280.761107432922,
+     "share": 0.09252927494218637
+    },
+    {
+     "commune": "Kouba",
+     "built_ha_at_risk": 24.636364570553493,
+     "built_ha": 709.4508420246544,
+     "share": 0.034725964240517944
+    },
+    {
+     "commune": "Baraki",
+     "built_ha_at_risk": 20.847461658459054,
+     "built_ha": 996.9402254794206,
+     "share": 0.020911445968020474
+    },
+    {
+     "commune": "Bir Mourad Rais",
+     "built_ha_at_risk": 17.8061448688033,
+     "built_ha": 309.7385695803684,
+     "share": 0.05748765771381633
+    },
+    {
+     "commune": "Birkhadem",
+     "built_ha_at_risk": 16.28548651185746,
+     "built_ha": 669.7862945955868,
+     "share": 0.024314451703868537
+    },
+    {
+     "commune": "Saoula",
+     "built_ha_at_risk": 12.819404927317816,
+     "built_ha": 614.4649150097703,
+     "share": 0.020862712604370556
+    },
+    {
+     "commune": "Djasr Kasentina",
+     "built_ha_at_risk": 10.330282574036033,
+     "built_ha": 822.7356421292243,
+     "share": 0.012556016835859277
+    },
+    {
+     "commune": "Hydra",
+     "built_ha_at_risk": 9.446771533600726,
+     "built_ha": 315.1160938857523,
+     "share": 0.02997870218912311
+    },
+    {
+     "commune": "Douera",
+     "built_ha_at_risk": 8.478307586255031,
+     "built_ha": 630.7334110341218,
+     "share": 0.01344198267910746
+    }
+   ],
+   "csi_wet": 0.9436338640294469,
+   "csi_wet_built": 0.941813898704358,
+   "commune_spearman": 0.988395261133237,
+   "commune_top5_overlap": 5
+  },
+  "dry_soil_amc1": {
+   "koriche": {
+    "peak_m3s": 51.034005835525576,
+    "peak_time": "2001-11-10 03:22",
+    "volume_Mm3": 1.4620226973651005,
+    "peak_err": -0.17779001347432566,
+    "volume_err": -0.2037531947521779,
+    "q_r": 0.9919732295847792
+   },
+   "built_ha_wet": 958.0232656592361,
+   "built_ha_significant": 213.59728131646995,
+   "zone_built_ha_wet": 8.92855830636084,
+   "zone_flood_time": "2001-11-10 00:47",
+   "zone_flood_s": 89225.31159144282,
+   "budget": {
+    "rain_m3": 97477004.97146451,
+    "runoff_m3": 65345679.25895939,
+    "soaked_m3": 32131325.712505125,
+    "edge_m3": 8259364.253230408,
+    "sea_m3": 45281278.92534373,
+    "drain_m3": 0.0,
+    "stored_m3": 11805035.848036317,
+    "error_m3": 0.23234893567860126,
+    "error_frac": 3.55568934799533e-09
+   },
+   "communes_top": [
+    {
+     "commune": "Bachdjarah",
+     "built_ha_at_risk": 25.214044870056988,
+     "built_ha": 280.761107432922,
+     "share": 0.08980604578958999
+    },
+    {
+     "commune": "Kouba",
+     "built_ha_at_risk": 23.081725010170157,
+     "built_ha": 709.4508420246544,
+     "share": 0.032534636148008174
+    },
+    {
+     "commune": "El Harrach",
+     "built_ha_at_risk": 22.351129435048147,
+     "built_ha": 570.7141282015886,
+     "share": 0.03916344160863886
+    },
+    {
+     "commune": "Bir Mourad Rais",
+     "built_ha_at_risk": 16.472383061550538,
+     "built_ha": 309.7385695803684,
+     "share": 0.05318156884325773
+    },
+    {
+     "commune": "Birkhadem",
+     "built_ha_at_risk": 15.257555438700713,
+     "built_ha": 669.7862945955868,
+     "share": 0.022779736703799142
+    },
+    {
+     "commune": "Saoula",
+     "built_ha_at_risk": 9.727116406276142,
+     "built_ha": 614.4649150097703,
+     "share": 0.015830222635447748
+    },
+    {
+     "commune": "Hydra",
+     "built_ha_at_risk": 8.427335752900948,
+     "built_ha": 315.1160938857523,
+     "share": 0.026743590430377513
+    },
+    {
+     "commune": "Djasr Kasentina",
+     "built_ha_at_risk": 7.637273058234153,
+     "built_ha": 822.7356421292243,
+     "share": 0.009282778899026466
+    },
+    {
+     "commune": "Bab Al Wadi",
+     "built_ha_at_risk": 5.8532603964372,
+     "built_ha": 106.85385965646108,
+     "share": 0.05477818410355637
+    },
+    {
+     "commune": "Bourouba",
+     "built_ha_at_risk": 5.708840376817803,
+     "built_ha": 264.8239285464007,
+     "share": 0.021557116866867784
+    }
+   ],
+   "csi_wet": 0.7736629382460758,
+   "csi_wet_built": 0.7343171585792897,
+   "commune_spearman": 0.9692742490669952,
+   "commune_top5_overlap": 4
+  },
+  "terrain_unfilled": {
+   "koriche": {
+    "peak_m3s": 61.26229308111262,
+    "peak_time": "2001-11-10 03:19",
+    "volume_Mm3": 1.7086248187412088,
+    "peak_err": -0.013001853487859316,
+    "volume_err": -0.06944874676587753,
+    "q_r": 0.9936753856835484
+   },
+   "built_ha_wet": 1371.353500589126,
+   "built_ha_significant": 635.575729813914,
+   "zone_built_ha_wet": 10.372758984482324,
+   "zone_flood_time": "2001-11-09 21:29",
+   "zone_flood_s": 77350.40576179499,
+   "budget": {
+    "rain_m3": 97477004.57495792,
+    "runoff_m3": 79512296.63288116,
+    "soaked_m3": 17964707.942076758,
+    "edge_m3": 10277765.399181614,
+    "sea_m3": 42860352.02138781,
+    "drain_m3": 0.0,
+    "stored_m3": 26373956.868264142,
+    "error_m3": 222.3440475948155,
+    "error_frac": 2.796347948813597e-06
+   },
+   "communes_top": [
+    {
+     "commune": "El Harrach",
+     "built_ha_at_risk": 77.3242035551308,
+     "built_ha": 570.7141282015886,
+     "share": 0.13548675200803548
+    },
+    {
+     "commune": "Baraki",
+     "built_ha_at_risk": 53.07862273723557,
+     "built_ha": 996.9402254794206,
+     "share": 0.053241529813595874
+    },
+    {
+     "commune": "Dar El Be\u00efda",
+     "built_ha_at_risk": 46.74113021160987,
+     "built_ha": 1141.4197602538916,
+     "share": 0.040949992140676635
+    },
+    {
+     "commune": "Kouba",
+     "built_ha_at_risk": 28.54420170123012,
+     "built_ha": 709.4508420246544,
+     "share": 0.04023422062587131
+    },
+    {
+     "commune": "Djasr Kasentina",
+     "built_ha_at_risk": 27.125486980231056,
+     "built_ha": 822.7356421292243,
+     "share": 0.03296986977497512
+    },
+    {
+     "commune": "Bachdjarah",
+     "built_ha_at_risk": 26.76018912374201,
+     "built_ha": 280.761107432922,
+     "share": 0.09531302026985848
+    },
+    {
+     "commune": "Burj Al Kifan",
+     "built_ha_at_risk": 25.87667815679202,
+     "built_ha": 1099.5379408805911,
+     "share": 0.023534138472809833
+    },
+    {
+     "commune": "Eucalyptus",
+     "built_ha_at_risk": 24.432477440503714,
+     "built_ha": 1074.0775330869742,
+     "share": 0.022747405739214244
+    },
+    {
+     "commune": "Birkhadem",
+     "built_ha_at_risk": 22.72492248373517,
+     "built_ha": 669.7862945955868,
+     "share": 0.03392861673506824
+    },
+    {
+     "commune": "Hussein Dey",
+     "built_ha_at_risk": 20.889938060930216,
+     "built_ha": 368.772395908486,
+     "share": 0.056647239036064494
+    }
+   ],
+   "csi_wet": 0.6104341697731783,
+   "csi_wet_built": 0.540461991394278,
+   "commune_spearman": 0.7127735222488818,
+   "commune_top5_overlap": 3
+  },
+  "built_n_0.02": {
+   "koriche": {
+    "peak_m3s": 62.453291200417624,
+    "peak_time": "2001-11-10 03:17",
+    "volume_Mm3": 1.8372420529884337,
+    "peak_err": 0.006186343315304432,
+    "volume_err": 0.0005987716849180647,
+    "q_r": 0.9989231541131055
+   },
+   "built_ha_wet": 1155.105687006401,
+   "built_ha_significant": 280.412801161664,
+   "zone_built_ha_wet": 8.928558306360838,
+   "zone_flood_time": "2001-11-09 21:29",
+   "zone_flood_s": 77379.1869548657,
+   "budget": {
+    "rain_m3": 97477004.50401701,
+    "runoff_m3": 79512524.25870241,
+    "soaked_m3": 17964480.245314598,
+    "edge_m3": 12165136.938288232,
+    "sea_m3": 55054358.076447025,
+    "drain_m3": 0.0,
+    "stored_m3": 12293345.788396731,
+    "error_m3": -316.5444295704365,
+    "error_frac": -3.981063769784564e-06
+   },
+   "communes_top": [
+    {
+     "commune": "El Harrach",
+     "built_ha_at_risk": 63.12856037992191,
+     "built_ha": 570.7141282015886,
+     "share": 0.11061327775229622
+    },
+    {
+     "commune": "Bachdjarah",
+     "built_ha_at_risk": 24.39000095372377,
+     "built_ha": 280.761107432922,
+     "share": 0.08687100993698318
+    },
+    {
+     "commune": "Kouba",
+     "built_ha_at_risk": 22.240690499808537,
+     "built_ha": 709.4508420246544,
+     "share": 0.031349163581704004
+    },
+    {
+     "commune": "Baraki",
+     "built_ha_at_risk": 18.970000773369243,
+     "built_ha": 996.9402254794206,
+     "share": 0.019028222844801674
+    },
+    {
+     "commune": "Bir Mourad Rais",
+     "built_ha_at_risk": 16.693260814681103,
+     "built_ha": 309.7385695803684,
+     "share": 0.053894679107277514
+    },
+    {
+     "commune": "Birkhadem",
+     "built_ha_at_risk": 14.713856364281598,
+     "built_ha": 669.7862945955868,
+     "share": 0.021967986629475213
+    },
+    {
+     "commune": "Saoula",
+     "built_ha_at_risk": 11.833950347207233,
+     "built_ha": 614.4649150097703,
+     "share": 0.019258952070549167
+    },
+    {
+     "commune": "Djasr Kasentina",
+     "built_ha_at_risk": 8.62272765144678,
+     "built_ha": 822.7356421292243,
+     "share": 0.010480556827623663
+    },
+    {
+     "commune": "Hydra",
+     "built_ha_at_risk": 8.503793441409423,
+     "built_ha": 315.1160938857523,
+     "share": 0.026986223828010945
+    },
+    {
+     "commune": "Bab Al Wadi",
+     "built_ha_at_risk": 6.566865439053395,
+     "built_ha": 106.85385965646108,
+     "share": 0.06145651135266521
+    }
+   ],
+   "csi_wet": 0.9167654234925061,
+   "csi_wet_built": 0.8800738007380073,
+   "commune_spearman": 0.9919562302981992,
+   "commune_top5_overlap": 5
+  },
+  "built_n_0.10": {
+   "koriche": {
+    "peak_m3s": 60.398062172759886,
+    "peak_time": "2001-11-10 03:25",
+    "volume_Mm3": 1.8341747553115302,
+    "peak_err": -0.026925496593631748,
+    "volume_err": -0.001071739983868114,
+    "q_r": 0.9954226414789322
+   },
+   "built_ha_wet": 1499.9808096203851,
+   "built_ha_significant": 355.0185093276087,
+   "zone_built_ha_wet": 11.10335462454485,
+   "zone_flood_time": "2001-11-09 21:33",
+   "zone_flood_s": 77586.1869548657,
+   "budget": {
+    "rain_m3": 97477004.4778979,
+    "runoff_m3": 79512537.52727441,
+    "soaked_m3": 17964466.950623482,
+    "edge_m3": 12095947.343122404,
+    "sea_m3": 52928302.654922694,
+    "drain_m3": 0.0,
+    "stored_m3": 14488612.42324495,
+    "error_m3": -324.8940156362951,
+    "error_frac": -4.0860727847460515e-06
+   },
+   "communes_top": [
+    {
+     "commune": "El Harrach",
+     "built_ha_at_risk": 74.13846675895762,
+     "built_ha": 570.7141282015886,
+     "share": 0.12990473355299575
+    },
+    {
+     "commune": "Kouba",
+     "built_ha_at_risk": 27.371850562311955,
+     "built_ha": 709.4508420246544,
+     "share": 0.03858174371066677
+    },
+    {
+     "commune": "Bachdjarah",
+     "built_ha_at_risk": 27.303888210123873,
+     "built_ha": 280.761107432922,
+     "share": 0.09724953879748881
+    },
+    {
+     "commune": "Baraki",
+     "built_ha_at_risk": 21.08533000561802,
+     "built_ha": 996.9402254794206,
+     "share": 0.021150044372498112
+    },
+    {
+     "commune": "Birkhadem",
+     "built_ha_at_risk": 20.142351856461264,
+     "built_ha": 669.7862945955868,
+     "share": 0.03007280384652108
+    },
+    {
+     "commune": "Bir Mourad Rais",
+     "built_ha_at_risk": 18.570721699201265,
+     "built_ha": 309.7385695803684,
+     "share": 0.05995611629627123
+    },
+    {
+     "commune": "Djasr Kasentina",
+     "built_ha_at_risk": 16.115580596068565,
+     "built_ha": 822.7356421292243,
+     "share": 0.01958779925270011
+    },
+    {
+     "commune": "Saoula",
+     "built_ha_at_risk": 13.380094605449454,
+     "built_ha": 614.4649150097703,
+     "share": 0.021775197051302278
+    },
+    {
+     "commune": "Hydra",
+     "built_ha_at_risk": 10.313291946398023,
+     "built_ha": 315.1160938857523,
+     "share": 0.032728547181526006
+    },
+    {
+     "commune": "Douera",
+     "built_ha_at_risk": 8.563260569499091,
+     "built_ha": 630.7334110341218,
+     "share": 0.013576671886556887
+    }
+   ],
+   "csi_wet": 0.91063404892661,
+   "csi_wet_built": 0.8721949509116409,
+   "commune_spearman": 0.9790710701084346,
+   "commune_top5_overlap": 4
+  },
+  "drains_20mmh": {
+   "koriche": {
+    "peak_m3s": 27.474984224793534,
+    "peak_time": "2001-11-10 05:16",
+    "volume_Mm3": 0.5502296120926476,
+    "peak_err": -0.557349926986621,
+    "volume_err": -0.7003339472286517,
+    "q_r": 0.9301722144276044
+   },
+   "built_ha_wet": 402.04848003930715,
+   "built_ha_significant": 112.18041219855618,
+   "zone_built_ha_wet": 7.645768293725691,
+   "zone_flood_time": "2001-11-10 03:44",
+   "zone_flood_s": 99857.07242985243,
+   "budget": {
+    "rain_m3": 97477004.5386993,
+    "runoff_m3": 79512436.68810286,
+    "soaked_m3": 17964567.850596443,
+    "edge_m3": 5386133.330248099,
+    "sea_m3": 29726373.84191264,
+    "drain_m3": 38658847.25258759,
+    "stored_m3": 5741150.489792617,
+    "error_m3": -68.22643809206784,
+    "error_frac": -8.580599580879943e-07
+   },
+   "communes_top": [
+    {
+     "commune": "Bachdjarah",
+     "built_ha_at_risk": 18.477273459388467,
+     "built_ha": 280.761107432922,
+     "share": 0.0658113711985659
+    },
+    {
+     "commune": "Kouba",
+     "built_ha_at_risk": 12.878871961414543,
+     "built_ha": 709.4508420246544,
+     "share": 0.01815329716807494
+    },
+    {
+     "commune": "Saoula",
+     "built_ha_at_risk": 7.543824781393809,
+     "built_ha": 614.4649150097703,
+     "share": 0.012277063502110382
+    },
+    {
+     "commune": "Bir Mourad Rais",
+     "built_ha_at_risk": 5.453981396893947,
+     "built_ha": 309.7385695803684,
+     "share": 0.017608337909879812
+    },
+    {
+     "commune": "El Harrach",
+     "built_ha_at_risk": 5.42000022763573,
+     "built_ha": 570.7141282015886,
+     "share": 0.009496874108785455
+    },
+    {
+     "commune": "Birkhadem",
+     "built_ha_at_risk": 4.697899882308788,
+     "built_ha": 669.7862945955868,
+     "share": 0.0070140280865934315
+    },
+    {
+     "commune": "Djasr Kasentina",
+     "built_ha_at_risk": 4.646928113325628,
+     "built_ha": 822.7356421292243,
+     "share": 0.005648142459586977
+    },
+    {
+     "commune": "Baba Hassen",
+     "built_ha_at_risk": 4.646928112755973,
+     "built_ha": 329.4901380293795,
+     "share": 0.01410339059174397
+    },
+    {
+     "commune": "Bab Al Wadi",
+     "built_ha_at_risk": 4.460031508376081,
+     "built_ha": 106.85385965646108,
+     "share": 0.04173954523229426
+    },
+    {
+     "commune": "Douera",
+     "built_ha_at_risk": 4.239153803096472,
+     "built_ha": 630.7334110341218,
+     "share": 0.00672099135535907
+    }
+   ],
+   "csi_wet": 0.4749036563586803,
+   "csi_wet_built": 0.32731365682841423,
+   "commune_spearman": 0.9048906381976413,
+   "commune_top5_overlap": 4
+  }
+ }
+}

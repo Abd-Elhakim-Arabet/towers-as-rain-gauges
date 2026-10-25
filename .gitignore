@@ -16,3 +16,4 @@ docs/explainer/*.log
 docs/explainer/*.toc
 docs/explainer/*.out
 site/_local/
+site/flood/index.html

@@ -22,7 +22,7 @@ Built for the Huawei ICT Competition (Innovation Track).
 | 2 | AI models (causal TCN, physics head; PyTorch + MindSpore twin), cross-domain tests on Italy and the Netherlands | done — see [results/phase2.md](results/phase2.md) |
 | 3 | Rain maps (IDW) + nowcasting (pysteps) | done — see [results/phase3_maps.json](results/phase3_maps.json), [results/phase3_nowcast.json](results/phase3_nowcast.json) |
 | 4 | Virtual Algerian network (simulation) | done — see [results/phase4.md](results/phase4.md), explainer Part 4, interactive replay in [site/phase4/index.html](site/phase4/index.html) |
-| 5 | Flood-risk layer | – |
+| 5 | Flood-risk layer: 2D flood model (own package `src/floodrisk/`) on the Phase 4 storms, hazard, alarms (simulation) | done — see [results/phase5/phase5.md](results/phase5/phase5.md), explainer Part 5, plan in [docs/phase5/PLAN.md](docs/phase5/PLAN.md), local page `/flood/` |
 | 6 | Dashboard | – |
 | 7 | Report, pitch, video script | – |
 

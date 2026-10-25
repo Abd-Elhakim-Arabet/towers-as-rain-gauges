@@ -1,0 +1,1155 @@
+{
+ "city": "Gharda\u00efa",
+ "dem": "Copernicus GLO-30 (surface)",
+ "grid": [
+  756,
+  1476
+ ],
+ "cell_m": [
+  52.0,
+  61.8
+ ],
+ "basins": {
+  "mzab": {
+   "lat": 32.48861111111111,
+   "lon": 3.6791666666666667,
+   "area_km2": 1386.5634055534506,
+   "area_km2_ref": null,
+   "cn_mean": 85.98939344410519,
+   "built_share": 0.007412739563733339,
+   "tower_box_share": 0.04548879414471747
+  }
+ },
+ "filled_pits_Mm3": 132.66680366046418,
+ "tower_box_share_domain": 0.08206704090850432,
+ "basin_true_total_mm": 49.78993606567383,
+ "gauge_total_mm": 80.0,
+ "gauge_note": "Gharda\u00efa, two-day total 29 Sep - 1 Oct 2008 (ANRH, via Springer 2021)",
+ "gauge_factor": 1.6067504062362834,
+ "observed": {
+  "mzab": {
+   "peak_m3s": 1200.0,
+   "peak_range_m3s": [
+    900.0,
+    1600.0
+   ],
+   "src": "900 (press, all tributaries), 1,200, 1,600 m3/s (Springer 2021); 10-yr 205, 100-yr 722 m3/s; a dam break upstream added >900 m3/s"
+  }
+ },
+ "thresholds": {
+  "3": {
+   "threshold_mm": 23.83076541850638,
+   "depths_mm": [
+    10.0,
+    20.0,
+    30.0,
+    45.0
+   ],
+   "town_wet_ha": [
+    0.0,
+    0.7857840283407134,
+    11.786760364037132,
+    57.978359797775525
+   ]
+  },
+  "6": {
+   "threshold_mm": 23.962638955520358,
+   "depths_mm": [
+    10.0,
+    20.0,
+    30.0,
+    45.0
+   ],
+   "town_wet_ha": [
+    0.0,
+    0.7857840283407134,
+    11.420656442817073,
+    57.031847248856174
+   ]
+  },
+  "12": {
+   "threshold_mm": 23.989436180170436,
+   "depths_mm": [
+    10.0,
+    20.0,
+    30.0,
+    45.0
+   ],
+   "town_wet_ha": [
+    0.0,
+    0.7857840283407134,
+    11.349221520099881,
+    62.96987418819161
+   ]
+  },
+  "24": {
+   "threshold_mm": 24.20258504132052,
+   "depths_mm": [
+    10.0,
+    20.0,
+    30.0,
+    45.0
+   ],
+   "town_wet_ha": [
+    0.0,
+    0.7857840283407134,
+    10.813459685643085,
+    71.69386270155024
+   ]
+  }
+ },
+ "alarm_ha": 5.0,
+ "latency_min": {
+  "truth": 0,
+  "ai": 5,
+  "classical": 5,
+  "ai_sparse": 5,
+  "classical_sparse": 5,
+  "imerg": 240
+ },
+ "hours0": "2008-09-29 00:00:00",
+ "scenarios": {
+  "satellite": {
+   "truth": {
+    "mzab": {
+     "peak_m3s": 134.42535909016928,
+     "peak_time": "2008-10-01 16:58",
+     "volume_Mm3": 5.399655792560637
+    },
+    "built_ha_wet": 83.3377531429129,
+    "built_ha_significant": 52.638600109790254,
+    "zone_built_ha_wet": 71.97960228883345,
+    "zone_flood_time": "2008-10-01 03:36",
+    "zone_flood_s": 185771.40361768042,
+    "budget": {
+     "rain_m3": 170436681.30100903,
+     "runoff_m3": 69679793.83718054,
+     "soaked_m3": 100756887.46382849,
+     "edge_m3": 23258300.309287585,
+     "sea_m3": 0.0,
+     "drain_m3": 0.0,
+     "stored_m3": 46423002.97256981,
+     "error_m3": -1509.4446768537164,
+     "error_frac": -2.166258815835201e-05
+    },
+    "communes_top": [
+     {
+      "commune": "Ghardaia",
+      "built_ha_at_risk": 27.457793938221617,
+      "built_ha": 1239.0295997861579,
+      "share": 0.022160724766349824
+     },
+     {
+      "commune": "Bounoura",
+      "built_ha_at_risk": 11.215281029601678,
+      "built_ha": 549.0844423526063,
+      "share": 0.02042542123675678
+     },
+     {
+      "commune": "El Atteuf",
+      "built_ha_at_risk": 7.53638313626924,
+      "built_ha": 253.7189452150357,
+      "share": 0.029703667299585734
+     },
+     {
+      "commune": "Dhayet Bendhahoua",
+      "built_ha_at_risk": 5.05401998693759,
+      "built_ha": 291.4276485887616,
+      "share": 0.017342280361563777
+     },
+     {
+      "commune": "Berriane",
+      "built_ha_at_risk": 1.3751220187600823,
+      "built_ha": 78.03371091239441,
+      "share": 0.017622153331960357
+     },
+     {
+      "commune": "Metlili",
+      "built_ha_at_risk": 0.0,
+      "built_ha": 0.07143491253826195,
+      "share": 0.0
+     }
+    ],
+    "alarm_time": "2008-09-29 23:00",
+    "alarm_lead_min": 1716.1900602946737,
+    "model_alarm_lead_min": 0.0
+   },
+   "ai": {
+    "mzab": {
+     "peak_m3s": 134.09097747802736,
+     "peak_time": "2008-10-01 16:58",
+     "volume_Mm3": 5.343183785076561,
+     "peak_err": -0.0024874890750161693,
+     "volume_err": -0.010458445807208783,
+     "q_r": 0.9976531646542497
+    },
+    "built_ha_wet": 76.24783823844894,
+    "built_ha_significant": 51.91532163665658,
+    "zone_built_ha_wet": 64.97898102294663,
+    "zone_flood_time": "2008-10-01 05:41",
+    "zone_flood_s": 193269.2670675889,
+    "budget": {
+     "rain_m3": 168960378.51224506,
+     "runoff_m3": 68727560.79719077,
+     "soaked_m3": 100232817.71505429,
+     "edge_m3": 22744441.04814212,
+     "sea_m3": 0.0,
+     "drain_m3": 0.0,
+     "stored_m3": 45984465.2240704,
+     "error_m3": -1345.4750217497349,
+     "error_frac": -1.9576935455633555e-05
+    },
+    "communes_top": [
+     {
+      "commune": "Ghardaia",
+      "built_ha_at_risk": 27.359570936924378,
+      "built_ha": 1239.0295997861579,
+      "share": 0.022081450630111115
+     },
+     {
+      "commune": "Bounoura",
+      "built_ha_at_risk": 11.018835035389852,
+      "built_ha": 549.0844423526063,
+      "share": 0.020067651139738307
+     },
+     {
+      "commune": "El Atteuf",
+      "built_ha_at_risk": 7.107773658644628,
+      "built_ha": 253.7189452150357,
+      "share": 0.02801435916667768
+     },
+     {
+      "commune": "Dhayet Bendhahoua",
+      "built_ha_at_risk": 5.05401998693759,
+      "built_ha": 291.4276485887616,
+      "share": 0.017342280361563777
+     },
+     {
+      "commune": "Berriane",
+      "built_ha_at_risk": 1.3751220187600823,
+      "built_ha": 78.03371091239441,
+      "share": 0.017622153331960357
+     },
+     {
+      "commune": "Metlili",
+      "built_ha_at_risk": 0.0,
+      "built_ha": 0.07143491253826195,
+      "share": 0.0
+     }
+    ],
+    "csi_wet": 0.9830837930128711,
+    "csi_wet_built": 0.9038901601830663,
+    "commune_spearman": 1.0,
+    "commune_top5_overlap": 5,
+    "alarm_time": "2008-09-29 23:05",
+    "alarm_lead_min": 1711.1900602946737,
+    "model_alarm_lead_min": -129.9643908318079
+   },
+   "classical": {
+    "mzab": {
+     "peak_m3s": 134.82435760498046,
+     "peak_time": "2008-10-01 16:59",
+     "volume_Mm3": 5.433966062460163,
+     "peak_err": 0.0029681789024906813,
+     "volume_err": 0.006354158712634339,
+     "q_r": 0.9999900820196838
+    },
+    "built_ha_wet": 94.7048334100083,
+    "built_ha_significant": 55.147751397578,
+    "zone_built_ha_wet": 82.83770881322474,
+    "zone_flood_time": "2008-09-30 14:25",
+    "zone_flood_s": 138314.91716706197,
+    "budget": {
+     "rain_m3": 171217754.70759505,
+     "runoff_m3": 70177418.2513109,
+     "soaked_m3": 101040336.45628415,
+     "edge_m3": 23137031.008957,
+     "sea_m3": 0.0,
+     "drain_m3": 0.0,
+     "stored_m3": 47040712.097724706,
+     "error_m3": -324.8553708046675,
+     "error_frac": -4.629058447851909e-06
+    },
+    "communes_top": [
+     {
+      "commune": "Ghardaia",
+      "built_ha_at_risk": 28.029273238527708,
+      "built_ha": 1239.0295997861579,
+      "share": 0.022621956120632822
+     },
+     {
+      "commune": "Bounoura",
+      "built_ha_at_risk": 12.92078955163336,
+      "built_ha": 549.0844423526063,
+      "share": 0.023531516384388832
+     },
+     {
+      "commune": "El Atteuf",
+      "built_ha_at_risk": 7.53638313626924,
+      "built_ha": 253.7189452150357,
+      "share": 0.029703667299585734
+     },
+     {
+      "commune": "Dhayet Bendhahoua",
+      "built_ha_at_risk": 5.286183452387561,
+      "built_ha": 291.4276485887616,
+      "share": 0.018138922226445926
+     },
+     {
+      "commune": "Berriane",
+      "built_ha_at_risk": 1.3751220187600823,
+      "built_ha": 78.03371091239441,
+      "share": 0.017622153331960357
+     },
+     {
+      "commune": "Metlili",
+      "built_ha_at_risk": 0.0,
+      "built_ha": 0.07143491253826195,
+      "share": 0.0
+     }
+    ],
+    "csi_wet": 0.979298209295104,
+    "csi_wet_built": 0.9,
+    "commune_spearman": 1.0,
+    "commune_top5_overlap": 5,
+    "alarm_time": "2008-09-29 23:05",
+    "alarm_lead_min": 1711.1900602946737,
+    "model_alarm_lead_min": 785.9414408436409
+   },
+   "ai_sparse": {
+    "mzab": {
+     "peak_m3s": 134.05064646402994,
+     "peak_time": "2008-10-01 16:59",
+     "volume_Mm3": 5.298710475525653,
+     "peak_err": -0.0027875144145086406,
+     "volume_err": -0.018694768872871692,
+     "q_r": 0.9938428295016328
+    },
+    "built_ha_wet": 68.13104644454236,
+    "built_ha_significant": 49.50439338130161,
+    "zone_built_ha_wet": 57.031847146468145,
+    "zone_flood_time": "2008-10-01 13:26",
+    "zone_flood_s": 221217.01807460294,
+    "budget": {
+     "rain_m3": 166024043.7808689,
+     "runoff_m3": 67262408.9198515,
+     "soaked_m3": 98761634.86101739,
+     "edge_m3": 22486017.27361005,
+     "sea_m3": 0.0,
+     "drain_m3": 0.0,
+     "stored_m3": 44777818.402524106,
+     "error_m3": -1426.7562826648355,
+     "error_frac": -2.121179282123138e-05
+    },
+    "communes_top": [
+     {
+      "commune": "Ghardaia",
+      "built_ha_at_risk": 27.288136025583636,
+      "built_ha": 1239.0295997861579,
+      "share": 0.022023796711792238
+     },
+     {
+      "commune": "Bounoura",
+      "built_ha_at_risk": 9.384761445056766,
+      "built_ha": 549.0844423526063,
+      "share": 0.017091654254210577
+     },
+     {
+      "commune": "El Atteuf",
+      "built_ha_at_risk": 6.920257013381379,
+      "built_ha": 253.7189452150357,
+      "share": 0.027275286863250276
+     },
+     {
+      "commune": "Dhayet Bendhahoua",
+      "built_ha_at_risk": 4.536116878519697,
+      "built_ha": 291.4276485887616,
+      "share": 0.015565156224832623
+     },
+     {
+      "commune": "Berriane",
+      "built_ha_at_risk": 1.3751220187600823,
+      "built_ha": 78.03371091239441,
+      "share": 0.017622153331960357
+     },
+     {
+      "commune": "Metlili",
+      "built_ha_at_risk": 0.0,
+      "built_ha": 0.07143491253826195,
+      "share": 0.0
+     }
+    ],
+    "csi_wet": 0.9646013044393015,
+    "csi_wet_built": 0.8198614318706697,
+    "commune_spearman": 1.0,
+    "commune_top5_overlap": 5,
+    "alarm_time": "2008-09-29 23:05",
+    "alarm_lead_min": 1711.1900602946737,
+    "model_alarm_lead_min": -595.7602409487085
+   },
+   "imerg": {
+    "mzab": {
+     "peak_m3s": 134.73300476074218,
+     "peak_time": "2008-10-01 16:58",
+     "volume_Mm3": 5.418375252353856,
+     "peak_err": 0.0022885984657592395,
+     "volume_err": 0.00346678760876018,
+     "q_r": 0.9997357656234878
+    },
+    "built_ha_wet": 81.18577644535945,
+    "built_ha_significant": 51.87067482605002,
+    "zone_built_ha_wet": 69.59546212583,
+    "zone_flood_time": "2008-10-01 03:43",
+    "zone_flood_s": 186185.18346142233,
+    "budget": {
+     "rain_m3": 170477719.7748737,
+     "runoff_m3": 69673764.27148287,
+     "soaked_m3": 100803955.50339083,
+     "edge_m3": 23181273.63289054,
+     "sea_m3": 0.0,
+     "drain_m3": 0.0,
+     "stored_m3": 46494041.73954262,
+     "error_m3": -1551.1009502857924,
+     "error_frac": -2.2262338866060813e-05
+    },
+    "communes_top": [
+     {
+      "commune": "Ghardaia",
+      "built_ha_at_risk": 27.457793938221617,
+      "built_ha": 1239.0295997861579,
+      "share": 0.022160724766349824
+     },
+     {
+      "commune": "Bounoura",
+      "built_ha_at_risk": 10.384850197839535,
+      "built_ha": 549.0844423526063,
+      "share": 0.018913029393702402
+     },
+     {
+      "commune": "El Atteuf",
+      "built_ha_at_risk": 7.366725218841178,
+      "built_ha": 253.7189452150357,
+      "share": 0.02903498283345621
+     },
+     {
+      "commune": "Dhayet Bendhahoua",
+      "built_ha_at_risk": 5.286183452387561,
+      "built_ha": 291.4276485887616,
+      "share": 0.018138922226445926
+     },
+     {
+      "commune": "Berriane",
+      "built_ha_at_risk": 1.3751220187600823,
+      "built_ha": 78.03371091239441,
+      "share": 0.017622153331960357
+     },
+     {
+      "commune": "Metlili",
+      "built_ha_at_risk": 0.0,
+      "built_ha": 0.07143491253826195,
+      "share": 0.0
+     }
+    ],
+    "csi_wet": 0.9874516365157378,
+    "csi_wet_built": 0.9565217391304348,
+    "commune_spearman": 1.0,
+    "commune_top5_overlap": 5,
+    "alarm_time": "2008-09-30 03:00",
+    "alarm_lead_min": 1476.1900602946737,
+    "model_alarm_lead_min": -246.89633072903186
+   }
+  },
+  "gauge": {
+   "truth": {
+    "mzab": {
+     "peak_m3s": 678.9366678873698,
+     "peak_time": "2008-10-01 12:57",
+     "volume_Mm3": 27.740637971941077
+    },
+    "built_ha_wet": 184.9985609465291,
+    "built_ha_significant": 121.12682104517265,
+    "zone_built_ha_wet": 160.04098891660982,
+    "zone_flood_time": "2008-09-29 21:56",
+    "zone_flood_s": 79001.30909239274,
+    "budget": {
+     "rain_m3": 273849200.4730936,
+     "runoff_m3": 153099412.57250735,
+     "soaked_m3": 120749787.90058628,
+     "edge_m3": 81541997.92819464,
+     "sea_m3": 0.0,
+     "drain_m3": 0.0,
+     "stored_m3": 71563066.59098184,
+     "error_m3": -5651.946669131517,
+     "error_frac": -3.691684098692916e-05
+    },
+    "communes_top": [
+     {
+      "commune": "Ghardaia",
+      "built_ha_at_risk": 55.406702809880656,
+      "built_ha": 1239.0295997861579,
+      "share": 0.04471782015493674
+     },
+     {
+      "commune": "El Atteuf",
+      "built_ha_at_risk": 27.216701140588356,
+      "built_ha": 253.7189452150357,
+      "share": 0.10727106372573499
+     },
+     {
+      "commune": "Bounoura",
+      "built_ha_at_risk": 25.662991837488814,
+      "built_ha": 549.0844423526063,
+      "share": 0.046737787229106695
+     },
+     {
+      "commune": "Dhayet Bendhahoua",
+      "built_ha_at_risk": 10.831318418867104,
+      "built_ha": 291.4276485887616,
+      "share": 0.03716640638360075
+     },
+     {
+      "commune": "Berriane",
+      "built_ha_at_risk": 2.009106838347583,
+      "built_ha": 78.03371091239441,
+      "share": 0.025746652502572045
+     },
+     {
+      "commune": "Metlili",
+      "built_ha_at_risk": 0.0,
+      "built_ha": 0.07143491253826195,
+      "share": 0.0
+     }
+    ],
+    "alarm_time": "2008-09-29 08:00",
+    "alarm_lead_min": 836.6884848732122,
+    "model_alarm_lead_min": 0.0
+   },
+   "ai": {
+    "mzab": {
+     "peak_m3s": 678.6288655598959,
+     "peak_time": "2008-10-01 12:58",
+     "volume_Mm3": 27.55595848855841,
+     "peak_err": -0.0004533594104317862,
+     "volume_err": -0.00665736251521909,
+     "q_r": 0.9997959535658257
+    },
+    "built_ha_wet": 180.4892322112556,
+    "built_ha_significant": 119.49274744585816,
+    "zone_built_ha_wet": 155.83525855333698,
+    "zone_flood_time": "2008-09-29 23:18",
+    "zone_flood_s": 83938.2505044062,
+    "budget": {
+     "rain_m3": 271477150.4353782,
+     "runoff_m3": 151230981.202092,
+     "soaked_m3": 120246169.2332862,
+     "edge_m3": 80322050.89355126,
+     "sea_m3": 0.0,
+     "drain_m3": 0.0,
+     "stored_m3": 70913843.25627466,
+     "error_m3": -4912.947733923793,
+     "error_frac": -3.248638403898573e-05
+    },
+    "communes_top": [
+     {
+      "commune": "Ghardaia",
+      "built_ha_at_risk": 55.59421944915629,
+      "built_ha": 1239.0295997861579,
+      "share": 0.04486916168810754
+     },
+     {
+      "commune": "El Atteuf",
+      "built_ha_at_risk": 27.19884241275317,
+      "built_ha": 253.7189452150357,
+      "share": 0.1072006758884371
+     },
+     {
+      "commune": "Bounoura",
+      "built_ha_at_risk": 24.09142378260367,
+      "built_ha": 549.0844423526063,
+      "share": 0.043875626268669345
+     },
+     {
+      "commune": "Dhayet Bendhahoua",
+      "built_ha_at_risk": 10.599154962997302,
+      "built_ha": 291.4276485887616,
+      "share": 0.03636976455159183
+     },
+     {
+      "commune": "Berriane",
+      "built_ha_at_risk": 2.009106838347583,
+      "built_ha": 78.03371091239441,
+      "share": 0.025746652502572045
+     },
+     {
+      "commune": "Metlili",
+      "built_ha_at_risk": 0.0,
+      "built_ha": 0.07143491253826195,
+      "share": 0.0
+     }
+    ],
+    "csi_wet": 0.9884332035099245,
+    "csi_wet_built": 0.9782135076252724,
+    "commune_spearman": 1.0,
+    "commune_top5_overlap": 5,
+    "alarm_time": "2008-09-29 08:05",
+    "alarm_lead_min": 831.6884848732122,
+    "model_alarm_lead_min": -87.282356866891
+   },
+   "classical": {
+    "mzab": {
+     "peak_m3s": 680.6088053385416,
+     "peak_time": "2008-10-01 12:57",
+     "volume_Mm3": 27.9076149808923,
+     "peak_err": 0.0024628769224896985,
+     "volume_err": 0.006019220218371313,
+     "q_r": 0.9999878815755652
+    },
+    "built_ha_wet": 198.59798210560362,
+    "built_ha_significant": 125.26111649650605,
+    "zone_built_ha_wet": 171.9170428491692,
+    "zone_flood_time": "2008-09-29 21:02",
+    "zone_flood_s": 75753.26706973466,
+    "budget": {
+     "rain_m3": 275104190.4637209,
+     "runoff_m3": 154080918.36681268,
+     "soaked_m3": 121023272.09690824,
+     "edge_m3": 81612269.65658025,
+     "sea_m3": 0.0,
+     "drain_m3": 0.0,
+     "stored_m3": 72469699.78269,
+     "error_m3": -1051.0724575817585,
+     "error_frac": -6.821561480309478e-06
+    },
+    "communes_top": [
+     {
+      "commune": "Ghardaia",
+      "built_ha_at_risk": 59.362410978072106,
+      "built_ha": 1239.0295997861579,
+      "share": 0.04791040584366779
+     },
+     {
+      "commune": "El Atteuf",
+      "built_ha_at_risk": 27.216701140588356,
+      "built_ha": 253.7189452150357,
+      "share": 0.10727106372573499
+     },
+     {
+      "commune": "Bounoura",
+      "built_ha_at_risk": 25.84157912063075,
+      "built_ha": 549.0844423526063,
+      "share": 0.04706303280040127
+     },
+     {
+      "commune": "Dhayet Bendhahoua",
+      "built_ha_at_risk": 10.831318418867104,
+      "built_ha": 291.4276485887616,
+      "share": 0.03716640638360075
+     },
+     {
+      "commune": "Berriane",
+      "built_ha_at_risk": 2.009106838347583,
+      "built_ha": 78.03371091239441,
+      "share": 0.025746652502572045
+     },
+     {
+      "commune": "Metlili",
+      "built_ha_at_risk": 0.0,
+      "built_ha": 0.07143491253826195,
+      "share": 0.0
+     }
+    ],
+    "csi_wet": 0.9868022903961641,
+    "csi_wet_built": 0.9434156378600823,
+    "commune_spearman": 1.0,
+    "commune_top5_overlap": 5,
+    "alarm_time": "2008-09-29 08:05",
+    "alarm_lead_min": 831.6884848732122,
+    "model_alarm_lead_min": 49.13403371096793
+   },
+   "ai_sparse": {
+    "mzab": {
+     "peak_m3s": 677.0395222981771,
+     "peak_time": "2008-10-01 13:00",
+     "volume_Mm3": 27.36302073575501,
+     "peak_err": -0.0027942894807788665,
+     "volume_err": -0.013612420758600252,
+     "q_r": 0.9995242728453886
+    },
+    "built_ha_wet": 164.01455575994555,
+    "built_ha_significant": 115.4209574665041,
+    "zone_built_ha_wet": 140.20887167000706,
+    "zone_flood_time": "2008-09-30 07:47",
+    "zone_flood_s": 114466.33533526225,
+    "budget": {
+     "rain_m3": 266759193.52839208,
+     "runoff_m3": 148043714.82202247,
+     "soaked_m3": 118715478.70636961,
+     "edge_m3": 79256684.23384787,
+     "sea_m3": 0.0,
+     "drain_m3": 0.0,
+     "stored_m3": 68792188.635062,
+     "error_m3": -5158.046887397766,
+     "error_frac": -3.484137704595395e-05
+    },
+    "communes_top": [
+     {
+      "commune": "Ghardaia",
+      "built_ha_at_risk": 53.594041923232886,
+      "built_ha": 1239.0295997861579,
+      "share": 0.043254851968413506
+     },
+     {
+      "commune": "El Atteuf",
+      "built_ha_at_risk": 26.582716281482668,
+      "built_ha": 253.7189452150357,
+      "share": 0.10477229541906256
+     },
+     {
+      "commune": "Bounoura",
+      "built_ha_at_risk": 22.635937460443518,
+      "built_ha": 549.0844423526063,
+      "share": 0.04122487492717444
+     },
+     {
+      "commune": "Dhayet Bendhahoua",
+      "built_ha_at_risk": 10.599154962997302,
+      "built_ha": 291.4276485887616,
+      "share": 0.03636976455159183
+     },
+     {
+      "commune": "Berriane",
+      "built_ha_at_risk": 2.009106838347583,
+      "built_ha": 78.03371091239441,
+      "share": 0.025746652502572045
+     },
+     {
+      "commune": "Metlili",
+      "built_ha_at_risk": 0.0,
+      "built_ha": 0.07143491253826195,
+      "share": 0.0
+     }
+    ],
+    "csi_wet": 0.9676047735388085,
+    "csi_wet_built": 0.8996728462377317,
+    "commune_spearman": 1.0,
+    "commune_top5_overlap": 5,
+    "alarm_time": "2008-09-29 08:05",
+    "alarm_lead_min": 831.6884848732122,
+    "model_alarm_lead_min": -596.0837707144918
+   },
+   "imerg": {
+    "mzab": {
+     "peak_m3s": 679.5254821777344,
+     "peak_time": "2008-10-01 12:57",
+     "volume_Mm3": 27.817398852695526,
+     "peak_err": 0.0008672595224481494,
+     "volume_err": 0.0027670913997035473,
+     "q_r": 0.9999892326236047
+    },
+    "built_ha_wet": 185.03427841836603,
+    "built_ha_significant": 120.80536392976907,
+    "zone_built_ha_wet": 159.29092237268,
+    "zone_flood_time": "2008-09-29 20:00",
+    "zone_flood_s": 72005.57229256349,
+    "budget": {
+     "rain_m3": 273915139.22339314,
+     "runoff_m3": 153119352.90642345,
+     "soaked_m3": 120795786.3169697,
+     "edge_m3": 81412121.55026925,
+     "sea_m3": 0.0,
+     "drain_m3": 0.0,
+     "stored_m3": 71712877.40695415,
+     "error_m3": -5646.050799950957,
+     "error_frac": -3.6873528347533277e-05
+    },
+    "communes_top": [
+     {
+      "commune": "Ghardaia",
+      "built_ha_at_risk": 55.48706707975014,
+      "built_ha": 1239.0295997861579,
+      "share": 0.044782680808696226
+     },
+     {
+      "commune": "El Atteuf",
+      "built_ha_at_risk": 27.216701140588356,
+      "built_ha": 253.7189452150357,
+      "share": 0.10727106372573499
+     },
+     {
+      "commune": "Bounoura",
+      "built_ha_at_risk": 25.26117045221574,
+      "built_ha": 549.0844423526063,
+      "share": 0.04600598469696532
+     },
+     {
+      "commune": "Dhayet Bendhahoua",
+      "built_ha_at_risk": 10.831318418867104,
+      "built_ha": 291.4276485887616,
+      "share": 0.03716640638360075
+     },
+     {
+      "commune": "Berriane",
+      "built_ha_at_risk": 2.009106838347583,
+      "built_ha": 78.03371091239441,
+      "share": 0.025746652502572045
+     },
+     {
+      "commune": "Metlili",
+      "built_ha_at_risk": 0.0,
+      "built_ha": 0.07143491253826195,
+      "share": 0.0
+     }
+    ],
+    "csi_wet": 0.992741066829017,
+    "csi_wet_built": 0.9838012958963283,
+    "commune_spearman": 1.0,
+    "commune_top5_overlap": 5,
+    "alarm_time": "2008-09-29 12:00",
+    "alarm_lead_min": 596.6884848732122,
+    "model_alarm_lead_min": -123.40438666951256
+   }
+  }
+ },
+ "sensitivity": {
+  "wet_soil_amc3": {
+   "mzab": {
+    "peak_m3s": 998.6677652994791,
+    "peak_time": "2008-10-01 11:29",
+    "volume_Mm3": 44.194523203428,
+    "peak_err": 0.47092919345041206,
+    "volume_err": 0.5931329066090547,
+    "q_r": 0.8948480116486874
+   },
+   "built_ha_wet": 255.05834977513132,
+   "built_ha_significant": 169.8097128508528,
+   "zone_built_ha_wet": 221.9571978870961,
+   "zone_flood_time": "2008-09-29 07:17",
+   "zone_flood_s": 26241.480725777586,
+   "budget": {
+    "rain_m3": 273849200.4730936,
+    "runoff_m3": 209612416.34156564,
+    "soaked_m3": 64236784.13152799,
+    "edge_m3": 125356235.92188823,
+    "sea_m3": 0.0,
+    "drain_m3": 0.0,
+    "stored_m3": 84262441.62514415,
+    "error_m3": -6261.205466747284,
+    "error_frac": -2.9870394015899247e-05
+   },
+   "communes_top": [
+    {
+     "commune": "Ghardaia",
+     "built_ha_at_risk": 88.14175069825865,
+     "built_ha": 1239.0295997861579,
+     "share": 0.07113772803609444
+    },
+    {
+     "commune": "El Atteuf",
+     "built_ha_at_risk": 33.77978358169826,
+     "built_ha": 253.7189452150357,
+     "share": 0.13313859378166937
+    },
+    {
+     "commune": "Bounoura",
+     "built_ha_at_risk": 30.42234283610245,
+     "built_ha": 549.0844423526063,
+     "share": 0.05540558152723274
+    },
+    {
+     "commune": "Dhayet Bendhahoua",
+     "built_ha_at_risk": 15.322788439478158,
+     "built_ha": 291.4276485887616,
+     "share": 0.05257836212067991
+    },
+    {
+     "commune": "Berriane",
+     "built_ha_at_risk": 2.1430472953151907,
+     "built_ha": 78.03371091239441,
+     "share": 0.027463096016555093
+    },
+    {
+     "commune": "Metlili",
+     "built_ha_at_risk": 0.0,
+     "built_ha": 0.07143491253826195,
+     "share": 0.0
+    }
+   ],
+   "csi_wet": 0.8564010707025983,
+   "csi_wet_built": 0.7479608482871125,
+   "commune_spearman": 1.0,
+   "commune_top5_overlap": 5
+  },
+  "dry_soil_amc1": {
+   "mzab": {
+    "peak_m3s": 175.8305211385091,
+    "peak_time": "2008-10-01 15:58",
+    "volume_Mm3": 7.409667208394615,
+    "peak_err": -0.7410207321904758,
+    "volume_err": -0.7328948520978754,
+    "q_r": 0.5095516949067954
+   },
+   "built_ha_wet": 94.23157705830853,
+   "built_ha_significant": 59.835667399228164,
+   "zone_built_ha_wet": 81.5072335386088,
+   "zone_flood_time": "2008-10-01 03:23",
+   "zone_flood_s": 185011.5838338528,
+   "budget": {
+    "rain_m3": 273849200.4730936,
+    "runoff_m3": 76516278.96443756,
+    "soaked_m3": 197332921.50865608,
+    "edge_m3": 27860651.52749533,
+    "sea_m3": 0.0,
+    "drain_m3": 0.0,
+    "stored_m3": 48657515.4528934,
+    "error_m3": -1888.0159511640668,
+    "error_frac": -2.4674696374631067e-05
+   },
+   "communes_top": [
+    {
+     "commune": "Ghardaia",
+     "built_ha_at_risk": 29.29724288428907,
+     "built_ha": 1239.0295997861579,
+     "share": 0.02364531314614714
+    },
+    {
+     "commune": "Bounoura",
+     "built_ha_at_risk": 13.295822812221827,
+     "built_ha": 549.0844423526063,
+     "share": 0.024214532022168698
+    },
+    {
+     "commune": "El Atteuf",
+     "built_ha_at_risk": 9.616924945234857,
+     "built_ha": 253.7189452150357,
+     "share": 0.03790385040850685
+    },
+    {
+     "commune": "Dhayet Bendhahoua",
+     "built_ha_at_risk": 6.054108736127797,
+     "built_ha": 291.4276485887616,
+     "share": 0.02077396830892614
+    },
+    {
+     "commune": "Berriane",
+     "built_ha_at_risk": 1.5715680213545569,
+     "built_ha": 78.03371091239441,
+     "share": 0.020139603806858534
+    },
+    {
+     "commune": "Metlili",
+     "built_ha_at_risk": 0.0,
+     "built_ha": 0.07143491253826195,
+     "share": 0.0
+    }
+   ],
+   "csi_wet": 0.5274252679075014,
+   "csi_wet_built": 0.5288985823336968,
+   "commune_spearman": 0.942857142857143,
+   "commune_top5_overlap": 5
+  },
+  "terrain_unfilled": {
+   "mzab": {
+    "peak_m3s": 486.8192159016927,
+    "peak_time": "2008-10-01 13:51",
+    "volume_Mm3": 21.01110172104177,
+    "peak_err": -0.2829681486838591,
+    "volume_err": -0.2425876527319255,
+    "q_r": 0.9710700006118428
+   },
+   "built_ha_wet": 177.28359047742083,
+   "built_ha_significant": 108.83108696357944,
+   "zone_built_ha_wet": 150.22761791189834,
+   "zone_flood_time": "2008-09-29 19:54",
+   "zone_flood_s": 71666.58383381556,
+   "budget": {
+    "rain_m3": 273849200.4730936,
+    "runoff_m3": 153099412.57250735,
+    "soaked_m3": 120749787.90058628,
+    "edge_m3": 66233433.01421788,
+    "sea_m3": 0.0,
+    "drain_m3": 0.0,
+    "stored_m3": 86872031.47050558,
+    "error_m3": -6051.912216112018,
+    "error_frac": -3.952929743114366e-05
+   },
+   "communes_top": [
+    {
+     "commune": "Ghardaia",
+     "built_ha_at_risk": 49.0222076273635,
+     "built_ha": 1239.0295997861579,
+     "share": 0.039565001220167914
+    },
+    {
+     "commune": "Bounoura",
+     "built_ha_at_risk": 24.073565018244096,
+     "built_ha": 549.0844423526063,
+     "share": 0.04384310164589355
+    },
+    {
+     "commune": "El Atteuf",
+     "built_ha_at_risk": 22.046599465832834,
+     "built_ha": 253.7189452150357,
+     "share": 0.08689378496015569
+    },
+    {
+     "commune": "Dhayet Bendhahoua",
+     "built_ha_at_risk": 11.66174927757347,
+     "built_ha": 291.4276485887616,
+     "share": 0.04001593305935621
+    },
+    {
+     "commune": "Berriane",
+     "built_ha_at_risk": 2.026965574565415,
+     "built_ha": 78.03371091239441,
+     "share": 0.025975511748262427
+    },
+    {
+     "commune": "Metlili",
+     "built_ha_at_risk": 0.0,
+     "built_ha": 0.07143491253826195,
+     "share": 0.0
+    }
+   ],
+   "csi_wet": 0.7266059036358963,
+   "csi_wet_built": 0.7475633528265108,
+   "commune_spearman": 0.942857142857143,
+   "commune_top5_overlap": 5
+  },
+  "built_n_0.02": {
+   "mzab": {
+    "peak_m3s": 691.8772684733073,
+    "peak_time": "2008-10-01 12:35",
+    "volume_Mm3": 27.82443417897884,
+    "peak_err": 0.019060099708864353,
+    "volume_err": 0.003020702231957495,
+    "q_r": 0.9973376814347099
+   },
+   "built_ha_wet": 169.1132226077856,
+   "built_ha_significant": 113.27791021609595,
+   "zone_built_ha_wet": 145.19145678931318,
+   "zone_flood_time": "2008-09-29 22:05",
+   "zone_flood_s": 79544.75151460437,
+   "budget": {
+    "rain_m3": 273849200.4730936,
+    "runoff_m3": 153099412.57250735,
+    "soaked_m3": 120749787.90058628,
+    "edge_m3": 81705252.70197265,
+    "sea_m3": 0.0,
+    "drain_m3": 0.0,
+    "stored_m3": 71399818.6388026,
+    "error_m3": -5658.768267899752,
+    "error_frac": -3.696139764886282e-05
+   },
+   "communes_top": [
+    {
+     "commune": "Ghardaia",
+     "built_ha_at_risk": 50.23660113991519,
+     "built_ha": 1239.0295997861579,
+     "share": 0.04054511784753604
+    },
+    {
+     "commune": "El Atteuf",
+     "built_ha_at_risk": 26.27911792983989,
+     "built_ha": 253.7189452150357,
+     "share": 0.1035757022699563
+    },
+    {
+     "commune": "Bounoura",
+     "built_ha_at_risk": 25.261170458802102,
+     "built_ha": 549.0844423526063,
+     "share": 0.04600598470896049
+    },
+    {
+     "commune": "Dhayet Bendhahoua",
+     "built_ha_at_risk": 9.715147939346961,
+     "built_ha": 291.4276485887616,
+     "share": 0.03333639751201564
+    },
+    {
+     "commune": "Berriane",
+     "built_ha_at_risk": 1.7858727481916539,
+     "built_ha": 78.03371091239441,
+     "share": 0.022885913373985094
+    },
+    {
+     "commune": "Metlili",
+     "built_ha_at_risk": 0.0,
+     "built_ha": 0.07143491253826195,
+     "share": 0.0
+    }
+   ],
+   "csi_wet": 0.9973218690534922,
+   "csi_wet_built": 0.9229098805646037,
+   "commune_spearman": 1.0,
+   "commune_top5_overlap": 5
+  },
+  "built_n_0.10": {
+   "mzab": {
+    "peak_m3s": 659.5019755045573,
+    "peak_time": "2008-10-01 13:38",
+    "volume_Mm3": 27.615413729982606,
+    "peak_err": -0.028625191865519595,
+    "volume_err": -0.004514108222209212,
+    "q_r": 0.9912974580182625
+   },
+   "built_ha_wet": 237.25319820368554,
+   "built_ha_significant": 164.87177458346747,
+   "zone_built_ha_wet": 208.87567980051355,
+   "zone_flood_time": "2008-09-29 22:24",
+   "zone_flood_s": 80651.70181946176,
+   "budget": {
+    "rain_m3": 273849200.4730936,
+    "runoff_m3": 153099412.57250735,
+    "soaked_m3": 120749787.90058628,
+    "edge_m3": 81252333.47575441,
+    "sea_m3": 0.0,
+    "drain_m3": 0.0,
+    "stored_m3": 71852718.94359635,
+    "error_m3": -5639.846843406558,
+    "error_frac": -3.683780851043792e-05
+   },
+   "communes_top": [
+    {
+     "commune": "Ghardaia",
+     "built_ha_at_risk": 94.93699656889288,
+     "built_ha": 1239.0295997861579,
+     "share": 0.07662205695915408
+    },
+    {
+     "commune": "El Atteuf",
+     "built_ha_at_risk": 28.609681904547674,
+     "built_ha": 253.7189452150357,
+     "share": 0.11276131500665024
+    },
+    {
+     "commune": "Bounoura",
+     "built_ha_at_risk": 26.805950438101004,
+     "built_ha": 549.0844423526063,
+     "share": 0.04881935886445493
+    },
+    {
+     "commune": "Dhayet Bendhahoua",
+     "built_ha_at_risk": 12.376098376610626,
+     "built_ha": 291.4276485887616,
+     "share": 0.04246713871021464
+    },
+    {
+     "commune": "Berriane",
+     "built_ha_at_risk": 2.1430472953151907,
+     "built_ha": 78.03371091239441,
+     "share": 0.027463096016555093
+    },
+    {
+     "commune": "Metlili",
+     "built_ha_at_risk": 0.0,
+     "built_ha": 0.07143491253826195,
+     "share": 0.0
+    }
+   ],
+   "csi_wet": 0.9936918835568431,
+   "csi_wet_built": 0.8090185676392573,
+   "commune_spearman": 1.0,
+   "commune_top5_overlap": 5
+  }
+ }
+}

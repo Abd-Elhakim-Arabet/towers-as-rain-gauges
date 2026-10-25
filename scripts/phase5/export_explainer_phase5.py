@@ -76,7 +76,7 @@ def macros(key, s):
         "Factor": num(s["gauge_factor"], 2), "AlarmHa": num(s["alarm_ha"]),
     }
     for i, (T, th) in enumerate(s["thresholds"].items()):
-        L = "ABC"[i]
+        L = "ABCDE"[i]
         M[f"Dur{L}"] = T
         M[f"Thr{L}"] = num(th["threshold_mm"]) if th["threshold_mm"] else "--"
     err = 0.0
@@ -118,7 +118,7 @@ def macros(key, s):
     for i, r in enumerate(top[:3]):
         M[f"Commune{'ABC'[i]}"] = r["commune"].replace("_", " ")
         M[f"Commune{'ABC'[i]}Ha"] = num(r["built_ha_at_risk"])
-    return {f"\\newcommand{{\\Pfive{t}{k}}}{{{v}}}" for k, v in M.items()}
+    return {f"\\newcommand{{\\Pfive{t}{k}}}{{{v}}}%" for k, v in M.items()}
 
 
 def dat_files(key, s):
