@@ -2,6 +2,7 @@
 
     python scripts/serve_site.py            # builds site/_local/ and serves it
     python scripts/serve_site.py --port 8080
+    python scripts/serve_site.py --tailscale   # also open it to your own devices on Tailscale
 
 Pages:
   /               opens the explainer PDF (the project write-up)
@@ -10,7 +11,8 @@ Pages:
   /storm3d/       3D storm over the towers: satellite imagery, terrain, 3D buildings (needs internet)
   /flood/         Phase 5 flood risk: water depth, danger, basin flow and alarms (needs internet for imagery)
 
-Listens on 127.0.0.1 only, so other machines on the lab network cannot open it.
+Listens on 127.0.0.1 only, so other machines on the lab network cannot open it. --tailscale (or --host <ip>) adds the
+Tailscale address: then every device on the same tailnet can open it, the lab network still cannot.
 """
 
 from __future__ import annotations
@@ -19,6 +21,8 @@ import argparse
 import functools
 import http.server
 import shutil
+import subprocess
+import threading
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,12 +75,26 @@ def build() -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8000)
+    ap.add_argument("--host", action="append", default=[], help="extra address to listen on (repeatable)")
+    ap.add_argument("--tailscale", action="store_true", help="also listen on this machine's Tailscale IPv4")
     args = ap.parse_args()
+    hosts = ["127.0.0.1"] + args.host
+    if args.tailscale:
+        hosts.append(subprocess.run(["tailscale", "ip", "-4"], capture_output=True, text=True,
+                                    check=True).stdout.split()[0])
     build()
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(OUT))
-    with http.server.ThreadingHTTPServer(("127.0.0.1", args.port), handler) as srv:
-        print(f"serving on http://localhost:{args.port}  (Ctrl+C to stop)", flush=True)
-        srv.serve_forever()
+    servers = [http.server.ThreadingHTTPServer((h, args.port), handler) for h in dict.fromkeys(hosts)]
+    for srv in servers[1:]:
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+    for h in dict.fromkeys(hosts):
+        print(f"serving on http://{'localhost' if h == '127.0.0.1' else h}:{args.port}", flush=True)
+    print("(Ctrl+C to stop)", flush=True)
+    try:
+        servers[0].serve_forever()
+    finally:
+        for srv in servers:
+            srv.server_close()
 
 
 if __name__ == "__main__":
