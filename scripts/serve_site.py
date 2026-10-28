@@ -10,6 +10,7 @@ Pages:
   /replay/        Phase 4 storm replay (simulated Algerian network)
   /storm3d/       3D storm over the towers: satellite imagery, terrain, 3D buildings (needs internet)
   /flood/         Phase 5 flood risk: water depth, danger, basin flow and alarms (needs internet for imagery)
+  /dashboard/     Phase 6 control room: towers, rain, flood and alarm on one 3D scene (needs internet for imagery)
 
 Listens on 127.0.0.1 only, so other machines on the lab network cannot open it. --tailscale (or --host <ip>) adds the
 Tailscale address: then every device on the same tailnet can open it, the lab network still cannot.
@@ -20,6 +21,7 @@ from __future__ import annotations
 import argparse
 import functools
 import http.server
+import os
 import shutil
 import subprocess
 import threading
@@ -37,6 +39,7 @@ font:500 14px/1.4 'IBM Plex Sans',system-ui,sans-serif">
 <a href="/replay/" style="color:#cde2fb">Storm replay (simulation)</a>
 <a href="/storm3d/" style="color:#cde2fb">3D storm</a>
 <a href="/flood/" style="color:#cde2fb">Flood risk (simulation)</a>
+<a href="/dashboard/" style="color:#cde2fb">Control room (simulation)</a>
 </nav>"""
 
 
@@ -67,6 +70,12 @@ def build() -> None:
     if flood.exists():                         # Phase 5: full-screen app, its own complete page
         (OUT / "flood").mkdir(parents=True)
         shutil.copy(flood, OUT / "flood" / "index.html")
+    dash = SITE / "dashboard"
+    if (dash / "index.html").exists():         # Phase 6: full-screen app; its data folder is linked, not copied
+        (OUT / "dashboard").mkdir(parents=True)
+        shutil.copy(dash / "index.html", OUT / "dashboard" / "index.html")
+        if (dash / "data").exists():
+            os.symlink(dash / "data", OUT / "dashboard" / "data")
     pdf = ROOT / "docs" / "explainer" / "explainer.pdf"
     if pdf.exists():
         shutil.copy(pdf, OUT / "explainer.pdf")

@@ -17,3 +17,5 @@ docs/explainer/*.toc
 docs/explainer/*.out
 site/_local/
 site/flood/index.html
+site/dashboard/index.html
+site/dashboard/data/

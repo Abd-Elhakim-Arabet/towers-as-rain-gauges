@@ -1,0 +1,1088 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rain-to-Flood Control Room</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23070a0e'/%3E%3Cpath d='M16 5l7 11a7 7 0 1 1-14 0z' fill='%235aa9ff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Phase 6 operations dashboard. Its own page; dark only (a control-room screen).
+   Series colours follow the project's categorical order (truth / AI / classical / satellite);
+   status colours are reserved for the alarm state and always come with an icon and a word. */
+:root {
+  --bg: #070a0e; --glass: rgba(11, 15, 21, .80); --glass2: rgba(17, 23, 32, .86); --edge: rgba(255, 255, 255, .09);
+  --edge2: rgba(255, 255, 255, .16); --ink: #eef1f4; --ink2: #b9c2cc; --muted: #7d8996; --grid: rgba(255, 255, 255, .07);
+  --accent: #5aa9ff;
+  --s-truth: #f0efec; --s-ai: #3987e5; --s-classical: #d95926; --s-imerg: #c98500;
+  --st-normal: #34c47c; --st-watch: #e9c53a; --st-warning: #f08a3a; --st-flood: #ef4e4e;
+  --font: "Inter Tight", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 13px/1.4 var(--font); overflow: hidden; }
+#map { position: fixed; inset: 0; }
+.glass { background: var(--glass); border: 1px solid var(--edge); border-radius: 14px; backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); box-shadow: 0 10px 40px rgba(0, 0, 0, .45); }
+button { font: inherit; color: inherit; }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h3 { margin: 0 0 8px; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- header ---------- */
+header { position: fixed; top: 12px; left: 12px; right: 12px; height: 58px; display: flex; align-items: center; gap: 14px; padding: 0 10px 0 16px; z-index: 10; }
+.brand { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.brand b { font-size: 14px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+.brand b i { font-style: normal; color: var(--accent); }
+.brand span { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg { display: inline-flex; background: rgba(255, 255, 255, .05); border: 1px solid var(--edge); border-radius: 9px; padding: 2px; }
+.seg button { background: transparent; border: 0; padding: 6px 12px; border-radius: 7px; cursor: pointer; color: var(--ink2); white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: rgba(255, 255, 255, .13); color: var(--ink); }
+#status { margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 6px 16px 6px 8px; border-radius: 11px;
+  border: 1px solid var(--edge2); background: rgba(255, 255, 255, .04); min-width: 0; transition: background .4s, border-color .4s; }
+#status .ic { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; flex: none; transition: background .4s; }
+#status .ic svg { width: 20px; height: 20px; }
+#status .lv { font-weight: 700; letter-spacing: .14em; font-size: 13px; }
+#status .why { color: var(--ink2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 430px; }
+#status[data-s="flood"] { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 4px rgba(239, 78, 78, .18); } }
+.clock { text-align: right; line-height: 1.15; }
+.clock b { font: 500 17px var(--mono); display: block; }
+.clock span { font-size: 11px; color: var(--muted); }
+.hbtn { background: rgba(255, 255, 255, .06); border: 1px solid var(--edge); border-radius: 9px; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
+.hbtn:hover { background: rgba(255, 255, 255, .11); }
+.hbtn.primary { background: var(--accent); border-color: var(--accent); color: #04121f; font-weight: 600; }
+.sim { font: 600 10px var(--mono); letter-spacing: .12em; color: #ffcf8a; border: 1px solid rgba(255, 207, 138, .45); padding: 4px 7px; border-radius: 6px; white-space: nowrap; }
+
+/* ---------- side panels ---------- */
+#left { position: fixed; top: 82px; left: 12px; width: 268px; bottom: 150px; padding: 14px; overflow-y: auto; z-index: 5; display: flex; flex-direction: column; gap: 18px; }
+#right { position: fixed; top: 82px; right: 12px; width: 372px; bottom: 150px; padding: 14px; overflow-y: auto; z-index: 5; display: flex; flex-direction: column; gap: 16px; }
+.src { display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 7px 10px;
+  background: rgba(255, 255, 255, .03); border: 1px solid var(--edge); border-radius: 10px; cursor: pointer; margin-bottom: 5px; }
+.src:hover { background: rgba(255, 255, 255, .07); }
+.src[aria-pressed="true"] { background: rgba(255, 255, 255, .10); border-color: var(--edge2); }
+.src i { width: 12px; height: 12px; border-radius: 50%; }
+.src b { font-weight: 600; display: block; }
+.src small { color: var(--muted); font-size: 11px; }
+.src em { font-style: normal; font: 500 10.5px var(--mono); color: var(--ink2); background: rgba(255, 255, 255, .06); padding: 2px 6px; border-radius: 5px; }
+.tog { display: flex; align-items: center; gap: 10px; padding: 5px 2px; cursor: pointer; color: var(--ink2); }
+.tog input { appearance: none; width: 28px; height: 16px; border-radius: 9px; background: rgba(255, 255, 255, .15); position: relative; margin: 0; cursor: pointer; flex: none; transition: background .2s; }
+.tog input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.tog input:checked { background: var(--accent); }
+.tog input:checked::after { transform: translateX(12px); }
+.tog input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.grp { font-size: 10px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin: 8px 0 2px; }
+.views { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.views button { background: rgba(255, 255, 255, .04); border: 1px solid var(--edge); border-radius: 8px; padding: 7px 8px; cursor: pointer; text-align: left; font-size: 12px; }
+.views button:hover { background: rgba(255, 255, 255, .09); }
+.legend .ramp { height: 8px; border-radius: 4px; margin: 6px 0 3px; }
+.legend .rl { display: flex; justify-content: space-between; font: 10.5px var(--mono); color: var(--muted); }
+.note { color: var(--muted); font-size: 11.5px; line-height: 1.45; margin: 6px 0 0; }
+
+/* KPIs */
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kpi { background: rgba(255, 255, 255, .035); border: 1px solid var(--edge); border-radius: 11px; padding: 10px 11px; min-width: 0; }
+.kpi .k { font-size: 11px; color: var(--muted); }
+.kpi .v { font: 500 22px/1.15 var(--mono); margin-top: 3px; white-space: nowrap; }
+.kpi .v small { font: 400 11px var(--font); color: var(--ink2); margin-left: 3px; }
+.kpi .s { font-size: 11px; color: var(--ink2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar { height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .09); margin-top: 7px; overflow: hidden; position: relative; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; transition: width .25s, background .25s; }
+#alarmcard { border-radius: 11px; padding: 11px 12px; border: 1px solid var(--edge); background: rgba(255, 255, 255, .035); }
+#alarmcard .t { font-weight: 600; margin-bottom: 4px; }
+#alarmcard .d { color: var(--ink2); font-size: 12px; }
+.leads { display: grid; grid-template-columns: auto 1fr auto; gap: 5px 10px; align-items: center; margin-top: 10px; font-size: 12px; }
+.leads i { width: 9px; height: 9px; border-radius: 50%; }
+.leads .lv { font-family: var(--mono); text-align: right; white-space: nowrap; }
+.leads .sel { font-weight: 600; color: var(--ink); }
+.leads span { color: var(--ink2); }
+svg text { font-family: var(--font); }
+#chart { width: 100%; height: 170px; display: block; }
+.chartwrap { position: relative; }
+#tip { position: absolute; pointer-events: none; display: none; background: #0b0f15; border: 1px solid var(--edge2); border-radius: 8px; padding: 7px 9px; font-size: 11.5px; line-height: 1.5; white-space: nowrap; z-index: 2; }
+#tip b { font: 500 11.5px var(--mono); }
+#tip .k { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.com { display: grid; grid-template-columns: 1fr 120px 52px; gap: 8px; align-items: center; font-size: 12px; margin: 5px 0; }
+.com .b { height: 6px; background: rgba(255, 255, 255, .07); border-radius: 3px; overflow: hidden; }
+.com .b i { display: block; height: 100%; border-radius: 3px; transition: width .3s; }
+.com .n { font-family: var(--mono); text-align: right; color: var(--ink2); }
+.empty { color: var(--muted); font-size: 12px; }
+
+/* ---------- chain strip ---------- */
+#chain { position: fixed; left: 50%; transform: translateX(-50%); bottom: 150px; display: flex; align-items: stretch; z-index: 6; padding: 6px; gap: 0; }
+.node { display: flex; align-items: center; gap: 9px; padding: 7px 12px; border-radius: 10px; min-width: 150px; transition: background .3s; cursor: pointer; border: 0; background: transparent; text-align: left; }
+.node:hover { background: rgba(255, 255, 255, .06); }
+.node.hi { background: rgba(90, 169, 255, .16); }
+.node svg { width: 22px; height: 22px; flex: none; color: var(--ink2); }
+.node b { display: block; font-size: 12px; font-weight: 600; }
+.node span { display: block; font: 11px var(--mono); color: var(--ink2); white-space: nowrap; }
+.arrow { align-self: center; color: var(--muted); padding: 0 2px; font-size: 14px; }
+
+/* ---------- timeline ---------- */
+#timeline { position: fixed; left: 12px; right: 12px; bottom: 12px; height: 126px; z-index: 6; padding: 10px 14px 10px 10px; display: grid; grid-template-columns: auto 1fr; gap: 12px; }
+.tcontrols { display: flex; flex-direction: column; gap: 6px; align-items: stretch; justify-content: center; width: 92px; }
+#play { width: 100%; height: 44px; border-radius: 11px; border: 0; background: var(--accent); color: #04121f; cursor: pointer; display: grid; place-items: center; }
+#play svg { width: 20px; height: 20px; }
+#speed { display: flex; gap: 2px; }
+#speed button { flex: 1; border: 1px solid var(--edge); background: rgba(255, 255, 255, .04); border-radius: 6px; padding: 3px 0; font: 10.5px var(--mono); cursor: pointer; color: var(--ink2); }
+#speed button[aria-pressed="true"] { background: rgba(255, 255, 255, .14); color: var(--ink); }
+#tl { width: 100%; height: 100%; display: block; cursor: pointer; touch-action: none; }
+
+/* ---------- tour + about ---------- */
+#tour { position: fixed; left: 296px; bottom: 210px; width: 400px; padding: 16px 18px 14px; z-index: 12; display: none; }
+#tour.on { display: block; animation: rise .35s ease-out; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+#tour .st { font: 500 10.5px var(--mono); color: var(--accent); letter-spacing: .1em; }
+#tour h2 { font-size: 18px; margin: 4px 0 8px; font-weight: 600; letter-spacing: -.01em; }
+#tour p { margin: 0; color: var(--ink2); line-height: 1.55; font-size: 13px; }
+#tour .row { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+#tour .dots { display: flex; gap: 5px; margin-right: auto; }
+#tour .dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .18); }
+#tour .dots i.on { background: var(--accent); }
+#about { position: fixed; inset: 0; z-index: 20; display: none; place-items: center; background: rgba(0, 0, 0, .55); }
+#about.on { display: grid; }
+#about .box { width: min(640px, calc(100% - 32px)); max-height: calc(100% - 40px); overflow-y: auto; padding: 22px 24px; }
+#about h2 { margin: 0 0 10px; font-size: 18px; }
+#about p, #about li { color: var(--ink2); line-height: 1.55; }
+#about ul { padding-left: 18px; margin: 8px 0; }
+#loading { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: var(--bg); transition: opacity .6s; }
+#loading.done { opacity: 0; pointer-events: none; }
+#loading .in { text-align: center; color: var(--ink2); }
+#loading .ring { width: 40px; height: 40px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .1); border-top-color: var(--accent); margin: 0 auto 14px; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.maplibregl-ctrl-attrib { font-size: 10px; background: rgba(0, 0, 0, .45) !important; color: #aaa; }
+.maplibregl-ctrl-attrib a { color: #ccc; }
+.maplibregl-ctrl-bottom-right { bottom: 140px; right: 390px; }
+.maplibregl-ctrl-top-right { top: 82px; right: 392px; }
+.maplibregl-ctrl-bottom-left { bottom: 140px; left: 288px; }
+.maplibregl-ctrl-group { background: var(--glass2); border: 1px solid var(--edge); }
+.maplibregl-ctrl-group button + button { border-top-color: var(--edge); }
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(1) brightness(.9); }
+.maplibregl-ctrl-scale { background: rgba(0, 0, 0, .4); color: #ddd; border-color: #ddd; }
+
+@media (max-width: 1280px) { #status .why { max-width: 260px; } .node { min-width: 120px; } }
+@media (max-width: 1100px) {
+  body { overflow: auto; display: flex; flex-direction: column; }
+  #map { position: relative; height: 62vh; order: 1; flex: none; }
+  header { position: relative; top: 0; left: 0; right: 0; border-radius: 0; height: auto; flex-wrap: wrap; padding: 10px 16px; gap: 8px; order: 0; }
+  #timeline { order: 2; } #chain { order: 3; } #right { order: 4; } #left { order: 5; }
+  #status { order: 5; width: 100%; margin: 0; }
+  #left, #right, #timeline, #chain { position: static; width: auto; transform: none; margin: 10px 16px; }
+  #timeline { height: 110px; }
+  #chain { flex-wrap: wrap; justify-content: center; }
+  .arrow { display: none; }
+  #tour { left: 16px; right: 16px; width: auto; bottom: 16px; position: fixed; }
+  .maplibregl-ctrl-bottom-right, .maplibregl-ctrl-top-right, .maplibregl-ctrl-bottom-left { right: 10px; left: auto; top: auto; bottom: 10px; }
+}
+@media (max-width: 560px) { .clock, .sim { display: none; } .kpis { grid-template-columns: 1fr; } .com { grid-template-columns: 1fr 80px 46px; } }
+@media (prefers-reduced-motion: reduce) { #status[data-s="flood"] { animation: none; } }
+</style>
+</head>
+<body>
+<div id="map" aria-label="3D map of the city, the towers, the rain and the flood water"></div>
+
+<header class="glass">
+  <div class="brand"><b><i>◆</i> RAIN-TO-FLOOD CONTROL ROOM</b><span id="event">Towers as Rain Gauges</span></div>
+  <div class="seg" id="cities" role="group" aria-label="City"></div>
+  <div id="status" data-s="normal" role="status" aria-live="polite">
+    <div class="ic" id="st-ic"></div>
+    <div style="min-width:0"><div class="lv" id="st-lv">NORMAL</div><div class="why" id="st-why"></div></div>
+  </div>
+  <div class="clock"><b id="clock-utc">--:--</b><span id="clock-day"></span></div>
+  <span class="sim" title="Real towers, terrain, buildings and storms; simulated link signals and simulated flood">SIMULATION</span>
+  <button class="hbtn" id="about-btn" type="button">About</button>
+  <button class="hbtn primary" id="tour-btn" type="button">Guided tour</button>
+</header>
+
+<aside id="left" class="glass" aria-label="Controls">
+  <section>
+    <h3>Rain feeding the flood model</h3>
+    <div id="sources"></div>
+    <p class="note" id="src-note"></p>
+  </section>
+  <section>
+    <h3>Go to</h3>
+    <div class="views" id="views"></div>
+  </section>
+  <section>
+    <h3>Layers</h3>
+    <div class="grp">Network</div>
+    <label class="tog"><input type="checkbox" data-l="links" checked> Microwave links</label>
+    <label class="tog"><input type="checkbox" data-l="towers" checked> Towers</label>
+    <div class="grp">Weather</div>
+    <label class="tog"><input type="checkbox" data-l="rain" checked> Falling rain</label>
+    <label class="tog"><input type="checkbox" data-l="rainmap"> Rain map</label>
+    <div class="grp">Water</div>
+    <label class="tog"><input type="checkbox" data-l="water" checked> Flood water</label>
+    <div class="seg" id="wmode" role="group" aria-label="Water colour" style="margin:4px 0 2px">
+      <button type="button" data-v="0" aria-pressed="true">Realistic</button><button type="button" data-v="1" aria-pressed="false">Depth</button><button type="button" data-v="2" aria-pressed="false">Danger</button>
+    </div>
+    <div class="grp">Context</div>
+    <label class="tog"><input type="checkbox" data-l="basin" checked> Basin checked for floods</label>
+    <label class="tog"><input type="checkbox" data-l="zone" checked> Town the alarm protects</label>
+    <label class="tog"><input type="checkbox" data-l="communes" checked> Communes hit</label>
+    <label class="tog"><input type="checkbox" data-l="buildings" checked> 3D buildings</label>
+  </section>
+  <section class="legend" id="legend"></section>
+</aside>
+
+<aside id="right" class="glass" aria-label="Live figures">
+  <section>
+    <h3>Alarm</h3>
+    <div id="alarmcard"><div class="t" id="al-t"></div><div class="d" id="al-d"></div>
+      <div class="leads" id="leads"></div></div>
+  </section>
+  <section>
+    <h3>Now</h3>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Rain on the basin</div><div class="v" id="k-rain">–</div><div class="s" id="k-rain-s"></div></div>
+      <div class="kpi"><div class="k">Of the flash-flood threshold</div><div class="v" id="k-thr">–</div><div class="bar"><i id="k-thr-b"></i></div></div>
+      <div class="kpi"><div class="k" id="k-q-k">Flow out of the basin</div><div class="v" id="k-q">–</div><div class="s" id="k-q-s"></div></div>
+      <div class="kpi"><div class="k">Built-up land under 30 cm+</div><div class="v" id="k-ha">–</div><div class="s" id="k-ha-s"></div></div>
+    </div>
+  </section>
+  <section>
+    <h3 id="chart-h">Flow out of the basin</h3>
+    <div class="chartwrap"><svg id="chart" role="img" aria-label="Flow out of the basin over time for each rain source"></svg><div id="tip"></div></div>
+    <p class="note" id="chart-note"></p>
+  </section>
+  <section>
+    <h3>Communes: built-up land flooded now</h3>
+    <div id="communes"></div>
+  </section>
+</aside>
+
+<div id="chain" class="glass" aria-label="The chain from towers to alarm">
+  <button class="node" type="button" data-n="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21V9M8 21l4-12 4 12M9 15h6"/><path d="M7.5 6.5a6 6 0 0 1 9 0M5 4a9.5 9.5 0 0 1 14 0"/></svg><div><b>Towers</b><span id="n0">–</span></div></button>
+  <span class="arrow">→</span>
+  <button class="node" type="button" data-n="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 15a4 4 0 0 1 .5-8A5.5 5.5 0 0 1 18 8.5 3.5 3.5 0 0 1 17 15"/><path d="M9 18l-1 2M13 18l-1 2M17 18l-1 2"/></svg><div><b>Rain map</b><span id="n1">–</span></div></button>
+  <span class="arrow">→</span>
+  <button class="node" type="button" data-n="2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 15c2 0 2-1.5 4.5-1.5S10 15 12 15s2-1.5 4.5-1.5S19 15 21 15M3 19c2 0 2-1.5 4.5-1.5S10 19 12 19s2-1.5 4.5-1.5S19 19 21 19"/><path d="M5 11l4-6 3 4 2-2 5 4"/></svg><div><b>Flood model</b><span id="n2">–</span></div></button>
+  <span class="arrow">→</span>
+  <button class="node" type="button" data-n="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17v.5"/></svg><div><b>Alarm</b><span id="n3">–</span></div></button>
+</div>
+
+<div id="timeline" class="glass">
+  <div class="tcontrols">
+    <button id="play" type="button" aria-label="Play"></button>
+    <div id="speed" role="group" aria-label="Speed"><button type="button" data-v="0.5">½×</button><button type="button" data-v="1" aria-pressed="true">1×</button><button type="button" data-v="3">3×</button></div>
+  </div>
+  <svg id="tl" role="slider" tabindex="0" aria-label="Time in the storm" aria-valuemin="0"></svg>
+</div>
+
+<div id="tour" class="glass" role="dialog" aria-label="Guided tour">
+  <div class="st" id="tour-st"></div>
+  <h2 id="tour-h"></h2>
+  <p id="tour-p"></p>
+  <div class="row"><div class="dots" id="tour-dots"></div>
+    <button class="hbtn" id="tour-x" type="button">Exit</button><button class="hbtn" id="tour-b" type="button">Back</button><button class="hbtn primary" id="tour-n" type="button">Next</button></div>
+</div>
+
+<div id="about" role="dialog" aria-label="About this dashboard"><div class="box glass">
+  <h2>About this screen</h2>
+  <p>Phone towers talk to each other over microwave beams, and rain weakens those beams. This screen shows the whole idea
+  running on one city: the towers measure the rain, the rain goes into a flood model, and the flood model raises the alarm.</p>
+  <ul>
+    <li><b>Real:</b> tower positions (OpenCelliD), terrain (Copernicus GLO-30), land cover (ESA WorldCover), soil (HYSOGs250m),
+    buildings (OpenStreetMap), imagery (Esri), and the two storms (NASA IMERG, scaled to the rain gauge record).</li>
+    <li><b>Simulated:</b> the signal of every link, the true rain at 500 m, and the flood itself. Algerian operators do not publish
+    link data, so this is a simulation, not a measurement (Parts 4 and 5 of the explainer).</li>
+    <li><b>Rain sources:</b> “True rain” is the simulated truth. “Towers + AI” and “Towers, classical” are what the links would
+    measure, with our AI or the standard method. “Satellite only” is what exists today, available about 4 hours late.</li>
+    <li><b>Alarm:</b> the flood model is run on the rain as it arrives. The alarm is raised when it shows the town flooding
+    (<span id="ab-ha"></span> ha of built-up land under 30 cm), plus the time to get the data (towers 5 min, satellite 4 h).</li>
+  </ul>
+  <p>Water colour: the realistic view draws muddy flood water whose colour deepens with depth; “Depth” and “Danger” use the
+  same scales as the explainer (danger = depth × (speed + 0.5) + debris, UK DEFRA). Water thinner than 3 cm is not drawn.</p>
+  <div style="text-align:right;margin-top:12px"><button class="hbtn primary" id="about-x" type="button">Close</button></div>
+</div></div>
+
+<div id="loading"><div class="in"><div class="ring"></div><div id="load-t">Loading the city…</div></div></div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/deck.gl@9.0.35/dist.min.js"></script>
+<script>
+"use strict";
+const DATA = /*DATA*/null;
+const BASE = location.href.replace(/[#?].*$/, "").replace(/[^/]*$/, "");
+const SRC = ["truth", "ai", "classical", "imerg"];
+const SRC_COL = { truth: "#f0efec", ai: "#3987e5", classical: "#d95926", imerg: "#c98500" };
+const SRC_NOTE = {
+  truth: "The simulated true rain, 500 m detail everywhere. The reference every other source is judged against.",
+  ai: "What the towers would measure, read by our AI (Part 2). Available 5 minutes after it falls.",
+  classical: "What the towers would measure with the standard method (Part 1). Available after 5 minutes.",
+  imerg: "NASA's satellite estimate only, 10 km squares, first available about 4 hours after the rain." };
+const LINK_SRC = { truth: "truth", ai: "ai", classical: "classical", imerg: null };
+const EX = 1.0;                       // terrain exaggeration: none, the water must sit on the real ground
+const MAST = 36, DISH = 30;
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = id => document.getElementById(id);
+const fmt = (v, d = 0) => v == null || !isFinite(v) ? "–" : v.toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+let C = null;                         // current city (prepared)
+let src = "classical", t = 0, playing = false, speed = 1, wmode = 0;
+const show = { links: true, towers: true, rain: true, rainmap: false, water: true, basin: true, zone: true, communes: true, buildings: true };
+
+/* ================================================================ water layer (custom deck.gl layer) */
+const WATER_VS = `#version 300 es
+#define SHADER_NAME water-vs
+in vec3 positions;
+in vec3 positions64Low;
+in vec2 texCoords;
+uniform sampler2D uFrameA;
+uniform sampler2D uFrameB;
+uniform float uMix;
+uniform float uHmax;
+uniform float uVscale;
+uniform float uExag;
+out float vDepth;
+out vec2 vVel;
+out vec2 vUV;
+out vec3 vView;
+out float vDist;
+void main() {
+  vec4 a = textureLod(uFrameA, texCoords, 0.0);
+  vec4 b = textureLod(uFrameB, texCoords, 0.0);
+  vDepth = mix(uHmax * a.r * a.r, uHmax * b.r * b.r, uMix);
+  vVel = mix((a.gb * 255.0 - 128.0) / uVscale, (b.gb * 255.0 - 128.0) / uVscale, uMix);
+  vUV = texCoords;
+  vec4 cp;
+  vec3 p = vec3(positions.xy, (positions.z + vDepth) * uExag);
+  project_position_to_clipspace(p, positions64Low, vec3(0.0), cp);
+  float dist = length(cp.xyz - project_uCameraPosition) / project_uCommonUnitsPerMeter.z;
+  p.z += 0.35 + 0.0012 * dist;           // lift grows with distance: no flicker against the terrain
+  gl_Position = project_position_to_clipspace(p, positions64Low, vec3(0.0), cp);
+  vView = normalize(project_uCameraPosition - cp.xyz);
+  vDist = dist;
+}`;
+const WATER_FS = `#version 300 es
+#define SHADER_NAME water-fs
+precision highp float;
+in float vDepth;
+in vec2 vVel;
+in vec2 vUV;
+in vec3 vView;
+in float vDist;
+uniform float uTime;
+uniform float uRain;
+uniform float uStorm;
+uniform float uMode;
+uniform vec2 uGrid;
+uniform vec3 uSky;
+uniform vec3 uFog;
+uniform vec3 uSun;
+out vec4 fragColor;
+float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float noise(vec2 p) {
+  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);
+}
+float fbm(vec2 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 3; i++) { s += a * noise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; } return s; }
+// two-phase flow map: ripples drift with the water and never stretch
+float surf(vec2 p, vec2 flow, float t) {
+  float P = 5.0, ph = fract(t / P), ph2 = fract(t / P + 0.5);
+  float w = 1.0 - abs(1.0 - 2.0 * ph);
+  float h0 = fbm((p - flow * ph * P) * 0.11);
+  float h1 = fbm((p - flow * ph2 * P) * 0.11 + 19.7);
+  float h = mix(h1, h0, w);
+  h += uRain * 0.12 * fbm(p * 1.4 + vec2(t * 3.1, -t * 2.3));      // rain on the water
+  return h;
+}
+vec3 hazardColor(float hr) {
+  if (hr < 0.75) return vec3(0.99, 0.82, 0.64);
+  if (hr < 1.25) return vec3(0.99, 0.55, 0.24);
+  if (hr < 2.0) return vec3(0.90, 0.33, 0.05);
+  return vec3(0.65, 0.21, 0.01);
+}
+void main() {
+  if (vDepth < 0.03) discard;
+  vec2 p = vec2(vUV.x * uGrid.x, -vUV.y * uGrid.y);                 // metres, x east, y north
+  float speed = length(vVel);
+  float amp = 0.10 + 0.30 * clamp(speed / 2.5, 0.0, 1.0) + 0.12 * uRain;
+  float e = 1.5, h = surf(p, vVel, uTime);
+  float hx = surf(p + vec2(e, 0.0), vVel, uTime), hy = surf(p + vec2(0.0, e), vVel, uTime);
+  vec3 N = normalize(vec3(-(hx - h) / e * amp * 3.0, -(hy - h) / e * amp * 3.0, 1.0));
+  vec3 V = normalize(vView);
+  float cosT = clamp(dot(N, V), 0.0, 1.0);
+  float F = 0.03 + 0.97 * pow(1.0 - cosT, 5.0);
+  float k = 1.0 - exp(-vDepth * 1.3);
+  vec3 body;
+  if (uMode < 0.5) {
+    body = mix(vec3(0.44, 0.37, 0.26), vec3(0.20, 0.165, 0.11), k);  // muddy flood water, silt to dark brown
+  } else if (uMode < 1.5) {
+    float s = clamp(log(1.0 + vDepth * 6.0) / log(1.0 + 2.0 * 6.0), 0.0, 1.0);
+    body = mix(vec3(0.72, 0.83, 0.96), vec3(0.06, 0.26, 0.51), s);
+  } else {
+    float df = vDepth >= 0.75 ? 1.0 : (vDepth >= 0.25 ? 0.5 : 0.0);
+    body = hazardColor(vDepth * (speed + 0.5) + df);
+  }
+  float lit = uMode < 0.5 ? 1.0 : 0.8 + 0.2 * max(dot(N, uSun), 0.0);   // water is not lit like ground
+  vec3 R = reflect(-V, N);
+  vec3 sky = mix(uSky * 0.7, uSky * 1.25 + 0.04, clamp(R.z * 1.5, 0.0, 1.0));
+  float cloud = fbm(R.xy / (abs(R.z) + 0.25) * 1.8 + vec2(uTime * 0.012, 0.0));   // soft cloud reflections
+  sky *= 0.78 + 0.5 * cloud;
+  // wet sheen: always some sky in it; seen from afar, a flooded plain reads as a silver sheet
+  float far = smoothstep(1200.0, 14000.0, vDist);
+  float gloss = uMode < 0.5 ? min(0.9, 0.2 + 0.8 * F + 0.45 * far) : 0.45 * F + 0.25 * far;
+  vec3 col = mix(body * lit, sky, gloss);
+  float spec = pow(max(dot(reflect(-uSun, N), V), 0.0), 90.0) * (1.0 - 0.75 * uStorm);
+  col += vec3(1.0, 0.96, 0.88) * spec * 0.8;
+  // white water where it runs fast, and a thin wet rim at the edges
+  vec2 dir = speed > 0.01 ? vVel / speed : vec2(1.0, 0.0);
+  vec2 q = vec2(dot(p, dir), dot(p, vec2(-dir.y, dir.x)));
+  float streak = fbm(vec2(q.x * 0.09 - uTime * speed * 0.09, q.y * 0.7));
+  float foam = smoothstep(0.35, 2.6, speed) * smoothstep(0.52, 0.78, streak) * 0.75;
+  foam += smoothstep(0.12, 0.035, vDepth) * (0.35 + 0.3 * noise(p * 0.8));
+  col = mix(col, vec3(0.90, 0.88, 0.82), clamp(foam, 0.0, 0.85) * (uMode < 0.5 ? 1.0 : 0.35) * (1.0 - far));
+  col = mix(col, uFog, smoothstep(6000.0, 30000.0, vDist) * 0.55);
+  float a = smoothstep(0.03, 0.14, vDepth) * mix(0.88, 0.97, k);
+  fragColor = vec4(col, a);
+}`;
+
+class WaterLayer extends deck.Layer {
+  getShaders() {
+    let fs = WATER_FS;
+    return super.getShaders({ vs: WATER_VS, fs, modules: [deck.project32] });
+  }
+  initializeState() {}
+  updateState({ props, oldProps }) {
+    if (props.mesh !== oldProps.mesh) {
+      if (this.state.model) this.state.model.destroy();
+      const m = props.mesh;
+      this.setState({ model: new luma.Model(this.context.device, {
+        ...this.getShaders(), id: this.props.id,
+        bufferLayout: [{ name: "positions", format: "float32x3" }, { name: "positions64Low", format: "float32x3" },
+          { name: "texCoords", format: "float32x2" }],
+        geometry: new luma.Geometry({ topology: "triangle-list",
+          attributes: { positions: { size: 3, value: m.pos }, positions64Low: { size: 3, value: m.lo }, texCoords: { size: 2, value: m.uv } },
+          indices: { size: 1, value: m.idx } }),
+        parameters: { depthWriteEnabled: false, depthCompare: "less-equal", blend: true,
+          blendColorSrcFactor: "src-alpha", blendColorDstFactor: "one-minus-src-alpha",
+          blendAlphaSrcFactor: "one", blendAlphaDstFactor: "one-minus-src-alpha", cullMode: "none" } }) });
+    }
+  }
+  texture(bmp) {
+    if (!bmp._tex) bmp._tex = this.context.device.createTexture({ data: bmp, width: bmp.width, height: bmp.height, format: "rgba8unorm",
+      mipmaps: false, sampler: { minFilter: "linear", magFilter: "linear", addressModeU: "clamp-to-edge", addressModeV: "clamp-to-edge" } });
+    return bmp._tex;
+  }
+  draw({ uniforms }) {
+    const { model } = this.state, p = this.props;
+    if (!model || !p.frameA) return;
+    model.setUniforms(uniforms);
+    model.setUniforms({ uMix: p.mix, uHmax: p.hmax, uVscale: p.vscale, uExag: EX, uTime: p.time, uRain: p.rain, uStorm: p.storm,
+      uMode: p.mode, uGrid: p.grid, uSky: p.sky, uFog: p.fog, uSun: p.sun });
+    model.setBindings({ uFrameA: this.texture(p.frameA), uFrameB: this.texture(p.frameB || p.frameA) });
+    model.draw(this.context.renderPass);
+  }
+  finalizeState(ctx) { super.finalizeState(ctx); if (this.state.model) this.state.model.destroy(); }
+}
+WaterLayer.layerName = "WaterLayer";
+
+/* ================================================================ rain streaks (from the 3D storm page) */
+class RainLayer extends deck.LineLayer {
+  getShaders() {
+    const sh = super.getShaders();
+    sh.inject = { ...(sh.inject || {}), "vs:#decl": "out float vAlong;", "vs:#main-end": "vAlong = positions.x;",
+      "fs:#decl": "in float vAlong;", "fs:DECKGL_FILTER_COLOR": "color.a *= vAlong * vAlong;" };
+    return sh;
+  }
+}
+RainLayer.layerName = "RainLayer";
+const CLOUD = 1300, MAX_DROPS = 20000, WIND = { e: 0.3, n: -0.2 };
+const drops = { n: 0, x: new Float32Array(MAX_DROPS), y: new Float32Array(MAX_DROPS), z: new Float32Array(MAX_DROPS),
+  v: new Float32Array(MAX_DROPS), g: new Float32Array(MAX_DROPS), src: new Float32Array(MAX_DROPS * 3), dst: new Float32Array(MAX_DROPS * 3) };
+let cdf = null, cdfTotal = 0, mPerLon = 90000, rainHour = -1;
+
+/* ================================================================ tower mast mesh */
+function mastMesh() {
+  const P = [], N = [], I = [];
+  function box(a, b, w) {
+    const ax = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(...ax), u = ax.map(v => v / L);
+    const tt = Math.abs(u[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+    let s = [u[1] * tt[2] - u[2] * tt[1], u[2] * tt[0] - u[0] * tt[2], u[0] * tt[1] - u[1] * tt[0]];
+    const sl = Math.hypot(...s); s = s.map(v => v / sl);
+    const q = [u[1] * s[2] - u[2] * s[1], u[2] * s[0] - u[0] * s[2], u[0] * s[1] - u[1] * s[0]];
+    const cs = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([i, j]) => [0, 1, 2].map(k => s[k] * i * w / 2 + q[k] * j * w / 2));
+    for (const [i, j] of [[0, 1], [1, 2], [2, 3], [3, 0]]) {
+      const base = P.length / 3, c1 = cs[i], c2 = cs[j], n = [0, 1, 2].map(k => c1[k] + c2[k]), nl = Math.hypot(...n) || 1;
+      for (const [p, c] of [[a, c1], [a, c2], [b, c2], [b, c1]]) { P.push(p[0] + c[0], p[1] + c[1], p[2] + c[2]); N.push(n[0] / nl, n[1] / nl, n[2] / nl); }
+      I.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    }
+  }
+  const legs = [0, 1, 2].map(k => [Math.cos(k * 2.0944), Math.sin(k * 2.0944)]);
+  const R = h => 2.2 - 1.7 * h / MAST, at = (k, h) => [legs[k][0] * R(h), legs[k][1] * R(h), h];
+  for (let k = 0; k < 3; k++) box(at(k, 0), at(k, MAST), 0.35);
+  for (let h = 0; h < MAST; h += 6) for (let k = 0; k < 3; k++) { box(at(k, h + 6), at((k + 1) % 3, h + 6), 0.14); box(at(k, h), at((k + 1) % 3, h + 6), 0.11); }
+  for (let k = 0; k < 3; k++) { const a = (k + .5) * 2.0944, r = R(MAST - 3) + .45; box([Math.cos(a) * r, Math.sin(a) * r, MAST - 5], [Math.cos(a) * r, Math.sin(a) * r, MAST - 1.5], 0.5); }
+  for (const a of [0.3, 2.4]) { const r = R(DISH) + .5, cx = Math.cos(a) * r, cy = Math.sin(a) * r; box([cx, cy, DISH], [cx + Math.cos(a) * .6, cy + Math.sin(a) * .6, DISH], 1.4); }
+  const n = P.length / 3;
+  return { attributes: { positions: { value: new Float32Array(P), size: 3 }, normals: { value: new Float32Array(N), size: 3 },
+    texCoords: { value: new Float32Array(n * 2), size: 2 } }, indices: { value: new Uint32Array(I), size: 1 } };
+}
+const MAST_MESH = mastMesh();
+
+/* ================================================================ loading a city */
+async function bin(url) { const r = await fetch(BASE + url); if (!r.ok) throw new Error(url + " " + r.status); return r.arrayBuffer(); }
+async function prepare(c) {
+  if (c._p) return c._p;
+  $("load-t").textContent = `Loading ${c.name}…`;
+  const [wb, rb, net, lb] = await Promise.all([bin(`data/${c.key}/water.bin`), bin(`data/${c.key}/rain.bin`),
+    fetch(BASE + `data/${c.key}/net.json`).then(r => r.json()), bin(`data/${c.key}/linkrain.bin`)]);
+  const [nv, ni] = new Uint32Array(wb, 0, 2), f = new Float32Array(wb, 8, nv * 7);
+  const pos = new Float32Array(nv * 3), lo = new Float32Array(nv * 3), uv = new Float32Array(nv * 2);
+  for (let i = 0; i < nv; i++) {
+    pos[3 * i] = f[7 * i]; pos[3 * i + 1] = f[7 * i + 1]; pos[3 * i + 2] = f[7 * i + 2];
+    lo[3 * i] = f[7 * i + 3]; lo[3 * i + 1] = f[7 * i + 4]; uv[2 * i] = f[7 * i + 5]; uv[2 * i + 1] = f[7 * i + 6];
+  }
+  const mesh = { pos, lo, uv, idx: new Uint32Array(wb, 8 + nv * 28, ni) };
+  const R = c.rain, cells = R.ny * R.nx, rain = {};
+  SRC.forEach((s, k) => rain[s] = new Uint8Array(rb, k * R.nh * cells, R.nh * cells));
+  const dx = (R.bounds[2] - R.bounds[0]) / R.nx, dy = (R.bounds[3] - R.bounds[1]) / R.ny, rc = [];
+  for (let y = 0; y < R.ny; y++) for (let x = 0; x < R.nx; x++)
+    rc.push({ lo: R.bounds[0] + x * dx, la: R.bounds[3] - (y + 1) * dy, g: Math.max(0, R.ground[y * R.nx + x]) });
+  const nl = net.links.length, lr = {};
+  ["truth", "ai", "classical"].forEach((s, k) => lr[s] = new Uint8Array(lb, k * net.hours * nl, net.hours * nl));
+  const towers = net.sites.map(([lon, lat, e]) => ({ p: [lon, lat, Math.max(0, e) * EX], rot: Math.random() * 360 }));
+  const links = net.links.map(([a, b, ea, cc, d, eb], i) => ({ i, s: [a, b, Math.max(0, ea) * EX + DISH], t: [cc, d, Math.max(0, eb) * EX + DISH] }));
+  const labels = c.communes.features.map(f => ({ p: [f.properties.pt[0], f.properties.pt[1], Math.max(0, f.properties.pt[2]) * EX + 120], name: f.properties.name }));
+  c._p = { mesh, rain, rc, dx, dy, cells, lr, nl, linkHours: net.hours, towers, links, labels, frames: {} };
+  return c._p;
+}
+
+/* water frames: every hour of the run, loaded around the current time first */
+function loadFrames(c, s) {
+  const P = c._p;
+  if (P.frames[s]) return;
+  const arr = P.frames[s] = new Array(c.nframes).fill(null);
+  const order = [...Array(c.nframes).keys()].sort((a, b) => Math.abs(a - t) - Math.abs(b - t));
+  let k = 0;
+  const next = async () => {
+    while (k < order.length) {
+      const i = order[k++];
+      try {
+        const r = await fetch(BASE + `data/${c.key}/${s}/${String(i).padStart(3, "0")}.png`);
+        arr[i] = await createImageBitmap(await r.blob(), { premultiplyAlpha: "none", colorSpaceConversion: "none" });
+      } catch (e) { console.warn("frame", s, i, e); }
+    }
+  };
+  for (let j = 0; j < 6; j++) next();
+}
+function framePair() {
+  const arr = C._p.frames[src] || [], n = C.nframes;
+  const a = Math.min(n - 1, Math.floor(t)), b = Math.min(n - 1, a + 1);
+  let A = arr[a], B = arr[b];
+  if (!A) { for (let d = 1; d < n && !A; d++) A = arr[a - d] || arr[a + d]; B = A; }
+  return [A, B || A, A === arr[a] ? t - a : 0];
+}
+
+/* ================================================================ map */
+const map = new maplibregl.Map({
+  container: "map", hash: false, maxPitch: 82, maxZoom: 17.5, minZoom: 8.5, antialias: true, attributionControl: { compact: true },
+  style: { version: 8,
+    sources: {
+      sat: { type: "raster", tileSize: 256, maxzoom: 19, attribution: "Imagery © Esri, Maxar, Earthstar Geographics",
+        tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"] },
+      dem: { type: "raster-dem", encoding: "terrarium", tileSize: 256, minzoom: 8, maxzoom: 12,
+        attribution: "Terrain: Copernicus GLO-30", tiles: [BASE + "data/terrain/{z}/{x}/{y}.png"] },
+      omt: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "© OpenStreetMap contributors · OpenFreeMap" } },
+    layers: [
+      { id: "bg", type: "background", paint: { "background-color": "#1a2028" } },
+      { id: "satellite", type: "raster", source: "sat", paint: { "raster-brightness-max": 0.8, "raster-saturation": -0.2, "raster-contrast": 0.06 } },
+      { id: "buildings", type: "fill-extrusion", source: "omt", "source-layer": "building", minzoom: 13.5,
+        paint: { "fill-extrusion-color": "#cfc8bc", "fill-extrusion-height": ["coalesce", ["get", "render_height"], 8],
+          "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0], "fill-extrusion-opacity": 0.88 } } ],
+    sky: { "sky-color": "#5a6672", "horizon-color": "#8f989f", "fog-color": "#727b83", "sky-horizon-blend": 0.6,
+      "horizon-fog-blend": 0.7, "fog-ground-blend": 0.8, "atmosphere-blend": 0.6 } },
+  center: [3.05, 36.75], zoom: 11.5, pitch: 58, bearing: -20 });
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");
+const overlay = new deck.MapboxOverlay({ interleaved: true, layers: [],
+  effects: [new deck.LightingEffect({ ambient: new deck.AmbientLight({ color: [215, 222, 235], intensity: 1.25 }),
+    sun: new deck.DirectionalLight({ color: [255, 238, 220], intensity: 1.4, direction: [-1, -1.4, -2.2] }) })] });
+map.addControl(overlay);
+
+/* ---------- MapLibre vector + raster overlays ---------- */
+function setVectors() {
+  const fc = g => ({ type: "FeatureCollection", features: g ? [{ type: "Feature", properties: {}, geometry: g }] : [] });
+  const add = (id, data, type, paint, before) => {
+    if (map.getSource(id)) { map.getSource(id).setData(data); return; }
+    map.addSource(id, { type: "geojson", data });
+    map.addLayer({ id, type, source: id, paint }, before);
+  };
+  add("communes-fill", C.communes, "fill", { "fill-color": "#ef4e4e", "fill-opacity": 0 }, "buildings");
+  add("communes", C.communes, "line", { "line-color": "#f3d9c4", "line-width": 1, "line-opacity": 0.45, "line-dasharray": [2, 2] }, "buildings");
+  add("basin", fc(C.shapes.basin), "line", { "line-color": "#9fd0ff", "line-width": 2.2, "line-opacity": 0.85 }, "buildings");
+  add("zone", fc(C.shapes.zone), "line", { "line-color": "#f2c94c", "line-width": 2, "line-dasharray": [1.2, 1.2] }, "buildings");
+  applyVis();
+}
+function applyVis() {
+  const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  vis("basin", show.basin); vis("zone", show.zone); vis("communes", show.communes); vis("communes-fill", show.communes);
+  vis("buildings", show.buildings); vis("rainmap", show.rainmap);
+}
+// rain map: a small canvas per hour (one pixel per ~500 m cell), draped on the terrain and smoothly sampled
+const rcv = document.createElement("canvas");
+const RSTOPS = [[0.5, [150, 210, 255, 0]], [2, [120, 190, 250, 70]], [6, [70, 150, 240, 120]], [15, [250, 220, 80, 160]],
+  [35, [245, 130, 45, 185]], [70, [215, 45, 70, 205]]];
+function drawRainMap() {
+  const R = C.rain, h = Math.min(R.nh - 1, Math.floor(t)), f = C._p.rain[src];
+  if (rcv.width !== R.nx || rcv.height !== R.ny) { rcv.width = R.nx; rcv.height = R.ny; }
+  const ctx = rcv.getContext("2d"), im = ctx.createImageData(R.nx, R.ny);
+  for (let i = 0; i < R.nx * R.ny; i++) {
+    const r = f[h * C._p.cells + i] / 2, j = 4 * i;
+    if (r < RSTOPS[0][0]) continue;
+    let k = 0; while (k < RSTOPS.length - 2 && r > RSTOPS[k + 1][0]) k++;
+    const a = RSTOPS[k], b = RSTOPS[k + 1], u = Math.min(1, (Math.log(r) - Math.log(a[0])) / (Math.log(b[0]) - Math.log(a[0])));
+    for (let c = 0; c < 4; c++) im.data[j + c] = a[1][c] + (b[1][c] - a[1][c]) * u;
+    const x = i % R.nx, y = (i / R.nx) | 0, edge = Math.min(x, y, R.nx - 1 - x, R.ny - 1 - y);
+    if (edge < 3) im.data[j + 3] *= (edge + 0.5) / 3.5;                    // soft edges, no hard frame
+  }
+  ctx.putImageData(im, 0, 0);
+}
+function setRainMap() {
+  drawRainMap();
+  const b = C.rain.bounds, coords = [[b[0], b[3]], [b[2], b[3]], [b[2], b[1]], [b[0], b[1]]];
+  const srcObj = map.getSource("rainmap");
+  if (srcObj) { srcObj.setCoordinates(coords); }
+  else { map.addSource("rainmap", { type: "canvas", canvas: rcv, coordinates: coords, animate: true });
+    map.addLayer({ id: "rainmap", type: "raster", source: "rainmap", paint: { "raster-opacity": 0.85, "raster-fade-duration": 0, "raster-resampling": "linear" } }, "communes-fill"); }
+  applyVis();
+}
+
+/* ---------- rain particles ---------- */
+function buildCdf() {
+  const P = C._p, f = P.rain[src], h = Math.min(C.rain.nh - 1, Math.floor(t)), off = h * P.cells;
+  const b = map.getBounds(), px = (b.getEast() - b.getWest()) * 0.1, py = (b.getNorth() - b.getSouth()) * 0.1;
+  cdf = new Float32Array(P.cells); let s = 0, nin = 0;
+  for (let i = 0; i < P.cells; i++) {
+    const c = P.rc[i], inside = c.lo > b.getWest() - px && c.lo < b.getEast() + px && c.la > b.getSouth() - py && c.la < b.getNorth() + py;
+    const r = f[off + i] / 2;
+    if (inside) { nin++; s += r > 0.3 ? r : 0; }
+    cdf[i] = s;
+  }
+  cdfTotal = s;
+  const mean = nin ? s / nin : 0;
+  drops.n = reduced ? 0 : Math.min(MAX_DROPS, Math.round(5200 * Math.sqrt(mean)));
+  for (let k = 0; k < drops.n; k++) spawn(k, true);
+  rainHour = h;
+}
+function spawn(k, anywhere) {
+  if (cdfTotal <= 0) { drops.z[k] = -1e9; return; }
+  const r = Math.random() * cdfTotal; let lo = 0, hi = cdf.length - 1;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (cdf[m] < r) lo = m + 1; else hi = m; }
+  const c = C._p.rc[lo], z = anywhere ? c.g + Math.random() * CLOUD : c.g + CLOUD - Math.random() * 80, drift = z - c.g;
+  drops.x[k] = c.lo + Math.random() * C._p.dx - WIND.e * drift / mPerLon;
+  drops.y[k] = c.la + Math.random() * C._p.dy - WIND.n * drift / 110540;
+  drops.g[k] = c.g; drops.z[k] = z; drops.v[k] = 300 + Math.random() * 200;
+}
+function stepDrops(dt) {
+  for (let k = 0; k < drops.n; k++) {
+    const dz = drops.v[k] * dt;
+    drops.z[k] -= dz; drops.x[k] += WIND.e * dz / mPerLon; drops.y[k] += WIND.n * dz / 110540;
+    if (drops.z[k] < drops.g[k]) spawn(k, false);
+    const j = 3 * k, len = 12 + drops.v[k] * 0.07;
+    drops.src[j] = drops.x[k] - WIND.e * len / mPerLon; drops.src[j + 1] = drops.y[k] - WIND.n * len / 110540; drops.src[j + 2] = drops.z[k] + len;
+    drops.dst[j] = drops.x[k]; drops.dst[j + 1] = drops.y[k]; drops.dst[j + 2] = drops.z[k];
+  }
+}
+
+/* ---------- atmosphere follows the storm ---------- */
+let storm = 0, skyRGB = [0.36, 0.40, 0.45], fogRGB = [0.45, 0.48, 0.51];
+function atmosphere() {
+  const s = C.series[src] || C.series.truth, h = Math.min(s.basin_rain.length - 1, Math.floor(t));
+  // storm darkness follows the true weather outside, whichever source is chosen
+  const r = C.series.truth.basin_rain[h] || 0;
+  const w = Math.min(1, Math.log1p(r) / Math.log1p(12));
+  storm += (w - storm) * 0.08;
+  const mix = (a, b) => a.map((v, i) => v + (b[i] - v) * storm);
+  const sky = mix([92, 104, 116], [50, 56, 63]), hor = mix([150, 158, 165], [98, 104, 110]), fog = mix([118, 126, 133], [80, 86, 92]);
+  skyRGB = hor.map(v => v / 255); fogRGB = fog.map(v => v / 255);
+  const css = a => `rgb(${a.map(Math.round).join(",")})`;
+  map.setSky({ "sky-color": css(sky), "horizon-color": css(hor), "fog-color": css(fog), "sky-horizon-blend": 0.6,
+    "horizon-fog-blend": 0.65 + 0.25 * storm, "fog-ground-blend": 0.85 - 0.25 * storm, "atmosphere-blend": 0.6 });
+  if (map.getLayer("satellite")) {
+    map.setPaintProperty("satellite", "raster-brightness-max", 0.84 - 0.3 * storm);
+    map.setPaintProperty("satellite", "raster-saturation", -0.15 - 0.4 * storm);
+  }
+  if (map.getLayer("buildings")) map.setPaintProperty("buildings", "fill-extrusion-color", css(mix([210, 203, 192], [150, 148, 145])));
+}
+
+/* ---------- deck layers ---------- */
+let T = 0;
+function linkColor(mm) {
+  if (mm <= 0.25) return [150, 205, 255, 60];
+  const s = Math.min(1, Math.log1p(mm) / Math.log1p(25));
+  return [150 + 105 * s, 205 - 70 * s, 255 - 195 * s, 110 + 120 * s];
+}
+function layers() {
+  const P = C._p, out = [], z = map.getZoom();
+  if (show.water) {
+    const [A, B, m] = framePair(), s = C.series[src], h = Math.min(s.basin_rain.length - 1, Math.floor(t));
+    if (A) out.push(new WaterLayer({ id: "water", mesh: P.mesh, frameA: A, frameB: B, mix: m, hmax: C.h_max, vscale: C.v_scale,
+      time: T, rain: Math.min(1, (C.series.truth.basin_rain[h] || 0) / 20), storm, mode: wmode,
+      grid: [C.gridM[0], C.gridM[1]], sky: skyRGB, fog: fogRGB, sun: [-0.45, -0.55, 0.7] }));
+  }
+  const ls = LINK_SRC[src];
+  if (show.links && ls) {
+    const f = P.lr[ls], h = Math.min(P.linkHours - 1, Math.floor(t)), off = h * P.nl;
+    const fade = Math.max(0.22, Math.min(1, (z - 11.5) / 2.5));
+    out.push(new deck.LineLayer({ id: "links", data: P.links, getSourcePosition: d => d.s, getTargetPosition: d => d.t,
+      getColor: d => { const c = linkColor(f[off + d.i] / 2); return [c[0], c[1], c[2], c[3] * fade]; },
+      getWidth: d => (z < 12.5 ? 0.7 : 1) + Math.min(2.4, f[off + d.i] / 2 * 0.1) * fade, widthUnits: "pixels", parameters: { depthWriteEnabled: false },
+      updateTriggers: { getColor: [ls, h, C.key, fade.toFixed(2)], getWidth: [ls, h, C.key] } }));
+  }
+  if (show.towers) {
+    if (z > 13.6) out.push(new deck.SimpleMeshLayer({ id: "masts", data: P.towers, mesh: MAST_MESH, getPosition: d => d.p,
+      getOrientation: d => [0, d.rot, 0], getColor: [178, 184, 190], sizeScale: 1.6,
+      material: { ambient: 0.45, diffuse: 0.7, shininess: 40, specularColor: [90, 90, 90] } }));
+    out.push(new deck.ScatterplotLayer({ id: "beacons", data: P.towers, getPosition: d => [d.p[0], d.p[1], d.p[2] + (z > 13.6 ? MAST * 1.6 + 4 : DISH)],
+      getRadius: 2.5, radiusMinPixels: z > 13.6 ? 2 : 1, radiusMaxPixels: 6, billboard: true,
+      getFillColor: [255, 226, 160, z > 12.5 ? 210 : 120], updateTriggers: { getFillColor: z > 12.5 }, parameters: { depthWriteEnabled: false } }));
+  }
+  if (show.rain && drops.n) out.push(new RainLayer({ id: "rain", data: { length: drops.n,
+      attributes: { getSourcePosition: { value: drops.src, size: 3 }, getTargetPosition: { value: drops.dst, size: 3 } } },
+    getColor: [214, 226, 245, 170], getWidth: 1.1, widthUnits: "pixels",
+    parameters: { depthWriteEnabled: false, blend: true, blendColorSrcFactor: "src-alpha", blendColorDstFactor: "one" } }));
+  if (show.communes) out.push(new deck.TextLayer({ id: "labels", data: P.labels, getPosition: d => d.p, getText: d => d.name,
+    getSize: 13, getColor: [246, 240, 232, 235], fontFamily: "Inter Tight, sans-serif", fontWeight: 600, billboard: true,
+    outlineWidth: 4, outlineColor: [8, 10, 14, 220], fontSettings: { sdf: true }, characterSet: "auto", parameters: { depthCompare: "always" } }));
+  return out;
+}
+
+/* ================================================================ panels */
+const ICON = {
+  normal: '<svg viewBox="0 0 24 24" fill="none" stroke="#07140d" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  watch: '<svg viewBox="0 0 24 24" fill="none" stroke="#1d1704" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/></svg>',
+  warning: '<svg viewBox="0 0 24 24" fill="none" stroke="#1f0f03" stroke-width="2.4"><path d="M12 4l9 16H3z"/><path d="M12 10v4.5M12 17.4v.2"/></svg>',
+  flood: '<svg viewBox="0 0 24 24" fill="none" stroke="#1f0505" stroke-width="2.2"><path d="M2 15c2.5 0 2.5-1.6 5-1.6s2.5 1.6 5 1.6 2.5-1.6 5-1.6 2.5 1.6 5 1.6M2 19.5c2.5 0 2.5-1.6 5-1.6s2.5 1.6 5 1.6 2.5-1.6 5-1.6 2.5 1.6 5 1.6"/><path d="M12 3v7M9 7.5l3 3 3-3"/></svg>' };
+const ST_COL = { normal: "--st-normal", watch: "--st-watch", warning: "--st-warning", flood: "--st-flood" };
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const tOf = s => new Date(Date.parse(C.hours0.replace(" ", "T") + "Z") + s * 1000);
+const hhmm = d => d.toISOString().slice(11, 16);
+const dayLabel = d => d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+const dur = m => { m = Math.abs(m); return m >= 60 ? `${Math.floor(m / 60)} h ${String(Math.round(m % 60)).padStart(2, "0")}` : `${Math.round(m)} min`; };
+function leadText(min) { return min == null ? "no alarm" : min > 360 ? `${dur(min)} early (false alarm in practice)` : min >= 0 ? `${dur(min)} before` : `${dur(min)} late`; }
+
+function statusAt(s, ts) {
+  const S = C.series[s], h = Math.min(S.ratio.length - 1, Math.floor(ts / 3600)), flood = C.town_flood_s, al = S.alarm_model_s;
+  if (flood != null && ts >= flood) return { s: "flood", lv: "FLOODING",
+    why: `The town has been flooding since ${hhmm(tOf(flood))}` + (al != null && al <= flood ? `; warned ${dur((flood - al) / 60)} before` : al != null ? `; this rain warns ${dur((al - flood) / 60)} late` : "; no warning from this rain") };
+  if (al != null && ts >= al) return { s: "warning", lv: "FLOOD WARNING", why: `Issued ${hhmm(tOf(al))}: the model shows the town flooding` };
+  if (S.ratio[h] >= 0.5) return { s: "watch", lv: "WATCH", why: `Rain at ${Math.round(100 * S.ratio[h])}% of the flash-flood threshold` };
+  return { s: "normal", lv: "NORMAL", why: S.basin_rain[h] > 0.5 ? "Raining, below the flash-flood threshold" : "No heavy rain over the basin" };
+}
+
+function setStatus() {
+  const ts = t * 3600, st = statusAt(src, ts), el = $("status");
+  el.dataset.s = st.s;
+  const col = cssv(ST_COL[st.s]);
+  $("st-ic").style.background = col; $("st-ic").innerHTML = ICON[st.s];
+  el.style.borderColor = col + "88"; el.style.background = col + "1f";
+  $("st-lv").textContent = st.lv; $("st-lv").style.color = col; $("st-why").textContent = st.why;
+  const d = tOf(ts);
+  $("clock-utc").textContent = hhmm(d) + " UTC";
+  $("clock-day").textContent = `${dayLabel(d)} · ${hhmm(new Date(d.getTime() + 3600e3))} in Algeria`;
+  // alarm card
+  const S = C.series[src], al = S.alarm_model_s, flood = C.town_flood_s;
+  $("al-t").textContent = al == null ? "This rain never raises the alarm" : `${S.label}: alarm at ${hhmm(tOf(al))}`;
+  $("al-d").textContent = flood == null ? "With this storm the town does not reach the flood level."
+    : `The town floods at ${hhmm(tOf(flood))} (true rain: ${C.alarm_ha} ha of built-up land under 30 cm in ${C.alarm_communes.join(", ")}). ` +
+      `Data delay counted: ${S.latency_min < 60 ? S.latency_min + " min" : S.latency_min / 60 + " h"}.`;
+  $("leads").innerHTML = SRC.filter(k => k !== "truth").map(k => {
+    const m = C.series[k].alarm_model_lead_min;
+    return `<i style="background:${SRC_COL[k]}"></i><span class="${k === src ? "sel" : ""}">${C.series[k].label}</span><span class="lv ${k === src ? "sel" : ""}">${leadText(m)}</span>`;
+  }).join("");
+}
+
+function kpis() {
+  const S = C.series[src], h = Math.min(S.basin_rain.length - 1, Math.floor(t));
+  const r = S.basin_rain[h], tot = S.basin_rain.slice(0, h + 1).reduce((a, b) => a + b, 0);
+  $("k-rain").innerHTML = `${fmt(r, 1)}<small>mm/h</small>`;
+  $("k-rain-s").textContent = `storm so far ${fmt(tot)} mm`;
+  const ratio = S.ratio[h], pct = Math.round(100 * ratio);
+  $("k-thr").innerHTML = `${fmt(pct)}<small>%</small>`;
+  const b = $("k-thr-b"); b.style.width = Math.min(100, pct) + "%";
+  b.style.background = cssv(ratio >= 1 ? "--st-flood" : ratio >= 0.5 ? "--st-watch" : "--st-normal");
+  const qi = Math.min(S.q.length - 1, Math.round(t * 60 / C.q_step_min)), q = S.q[qi];
+  $("k-q").innerHTML = `${fmt(q, q < 10 ? 1 : 0)}<small>m³/s</small>`;
+  const qmax = Math.max(...S.q.slice(0, qi + 1));
+  $("k-q-s").textContent = `peak so far ${fmt(qmax)}` + (C.observed.peak_m3s ? ` · real ${C.key === "algiers" ? "≈" : "~"}${fmt(C.observed.peak_m3s)}` : "");
+  const i = Math.min(S.flooded_ha.length - 1, Math.floor(t)), j = Math.min(S.flooded_ha.length - 1, i + 1), u = t - i;
+  const ha = S.flooded_ha[i] + (S.flooded_ha[j] - S.flooded_ha[i]) * u, zha = S.zone_ha[i] + (S.zone_ha[j] - S.zone_ha[i]) * u;
+  $("k-ha").innerHTML = `${fmt(ha)}<small>ha</small>`;
+  $("k-ha-s").textContent = `${fmt(zha, 1)} ha in the alarm town`;
+  // communes
+  const vals = C.communes_top.map((n, k) => ({ n, v: S.communes[i][k] + (S.communes[j][k] - S.communes[i][k]) * u })).filter(x => x.v >= 0.5).sort((a, b) => b.v - a.v).slice(0, 6);
+  const vmax = Math.max(1, ...C.communes_top.map((_, k) => Math.max(...S.communes.map(r => r[k]))));
+  $("communes").innerHTML = vals.length ? vals.map(x => `<div class="com"><span>${x.n}</span><div class="b"><i style="width:${100 * x.v / vmax}%;background:${cssv("--st-flood")}"></i></div><span class="n">${fmt(x.v, 1)} ha</span></div>`).join("")
+    : `<div class="empty">No built-up land under 30 cm of water yet.</div>`;
+  // chain
+  const P = C._p, ls = LINK_SRC[src];
+  if (ls) {
+    const lh = Math.min(P.linkHours - 1, h), f = P.lr[ls]; let wet = 0;
+    for (let k = 0; k < P.nl; k++) if (f[lh * P.nl + k] >= 1) wet++;
+    $("n0").textContent = `${fmt(P.nl)} links · ${fmt(wet)} see rain`;
+  } else $("n0").textContent = "not used · satellite feed";
+  const rf = P.rain[src]; let pk = 0;
+  for (let k = 0; k < P.cells; k++) pk = Math.max(pk, rf[h * P.cells + k]);
+  $("n1").textContent = `peak ${fmt(pk / 2)} mm/h`;
+  $("n2").textContent = `${fmt(ha)} ha built-up flooded`;
+  $("n3").textContent = statusAt(src, t * 3600).lv.toLowerCase();
+}
+
+/* ---------- flow chart ---------- */
+const NS = "http://www.w3.org/2000/svg";
+function el(svg, tag, at) { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); svg.appendChild(e); return e; }
+function chart() {
+  const svg = $("chart"), W = svg.clientWidth || 340, H = 170, m = { l: 36, r: 8, t: 10, b: 22 };
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = "";
+  const n = C.series.truth.q.length, obs = C.observed.peak_m3s || 0;
+  const ymax = Math.max(...SRC.map(k => C.series[k].peak_q), C.key === "algiers" ? obs : 0) * 1.1 || 1;
+  const x = i => m.l + (W - m.l - m.r) * i / (n - 1), y = v => H - m.b - (H - m.t - m.b) * v / ymax;
+  const st = Math.pow(10, Math.floor(Math.log10(ymax / 4))), nice = [1, 2, 5, 10].map(s => s * st).find(s => ymax / s <= 4.5);
+  for (let v = 0; v <= ymax; v += nice) {
+    el(svg, "line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: v ? "rgba(255,255,255,.07)" : "rgba(255,255,255,.22)" });
+    el(svg, "text", { x: m.l - 6, y: y(v) + 3.5, "text-anchor": "end", fill: "#7d8996", "font-size": 10 }).textContent = fmt(v);
+  }
+  const hrs = n * C.q_step_min / 60, tick = hrs > 60 ? 24 : 12;
+  for (let hh = 0; hh <= hrs; hh += tick) el(svg, "text", { x: x(hh * 60 / C.q_step_min), y: H - 6, "text-anchor": "middle", fill: "#7d8996", "font-size": 10 }).textContent = `${dayLabel(tOf(hh * 3600)).split(" ").slice(1).join(" ")} ${hhmm(tOf(hh * 3600))}`;
+  if (C.key === "algiers" && obs) {
+    el(svg, "line", { x1: m.l, x2: W - m.r, y1: y(obs), y2: y(obs), stroke: "#f2c94c", "stroke-dasharray": "4 3" });
+    el(svg, "text", { x: W - m.r, y: y(obs) - 4, "text-anchor": "end", fill: "#f2c94c", "font-size": 10 }).textContent = `flood marks ≈${fmt(obs)} m³/s`;
+  }
+  [...SRC].sort((a, b) => (a === src) - (b === src)).forEach(k => {
+    const d = C.series[k].q.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+    el(svg, "path", { d, fill: "none", stroke: SRC_COL[k], "stroke-width": k === src ? 2.2 : 1.2, "stroke-opacity": k === src ? 1 : 0.45, "stroke-linejoin": "round" });
+  });
+  const cur = el(svg, "line", { y1: m.t, y2: H - m.b, stroke: "rgba(255,255,255,.55)" });
+  chart.cursor = () => { const xx = x(Math.min(n - 1, t * 60 / C.q_step_min)); cur.setAttribute("x1", xx); cur.setAttribute("x2", xx); };
+  chart.cursor();
+  const hit = el(svg, "rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent" }), tip = $("tip");
+  hit.addEventListener("pointermove", ev => {
+    const r = svg.getBoundingClientRect(), i = Math.max(0, Math.min(n - 1, Math.round(((ev.clientX - r.left) * W / r.width - m.l) / (W - m.l - m.r) * (n - 1))));
+    const d = tOf(i * C.q_step_min * 60);
+    tip.innerHTML = `<div style="color:#7d8996">${dayLabel(d)} ${hhmm(d)} UTC</div>` + SRC.map(k => `<div><span class="k" style="background:${SRC_COL[k]}"></span>${C.series[k].label} <b>${fmt(C.series[k].q[i], 1)}</b> m³/s</div>`).join("");
+    tip.style.display = "block";
+    tip.style.left = Math.min(ev.clientX - r.left + 12, r.width - tip.offsetWidth - 2) + "px"; tip.style.top = "6px";
+  });
+  hit.addEventListener("pointerleave", () => tip.style.display = "none");
+  $("chart-h").textContent = `River flow: ${C.basin.name.split(" (")[0]}`;
+  $("chart-note").textContent = C.key === "algiers"
+    ? `Our model peaks lower than the flood marks (≈${fmt(obs)} m³/s) but gets the volume right (Part 5).`
+    : `Reported flows were roughly 900–1,600 m³/s; the model does not include the dam break or mud (Part 5).`;
+}
+
+/* ---------- timeline ---------- */
+function timeline() {
+  const svg = $("tl"), W = svg.clientWidth || 800, H = svg.clientHeight || 100, m = { l: 6, r: 6, t: 18, b: 22 };
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = "";
+  const n = C.nframes - 1, S = C.series[src], x = h => m.l + (W - m.l - m.r) * h / n;
+  const rmax = Math.max(4, ...SRC.map(k => Math.max(...C.series[k].basin_rain)));
+  const bw = Math.max(1, (W - m.l - m.r) / n - 1.5);
+  el(svg, "rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "rgba(255,255,255,.025)", rx: 6 });
+  const played = el(svg, "rect", { x: m.l, y: m.t, height: H - m.t - m.b, fill: "rgba(90,169,255,.08)", rx: 6 });
+  S.basin_rain.forEach((r, h) => {
+    if (h >= n || r < 0.05) return;
+    const bh = (H - m.t - m.b - 4) * Math.sqrt(r / rmax);
+    el(svg, "rect", { x: x(h) + 0.75, y: H - m.b - bh, width: bw, height: bh, rx: 1.5, fill: SRC_COL[src], "fill-opacity": 0.75 });
+  });
+  for (let h = 0; h <= n; h += 6) {
+    const d = tOf(h * 3600), major = d.getUTCHours() === 0;
+    el(svg, "line", { x1: x(h), x2: x(h), y1: H - m.b, y2: H - m.b + (major ? 6 : 3), stroke: "rgba(255,255,255,.3)" });
+    if (major || W > 900) el(svg, "text", { x: x(h), y: H - 5, "text-anchor": "middle", fill: major ? "#b9c2cc" : "#7d8996", "font-size": 10, "font-family": "JetBrains Mono, monospace" }).textContent = major ? dayLabel(d) : hhmm(d);
+  }
+  const mark = (h, col, label, solid, left) => {
+    if (h == null || h < 0 || h > n) return;
+    el(svg, "line", { x1: x(h), x2: x(h), y1: m.t, y2: H - m.b, stroke: col, "stroke-width": 1.5, "stroke-dasharray": solid ? "" : "3 2" });
+    el(svg, "text", { x: x(h) + (left ? -4 : 4), y: m.t - 5, fill: col, "font-size": 10.5, "font-weight": 600, "text-anchor": left ? "end" : "start" }).textContent = label;
+  };
+  const fl = C.town_flood_s != null ? C.town_flood_s / 3600 : null, ah = S.alarm_model_s != null ? S.alarm_model_s / 3600 : null;
+  if (fl != null) mark(fl, cssv("--st-flood"), "town floods", true, ah != null && ah > fl);
+  if (ah != null) mark(ah, cssv("--st-warning"), `alarm · ${S.label}`, false, ah <= (fl ?? -1));
+  else el(svg, "text", { x: W - m.r - 4, y: m.t - 5, fill: cssv("--st-warning"), "font-size": 10.5, "text-anchor": "end" }).textContent = `${S.label}: no alarm`;
+  if (W > 520) el(svg, "text", { x: m.l + 6, y: m.t + 12, fill: "#7d8996", "font-size": 10 }).textContent = `rain on the basin, ${S.label.toLowerCase()} (mm/h, √ scale)`;
+  const head = el(svg, "g", {});
+  el(head, "line", { y1: m.t, y2: H - m.b, stroke: "#fff", "stroke-width": 2 });
+  el(head, "circle", { cy: H - m.b, r: 5, fill: "#fff", stroke: "#0b0f15", "stroke-width": 2 });
+  timeline.head = () => { const xx = x(t); head.setAttribute("transform", `translate(${xx},0)`); played.setAttribute("width", Math.max(0, xx - m.l)); };
+  timeline.head();
+  const pick = ev => { const r = svg.getBoundingClientRect(); setTime(Math.max(0, Math.min(n, ((ev.clientX - r.left) * W / r.width - m.l) / (W - m.l - m.r) * n))); };
+  svg.onpointerdown = ev => { svg.setPointerCapture(ev.pointerId); pick(ev); svg.onpointermove = pick; };
+  svg.onpointerup = () => svg.onpointermove = null;
+  svg.setAttribute("aria-valuemax", n);
+}
+
+/* ---------- controls ---------- */
+function sourceButtons() {
+  $("sources").innerHTML = SRC.map(k => `<button class="src" type="button" data-s="${k}" aria-pressed="${k === src}"><i style="background:${SRC_COL[k]}"></i>
+    <span><b>${C.series[k].label}</b><small>${k === "truth" ? "simulated reference" : k === "imerg" ? "what exists today" : "what the towers see"}</small></span>
+    <em>${k === "truth" ? "–" : C.series[k].latency_min < 60 ? C.series[k].latency_min + " min" : C.series[k].latency_min / 60 + " h"}</em></button>`).join("");
+  document.querySelectorAll(".src").forEach(b => b.onclick = () => setSource(b.dataset.s));
+  $("src-note").textContent = SRC_NOTE[src];
+}
+function setSource(s) {
+  src = s; loadFrames(C, s);
+  document.querySelectorAll(".src").forEach(b => b.setAttribute("aria-pressed", b.dataset.s === s));
+  $("src-note").textContent = SRC_NOTE[s];
+  buildCdf(); if (show.rainmap) setRainMap(); chart(); timeline(); refresh();
+}
+function legend() {
+  const L = $("legend");
+  const ramps = ["linear-gradient(90deg,#877552,#30291b)", "linear-gradient(90deg,#b8d4f5,#0f4282)", "linear-gradient(90deg,#fdd0a2,#fd8d3c,#e6550d,#a63603)"];
+  const lab = [["3 cm", "50 cm", "1 m", "2 m+"], ["3 cm", "50 cm", "1 m", "2 m+"], ["low", "some", "most", "all"]];
+  L.innerHTML = `<h3>${wmode === 2 ? "Danger to people" : "Water depth"}</h3><div class="ramp" style="background:${ramps[wmode]}"></div><div class="rl">${lab[wmode].map(v => `<span>${v}</span>`).join("")}</div>` +
+    `<div style="margin-top:10px"><div class="rl" style="justify-content:flex-start;gap:10px;color:#b9c2cc;font-family:var(--font);font-size:11.5px">
+    <span><span style="display:inline-block;width:16px;height:2px;background:#9fd0ff;vertical-align:middle;margin-right:5px"></span>basin</span>
+    <span><span style="display:inline-block;width:16px;border-top:2px dashed #f2c94c;vertical-align:middle;margin-right:5px"></span>alarm town</span>
+    <span><span style="display:inline-block;width:16px;height:2px;background:linear-gradient(90deg,#96cdff,#ff8a3c);vertical-align:middle;margin-right:5px"></span>link: dry→rain</span></div></div>` +
+    (show.rainmap ? `<h3 style="margin-top:12px">Rain map</h3><div class="ramp" style="background:linear-gradient(90deg,rgba(120,190,250,.5),#4696f0,#fadc50,#f5822d,#d72d46)"></div><div class="rl"><span>2</span><span>6</span><span>15</span><span>35</span><span>70 mm/h</span></div>` : "");
+}
+function views() {
+  const c = C, gb = c.grid_bounds, cx = (gb[0] + gb[2]) / 2, cy = (gb[1] + gb[3]) / 2;
+  const V = c.key === "algiers"
+    ? [["Whole city", [cx + 0.01, cy - 0.025], 11.6, 58, -18], ["Alarm town", c.town_pt, 14.4, 66, -30], ["Deepest flooding", c.hotspot, 15.3, 70, 25], ["Basin outlet", c.basin.outlet, 15.0, 68, -60]]
+    : [["Whole valley", [cx, cy - 0.04], 10.6, 55, 15], ["Alarm towns", c.town_pt, 13.4, 64, 20], ["Deepest flooding", c.hotspot, 15.0, 70, -20], ["Basin outlet", c.basin.outlet, 14.2, 66, 40]];
+  c._views = V;
+  $("views").innerHTML = V.map((v, i) => `<button type="button" data-i="${i}">${v[0]}</button>`).join("");
+  document.querySelectorAll("#views button").forEach(b => b.onclick = () => fly(V[+b.dataset.i]));
+}
+function fly(v, dur = 2600) { map.flyTo({ center: [v[1][0], v[1][1]], zoom: v[2], pitch: v[3], bearing: v[4], duration: reduced ? 0 : dur, essential: true }); }
+
+function refresh() { setStatus(); kpis(); if (chart.cursor) chart.cursor(); if (timeline.head) timeline.head(); }
+function setTime(v) {
+  t = Math.max(0, Math.min(C.nframes - 1, v));
+  const h = Math.floor(t);
+  if (h !== rainHour) { buildCdf(); if (show.rainmap) setRainMap(); }
+  $("tl").setAttribute("aria-valuenow", t.toFixed(1));
+  refresh();
+}
+const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>', PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z"/></svg>';
+function setPlaying(p) { playing = p; $("play").innerHTML = p ? PAUSE : PLAY; $("play").setAttribute("aria-label", p ? "Pause" : "Play"); }
+
+async function setCity(key, keepView) {
+  const c = DATA.find(d => d.key === key);
+  $("loading").classList.remove("done");
+  await prepare(c);
+  C = c;
+  const gb = c.grid_bounds;
+  mPerLon = 111320 * Math.cos((gb[1] + gb[3]) / 2 * Math.PI / 180);
+  c.gridM = [(gb[2] - gb[0]) * mPerLon, (gb[3] - gb[1]) * 110540];
+  document.querySelectorAll("#cities button").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === key));
+  $("event").textContent = `${c.name} · ${c.event}`;
+  $("ab-ha").textContent = c.alarm_ha;
+  loadFrames(c, src);
+  setVectors(); sourceButtons(); views(); legend();
+  if (!keepView) { const v = c._views[0]; map.jumpTo({ center: v[1], zoom: v[2], pitch: v[3], bearing: v[4] }); }
+  chart(); timeline();
+  setTime(keepView ? Math.min(t, c.nframes - 1) : Math.max(0, (c.town_flood_s ?? c.peak_hour * 3600) / 3600 - 3));
+  setTimeout(() => $("loading").classList.add("done"), 400);
+}
+
+/* ================================================================ guided tour */
+function tourSteps() {
+  const c = C, S = c.series, fl = c.town_flood_s / 3600;
+  const onset = Math.max(0, S.truth.basin_rain.findIndex(r => r > 1.5));
+  const al = k => S[k].alarm_model_s == null ? null : S[k].alarm_model_s / 3600;
+  const V = c._views, ld = k => leadText(S[k].alarm_model_lead_min);
+  let wet = Math.max(0, Math.floor(fl) - 6);                               // wettest hour before the flood
+  for (let h = wet; h <= Math.floor(fl); h++) if (S.ai.basin_rain[h] > S.ai.basin_rain[wet]) wet = h;
+  if (c.key === "algiers") return [
+    { h: `${fmt(c.links_n)} microwave links over Algiers`, p: `Every line is a radio link between two phone towers, placed on the real tower sites (${fmt(c.sites_n)} sites, OpenCelliD). Rain weakens these beams, so each link is a rain gauge that already exists. The first showers are just starting.`,
+      time: Math.max(0, onset - 4), src: "ai", view: V[0], layers: { links: true, towers: true, rain: true, rainmap: false, water: true }, node: 0 },
+    { h: "The storm of 9–10 November 2001", p: "The storm that caused the Bab El Oued flood, replayed from NASA's satellite record and scaled to the 263 mm the Bouzaréah gauge measured. Watch the links warm up from blue to orange as rain weakens their signals.",
+      time: onset + 2, src: "ai", view: [0, c.town_pt, 13.3, 64, -35], layers: { rain: true }, node: 0 },
+    { h: "From links to a rain map", p: "Each link gives the rain along its own beam; together they give a rain map every few minutes. This is the AI's map, made only from the simulated link signals.",
+      time: wet + 0.5, src: "ai", view: [0, [c.town_pt[0] + 0.03, c.town_pt[1] - 0.05], 12.0, 45, -15], layers: { rainmap: true, rain: false, links: false }, node: 1 },
+    { h: "Rain becomes a flood", p: `The rain map goes into a flood model that moves the water over the real terrain, soil and streets. Water gathers in the ${c.basin.name.split(" at ")[0]} valley and runs down to Bab El Oued.`,
+      time: fl - 0.6, src: "classical", view: V[3], layers: { rainmap: false, rain: true, water: true, links: true }, node: 2 },
+    { h: "The alarm", p: `Tower rain read with the standard method warns ${ld("classical")} the town floods; read by our AI, ${ld("ai")}: the AI still measures too little heavy rain. The satellite alone is ${ld("imerg")}, because its data arrives 4 hours after the rain.`,
+      time: fl + 0.05, src: "classical", view: V[1], layers: {}, node: 3 },
+    { h: "Who is hit", p: "Danger to people: depth × (speed + 0.5) plus debris. The communes panel on the right lists the built-up land under water right now.",
+      time: fl + 2, src: "truth", view: V[2], layers: {}, node: 2, mode: 2 },
+    { h: "Today's situation: satellite only", p: `Switch to the satellite and the same storm gives a flood alarm ${ld("imerg")}. Towers measure the rain where people live, minutes after it falls.`,
+      time: fl + 0.5, src: "imerg", view: V[0], layers: {}, node: 3, mode: 0 } ];
+  return [
+    { h: "Ghardaïa and the M'zab valley", p: `${fmt(c.sites_n)} tower sites, ${fmt(c.links_n)} simulated links, in a desert valley. The blue outline is the ${fmt(c.basin.area_km2)} km² basin that drains into the town.`,
+      time: Math.max(0, onset - 2), src: "ai", view: V[0], layers: { basin: true, links: true }, node: 0 },
+    { h: "Where towers cannot see", p: `The towers stand in the town, but the rain that floods it falls far upstream: tower rain covers only ${Math.round(100 * c.basin.tower_share)}% of the basin. Everywhere else the satellite fills in.`,
+      time: onset + 3, src: "ai", view: [0, [c.basin.outlet[0] - 0.12, c.basin.outlet[1] + 0.08], 10.8, 50, -10], layers: { rainmap: true }, node: 1 },
+    { h: "The flood arrives from upstream", p: "The water runs down the wadi into the town. Tower rain cannot warn earlier here: the alarm has to come from the basin, which needs radar or the satellite.",
+      time: fl, src: "truth", view: V[1], layers: { rainmap: false }, node: 2 } ];
+}
+let tour = null;
+function showStep() {
+  const steps = tourSteps(), k = tour, s = steps[k];
+  $("tour").classList.add("on");
+  $("tour-st").textContent = `STEP ${k + 1} OF ${steps.length}`; $("tour-h").textContent = s.h; $("tour-p").textContent = s.p;
+  $("tour-dots").innerHTML = steps.map((_, i) => `<i class="${i === k ? "on" : ""}"></i>`).join("");
+  $("tour-b").disabled = k === 0; $("tour-n").textContent = k === steps.length - 1 ? "Finish" : "Next";
+  for (const [l, v] of Object.entries(s.layers || {})) { show[l] = v; const cb = document.querySelector(`[data-l="${l}"]`); if (cb) cb.checked = v; }
+  if (s.mode != null) setMode(s.mode);
+  if (s.src !== src) setSource(s.src);
+  applyVis(); if (show.rainmap) setRainMap(); legend();
+  setPlaying(false); animateTime(s.time);
+  fly(s.view, 3200);
+  document.querySelectorAll(".node").forEach(n => n.classList.toggle("hi", +n.dataset.n === s.node));
+}
+function animateTime(target) {
+  const t0 = t, start = performance.now(), D = reduced ? 0 : 2200;
+  const go = now => { const u = D ? Math.min(1, (now - start) / D) : 1; setTime(t0 + (target - t0) * (1 - Math.pow(1 - u, 3))); if (u < 1) requestAnimationFrame(go); };
+  requestAnimationFrame(go);
+}
+function endTour() { tour = null; $("tour").classList.remove("on"); document.querySelectorAll(".node").forEach(n => n.classList.remove("hi")); }
+$("tour-btn").onclick = () => { tour = 0; showStep(); };
+$("tour-n").onclick = () => { if (tour >= tourSteps().length - 1) endTour(); else { tour++; showStep(); } };
+$("tour-b").onclick = () => { if (tour > 0) { tour--; showStep(); } };
+$("tour-x").onclick = endTour;
+$("about-btn").onclick = () => $("about").classList.add("on");
+$("about-x").onclick = () => $("about").classList.remove("on");
+$("about").onclick = e => { if (e.target.id === "about") $("about").classList.remove("on"); };
+
+function setMode(v) { wmode = +v; document.querySelectorAll("#wmode button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.v === wmode)); legend(); }
+document.querySelectorAll("#wmode button").forEach(b => b.onclick = () => setMode(b.dataset.v));
+document.querySelectorAll("[data-l]").forEach(cb => cb.onchange = () => { show[cb.dataset.l] = cb.checked; if (cb.dataset.l === "rainmap" && cb.checked) setRainMap(); applyVis(); legend(); });
+document.querySelectorAll("#speed button").forEach(b => b.onclick = () => { speed = +b.dataset.v; document.querySelectorAll("#speed button").forEach(x => x.setAttribute("aria-pressed", x === b)); });
+$("play").onclick = () => setPlaying(!playing);
+document.querySelectorAll(".node").forEach(n => n.onclick = () => { const s = +n.dataset.n;
+  if (s === 0) { show.links = true; fly([0, C.town_pt, 13.2, 62, -30]); }
+  if (s === 1) { show.rainmap = true; document.querySelector('[data-l="rainmap"]').checked = true; setRainMap(); fly(C._views[0]); }
+  if (s === 2) fly(C._views[2]);
+  if (s === 3) fly(C._views[1]); applyVis(); });
+addEventListener("keydown", e => {
+  if (e.target.closest && e.target.closest("input,button")) { if (e.key !== " " || e.target.tagName === "BUTTON") return; }
+  if (e.key === " ") { e.preventDefault(); setPlaying(!playing); }
+  if (e.key === "ArrowRight") setTime(t + (e.shiftKey ? 3 : 0.25));
+  if (e.key === "ArrowLeft") setTime(t - (e.shiftKey ? 3 : 0.25));
+  if (e.key === "Escape") { endTour(); $("about").classList.remove("on"); }
+});
+addEventListener("resize", () => { if (C) { chart(); timeline(); } });
+$("cities").innerHTML = DATA.map(c => `<button type="button" data-k="${c.key}" aria-pressed="false">${c.name}</button>`).join("");
+document.querySelectorAll("#cities button").forEach(b => b.onclick = () => { endTour(); setCity(b.dataset.k); });
+setPlaying(false);
+
+/* ================================================================ loop */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
+  if (C) {
+    if (playing) { const nt = t + dt * speed / 1.6; if (nt >= C.nframes - 1) { setPlaying(false); setTime(C.nframes - 1); } else setTime(nt); }
+    stepDrops(dt); atmosphere();
+    overlay.setProps({ layers: layers() });
+  }
+  requestAnimationFrame(frame);
+}
+map.on("moveend", () => { if (C) buildCdf(); });
+map.on("load", async () => {
+  map.setTerrain({ source: "dem", exaggeration: EX });
+  const want = location.hash.slice(1);
+  await setCity(DATA.some(d => d.key === want) ? want : DATA[0].key);
+  requestAnimationFrame(frame);
+});
+</script>
+</body>
+</html>

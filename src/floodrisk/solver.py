@@ -40,6 +40,7 @@ class Params:
     record_s: float = 60.0        # basin outflow: mean over each interval
     snap_s: float = 900.0         # depth snapshots for the website
     snap_coarsen: int = 2
+    snap_flow: bool = False       # also save the water's velocity (east, north; m/s) with each snapshot
     ia_ratio: float = 0.2
     device: str | None = None
 
@@ -77,6 +78,7 @@ class Result:
     budget: dict[str, float] = field(default_factory=dict)
     steps: int = 0
     wall_s: float = 0.0
+    snaps_flow: np.ndarray | None = None       # (n, 2, ny/c, nx/c) float16 velocity east, north (snap_flow only)
 
 
 def _dev(p: Params):
@@ -132,7 +134,7 @@ def simulate(z, n, cn, dx, dy, rain: HourlyRain, t_end_s: float, sink=None, gaug
     gvol = {k: torch.zeros((), device=dev, dtype=dbl) for k in gauges}
     rec_t, rec_q = [], {k: [] for k in gauges}
     vol_last, t_last_rec = {k: 0.0 for k in gauges}, 0.0
-    snaps, t_snaps = [], []
+    snaps, t_snaps, snaps_flow = [], [], []
     t, steps, next_rec, next_snap = 0.0, 0, 0.0, 0.0
     i_rain, R = -1, torch.zeros((ny, nx), **f32)
     wall = time.time()
@@ -245,6 +247,17 @@ def simulate(z, n, cn, dx, dy, rain: HourlyRain, t_end_s: float, sink=None, gaug
         if t >= next_snap:
             hs = torch.nn.functional.avg_pool2d(H[None, None, : ny // c * c, : nx // c * c], c)[0, 0]
             snaps.append(hs.to(torch.float16).cpu().numpy())
+            if p.snap_flow:
+                # cell-centre discharge per metre (mean of the two faces), then velocity; rows run north -> south
+                qe = torch.zeros((ny, nx), **f32)
+                qn = torch.zeros((ny, nx), **f32)
+                qe[:, :-1] += 0.5 * QX
+                qe[:, 1:] += 0.5 * QX
+                qn[:-1, :] -= 0.5 * QY
+                qn[1:, :] -= 0.5 * QY
+                vel = torch.where(H > 0.01, torch.stack([qe, qn]) / H.clamp(min=0.01), torch.zeros((2, ny, nx), **f32))
+                vel = torch.nn.functional.avg_pool2d(vel[None, :, : ny // c * c, : nx // c * c], c)[0]
+                snaps_flow.append(vel.clamp(-10, 10).to(torch.float16).cpu().numpy())
             t_snaps.append(t)
             next_snap += p.snap_s
         if progress and steps % 5000 == 0:
@@ -259,4 +272,4 @@ def simulate(z, n, cn, dx, dy, rain: HourlyRain, t_end_s: float, sink=None, gaug
                   {k: float(v) for k, v in gvol.items()},
                   HMAX.cpu().numpy(), VMAX.cpu().numpy(), HRMAX.cpu().numpy(), TWET.cpu().numpy(),
                   np.stack(snaps) if snaps else np.zeros((0, 1, 1), np.float16), np.array(t_snaps),
-                  budget, steps, time.time() - wall)
+                  budget, steps, time.time() - wall, np.stack(snaps_flow) if snaps_flow else None)
