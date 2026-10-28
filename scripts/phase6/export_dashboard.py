@@ -343,6 +343,29 @@ def city(key):
     }
 
 
+def numbers(cities):
+    r"""Macros for the explainer (Part 6): \Psix<City><Name>."""
+    lines = ["% Phase 6 numbers, written by scripts/phase6/export_dashboard.py. Do not edit by hand."]
+    for c in cities:
+        C = "Alg" if c["key"] == "algiers" else "Gha"
+        d = DATA / c["key"]
+        nv = int(np.frombuffer((d / "water.bin").read_bytes()[:4], np.uint32)[0]) if (d / "water.bin").exists() else 0
+        mb = sum(f.stat().st_size for f in d.rglob("*") if f.is_file()) / 1e6 if d.exists() else 0
+        lead = lambda s: c["series"][s]["alarm_model_lead_min"]
+        vals = {"Sites": f"{c['sites_n']:,}", "Links": f"{c['links_n']:,}", "Frames": c["nframes"],
+                "Cell": c["cell_m"], "Vertices": f"{round(nv / 1000):,}", "Mb": f"{mb:.0f}",
+                "TowerShare": str(int(100 * c["basin"]["tower_share"] + 0.5)),
+                "PeakTruth": f"{c['series']['truth']['peak_q']:.0f}"}
+        for s in ("ai", "classical", "imerg"):
+            v = lead(s)
+            vals["Lead" + {"ai": "Ai", "classical": "Cl", "imerg": "Sat"}[s]] = "none" if v is None else f"{v:+.0f}"
+        for k, v in vals.items():
+            lines.append(f"\\newcommand{{\\Psix{C}{k}}}{{{v}}}%")
+    tiles = sum(1 for _ in (DATA / "terrain").rglob("*.png")) if (DATA / "terrain").exists() else 0
+    lines.append(f"\\newcommand{{\\PsixTiles}}{{{tiles}}}%")
+    (ROOT / "docs" / "explainer" / "p6_numbers.tex").write_text("\n".join(lines) + "\n")
+
+
 def main():
     """--html-only: rebuild the page from the cached city summaries (after editing the template)."""
     keys = [a for a in sys.argv[1:] if not a.startswith("--")] or list(config.CITIES)
@@ -355,6 +378,7 @@ def main():
                 old[k] = json.loads(json.dumps(city(k), default=float))
         cache.write_text(json.dumps(list(old.values()), default=float))
     cities = [old[k] for k in config.CITIES if k in old]
+    numbers(cities)
     html = (OUT / "template.html").read_text().replace("/*DATA*/null", json.dumps(cities, separators=(",", ":"), default=float))
     (OUT / "index.html").write_text(html)
     print("wrote", OUT / "index.html", f"{len(html) / 1e6:.2f} MB", flush=True)

@@ -1,0 +1,33 @@
+%==========================================================
+% Glossary and sources for Part 6 (the control room). Added after the earlier appendices; nothing above is changed.
+%==========================================================
+\section{More words, from Part 6}
+\small
+\begin{description}[leftmargin=3.2cm,style=nextline,itemsep=0.25em]
+\item[Dashboard] One screen that gathers the figures and maps needed for one job, here: deciding whether to warn a town.
+\item[Frame] One saved moment of the flood (here, every hour). The screen blends two frames to show the moments between.
+\item[Map tile] A small square image of a map at one zoom level. Maps on the web are made of thousands of them, loaded only
+where you look.
+\item[Shader] A small program that runs on the graphics card for every point and every pixel. Ours turns depth and speed
+into the colour, ripples and reflections of water.
+\item[Status ladder] The fixed steps of a warning (normal, watch, warning, flooding), so that everyone reads the
+situation the same way.
+\end{description}
+\normalsize
+
+\section{Sources for Part 6}
+\small
+\begin{itemize}
+\item MapLibre GL JS 4.7, \url{https://maplibre.org}; deck.gl 9.0, \url{https://deck.gl}. The map and 3D engines.
+\item Esri World Imagery; OpenStreetMap buildings served by OpenFreeMap (\url{https://openfreemap.org}).
+\item \emph{FlowsDT: a geospatial digital twin for navigating urban flood dynamics} (2025),
+arXiv:2507.08850. A 3D flood viewer with a time slider.
+\item \emph{Hydro3DJS: a modular web-based library for real-time 3D visualization of watershed dynamics and digital twin
+integration}, Environmental Modelling \& Software (2025).
+\item \emph{HORA 3D: personalized flood risk visualization as an interactive web service}, Computer Graphics Forum (2024).
+Focus-plus-context views of flood risk.
+\item Esri, \emph{Realistic water} sample and \texttt{WaterSymbol3DLayer} reference, ArcGIS Maps SDK for JavaScript. How
+realistic water is usually drawn (colour, waves, reflection).
+\end{itemize}
+The page is \texttt{site/dashboard/template.html}; the data behind it is rebuilt by \texttt{scripts/phase6/}.
+\normalsize

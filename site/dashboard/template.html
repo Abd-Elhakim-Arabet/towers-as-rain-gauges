@@ -224,6 +224,7 @@ svg text { font-family: var(--font); }
     <div class="grp">Context</div>
     <label class="tog"><input type="checkbox" data-l="basin" checked> Basin checked for floods</label>
     <label class="tog"><input type="checkbox" data-l="zone" checked> Town the alarm protects</label>
+    <label class="tog"><input type="checkbox" data-l="towerbox"> Area with tower rain</label>
     <label class="tog"><input type="checkbox" data-l="communes" checked> Communes hit</label>
     <label class="tog"><input type="checkbox" data-l="buildings" checked> 3D buildings</label>
   </section>
@@ -325,7 +326,7 @@ const fmt = (v, d = 0) => v == null || !isFinite(v) ? "–" : v.toLocaleString("
 
 let C = null;                         // current city (prepared)
 let src = "classical", t = 0, playing = false, speed = 1, wmode = 0;
-const show = { links: true, towers: true, rain: true, rainmap: false, water: true, basin: true, zone: true, communes: true, buildings: true };
+const show = { links: true, towers: true, rain: true, rainmap: false, water: true, basin: true, zone: true, towerbox: false, communes: true, buildings: true };
 
 /* ================================================================ water layer (custom deck.gl layer) */
 const WATER_VS = `#version 300 es
@@ -618,11 +619,12 @@ function setVectors() {
   add("communes", C.communes, "line", { "line-color": "#f3d9c4", "line-width": 1, "line-opacity": 0.45, "line-dasharray": [2, 2] }, "buildings");
   add("basin", fc(C.shapes.basin), "line", { "line-color": "#9fd0ff", "line-width": 2.2, "line-opacity": 0.85 }, "buildings");
   add("zone", fc(C.shapes.zone), "line", { "line-color": "#f2c94c", "line-width": 2, "line-dasharray": [1.2, 1.2] }, "buildings");
+  add("towerbox", fc(C.shapes.towerbox), "line", { "line-color": "#5aa9ff", "line-width": 2.4, "line-dasharray": [3, 2] }, "buildings");
   applyVis();
 }
 function applyVis() {
   const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
-  vis("basin", show.basin); vis("zone", show.zone); vis("communes", show.communes); vis("communes-fill", show.communes);
+  vis("basin", show.basin); vis("zone", show.zone); vis("towerbox", show.towerbox); vis("communes", show.communes); vis("communes-fill", show.communes);
   vis("buildings", show.buildings); vis("rainmap", show.rainmap);
 }
 // rain map: a small canvas per hour (one pixel per ~500 m cell), draped on the terrain and smoothly sampled
@@ -744,9 +746,9 @@ function layers() {
       getRadius: 2.5, radiusMinPixels: z > 13.6 ? 2 : 1, radiusMaxPixels: 6, billboard: true,
       getFillColor: [255, 226, 160, z > 12.5 ? 210 : 120], updateTriggers: { getFillColor: z > 12.5 }, parameters: { depthWriteEnabled: false } }));
   }
-  if (show.rain && drops.n) out.push(new RainLayer({ id: "rain", data: { length: drops.n,
+  if (show.rain && drops.n && z > 11.8) out.push(new RainLayer({ id: "rain", data: { length: drops.n,
       attributes: { getSourcePosition: { value: drops.src, size: 3 }, getTargetPosition: { value: drops.dst, size: 3 } } },
-    getColor: [214, 226, 245, 170], getWidth: 1.1, widthUnits: "pixels",
+    getColor: [214, 226, 245, 170 * Math.max(0, Math.min(1, (z - 11.8) / 1.8))], getWidth: 1.1, widthUnits: "pixels",
     parameters: { depthWriteEnabled: false, blend: true, blendColorSrcFactor: "src-alpha", blendColorDstFactor: "one" } }));
   if (show.communes) out.push(new deck.TextLayer({ id: "labels", data: P.labels, getPosition: d => d.p, getText: d => d.name,
     getSize: 13, getColor: [246, 240, 232, 235], fontFamily: "Inter Tight, sans-serif", fontWeight: 600, billboard: true,
@@ -786,7 +788,8 @@ function setStatus() {
   $("st-lv").textContent = st.lv; $("st-lv").style.color = col; $("st-why").textContent = st.why;
   const d = tOf(ts);
   $("clock-utc").textContent = hhmm(d) + " UTC";
-  $("clock-day").textContent = `${dayLabel(d)} · ${hhmm(new Date(d.getTime() + 3600e3))} in Algeria`;
+  const loc = new Date(d.getTime() + 3600e3);                                // Algeria = UTC+1, no summer time
+  $("clock-day").textContent = `${dayLabel(loc)}, ${hhmm(loc)} local time (UTC+1)`;
   // alarm card
   const S = C.series[src], al = S.alarm_model_s, flood = C.town_flood_s;
   $("al-t").textContent = al == null ? "This rain never raises the alarm" : `${S.label}: alarm at ${hhmm(tOf(al))}`;
@@ -939,6 +942,7 @@ function legend() {
     `<div style="margin-top:10px"><div class="rl" style="justify-content:flex-start;gap:10px;color:#b9c2cc;font-family:var(--font);font-size:11.5px">
     <span><span style="display:inline-block;width:16px;height:2px;background:#9fd0ff;vertical-align:middle;margin-right:5px"></span>basin</span>
     <span><span style="display:inline-block;width:16px;border-top:2px dashed #f2c94c;vertical-align:middle;margin-right:5px"></span>alarm town</span>
+    ${show.towerbox ? '<span><span style="display:inline-block;width:16px;border-top:2px dashed #5aa9ff;vertical-align:middle;margin-right:5px"></span>tower rain</span>' : ""}
     <span><span style="display:inline-block;width:16px;height:2px;background:linear-gradient(90deg,#96cdff,#ff8a3c);vertical-align:middle;margin-right:5px"></span>link: dry→rain</span></div></div>` +
     (show.rainmap ? `<h3 style="margin-top:12px">Rain map</h3><div class="ramp" style="background:linear-gradient(90deg,rgba(120,190,250,.5),#4696f0,#fadc50,#f5822d,#d72d46)"></div><div class="rl"><span>2</span><span>6</span><span>15</span><span>35</span><span>70 mm/h</span></div>` : "");
 }
@@ -1009,10 +1013,10 @@ function tourSteps() {
   return [
     { h: "Ghardaïa and the M'zab valley", p: `${fmt(c.sites_n)} tower sites, ${fmt(c.links_n)} simulated links, in a desert valley. The blue outline is the ${fmt(c.basin.area_km2)} km² basin that drains into the town.`,
       time: Math.max(0, onset - 2), src: "ai", view: V[0], layers: { basin: true, links: true }, node: 0 },
-    { h: "Where towers cannot see", p: `The towers stand in the town, but the rain that floods it falls far upstream: tower rain covers only ${Math.round(100 * c.basin.tower_share)}% of the basin. Everywhere else the satellite fills in.`,
-      time: onset + 3, src: "ai", view: [0, [c.basin.outlet[0] - 0.12, c.basin.outlet[1] + 0.08], 10.8, 50, -10], layers: { rainmap: true }, node: 1 },
+    { h: "Where towers cannot see", p: `The towers stand in the town, but the rain that floods it falls far upstream: tower rain covers only ${Math.round(100 * c.basin.tower_share)}% of the basin (dashed blue box). Everywhere else the satellite fills in, in 10 km squares.`,
+      time: onset + 3, src: "ai", view: [0, [c.basin.outlet[0] - 0.12, c.basin.outlet[1] + 0.08], 10.8, 50, -10], layers: { rainmap: true, towerbox: true, basin: true }, node: 1 },
     { h: "The flood arrives from upstream", p: "The water runs down the wadi into the town. Tower rain cannot warn earlier here: the alarm has to come from the basin, which needs radar or the satellite.",
-      time: fl, src: "truth", view: V[1], layers: { rainmap: false }, node: 2 } ];
+      time: fl, src: "truth", view: V[1], layers: { rainmap: false, towerbox: false }, node: 2 } ];
 }
 let tour = null;
 function showStep() {

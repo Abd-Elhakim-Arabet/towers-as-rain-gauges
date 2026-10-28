@@ -23,7 +23,7 @@ Built for the Huawei ICT Competition (Innovation Track).
 | 3 | Rain maps (IDW) + nowcasting (pysteps) | done — see [results/phase3_maps.json](results/phase3_maps.json), [results/phase3_nowcast.json](results/phase3_nowcast.json) |
 | 4 | Virtual Algerian network (simulation) | done — see [results/phase4.md](results/phase4.md), explainer Part 4, interactive replay in [site/phase4/index.html](site/phase4/index.html) |
 | 5 | Flood-risk layer: 2D flood model (own package `src/floodrisk/`) on the Phase 4 storms, hazard, alarms (simulation) | done — see [results/phase5/phase5.md](results/phase5/phase5.md), explainer Part 5, plan in [docs/phase5/PLAN.md](docs/phase5/PLAN.md), local page `/flood/` |
-| 6 | Dashboard | – |
+| 6 | Control-room dashboard: towers, rain, 3D flood water and alarm on one screen, with a guided tour (simulation) | done — explainer Part 6, plan in [docs/phase6/PLAN.md](docs/phase6/PLAN.md), local page `/dashboard/` (build: `scripts/phase6/run_dashboard_floods.py` then `scripts/phase6/export_dashboard.py`) |
 | 7 | Report, pitch, video script | – |
 
 ## Layout
