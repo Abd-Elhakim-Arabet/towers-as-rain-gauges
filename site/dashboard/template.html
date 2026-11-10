@@ -669,7 +669,7 @@ const map = new maplibregl.Map({
         layout: { visibility: M() ? "visible" : "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffffff",
         "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 10, ["match", ["get", "class"], ["motorway", "trunk", "primary"], 0.9, 0.25], 16, ["match", ["get", "class"], ["motorway", "trunk", "primary"], 13, ["secondary", "tertiary"], 9, 4.5]] } },
       { id: "buildings", type: "fill-extrusion", source: "omt", "source-layer": "building", minzoom: 13,
-        paint: { "fill-extrusion-color": M() ? ["interpolate", ["linear"], ["coalesce", ["get", "render_height"], 8], 0, "#181e2c", 10, "#162c68", 25, "#1646c4", 60, "#286eff"] : "#cfc8bc",
+        paint: { "fill-extrusion-color": M() ? ["interpolate", ["linear"], ["coalesce", ["get", "render_height"], 8], 0, "#f6f9fd", 10, "#d4e2fa", 25, "#a4c0f6", 60, "#7098f0"] : "#cfc8bc",
           "fill-extrusion-height": ["interpolate", ["linear"], ["zoom"], 13, 0, 14, ["coalesce", ["get", "render_height"], 8]],
           "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0], "fill-extrusion-opacity": M() ? 1 : 0.88, "fill-extrusion-vertical-gradient": true } } ],
     sky: { "sky-color": "#5a6672", "horizon-color": "#8f989f", "fog-color": "#727b83", "sky-horizon-blend": 0.6,
@@ -804,8 +804,8 @@ function atmosphere() {
   }
   if (map.getLayer("buildings")) map.setPaintProperty("buildings", "fill-extrusion-color", m
     ? ["interpolate", ["linear"], ["coalesce", ["get", "render_height"], 8],
-        0, css(mix([24, 30, 44], [18, 22, 32])), 10, css(mix([22, 44, 104], [18, 32, 72])),
-        25, css(mix([22, 70, 196], [20, 50, 140])), 60, css(mix([40, 110, 255], [30, 80, 190]))]
+        0, css(mix([246, 249, 253], [214, 222, 234])), 10, css(mix([212, 226, 250], [184, 198, 222])),
+        25, css(mix([164, 192, 246], [146, 166, 204])), 60, css(mix([112, 152, 240], [108, 130, 180]))]
     : css(mix([210, 203, 192], [150, 148, 145])));
 }
 
