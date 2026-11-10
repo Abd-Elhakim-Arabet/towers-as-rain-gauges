@@ -15,15 +15,16 @@
    Look: one neutral glass material, sentence-case labels, hairlines instead of nested boxes. */
 :root {
   --bg: #09090b; --glass: rgba(18, 18, 21, .74); --glass2: rgba(24, 24, 28, .9);
-  --line: rgba(255, 255, 255, .07); --edge: rgba(255, 255, 255, .08); --edge2: rgba(255, 255, 255, .14);
-  --hover: rgba(255, 255, 255, .05); --sel: rgba(255, 255, 255, .09);
-  --ink: #f4f4f5; --ink2: #a1a1aa; --muted: #71717a; --grid: rgba(255, 255, 255, .06);
+  --line: rgba(var(--fg), .07); --edge: rgba(var(--fg), .08); --edge2: rgba(var(--fg), .14);
+  --hover: rgba(var(--fg), .05); --sel: rgba(var(--fg), .09);
+  --ink: #f4f4f5; --ink2: #a1a1aa; --muted: #71717a; --grid: rgba(var(--fg), .06);
   --accent: #f4f4f5;
   --s-truth: #f0efec; --s-ai: #3987e5; --s-classical: #d95926; --s-imerg: #c98500;
   --st-normal: #34c47c; --st-watch: #e9c53a; --st-warning: #f08a3a; --st-flood: #ef4e4e;
   --font: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "Geist Mono", ui-monospace, Menlo, monospace;
-  --r: 18px;
+  --r: 18px; --fg: 255, 255, 255; --primary: #f4f4f5; --on-primary: #09090b; --knob: #d4d4d8;
+  --shadow: 0 12px 40px rgba(0, 0, 0, .35); --ctrl-filter: invert(1) brightness(.85); --scrim: rgba(0, 0, 0, .5); --sim: #f5c77e;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -32,7 +33,7 @@ body { background: var(--bg); color: var(--ink); font: 13px/1.45 var(--font); ov
   font-feature-settings: "tnum" 1, "cv11" 1; }
 #map { position: fixed; inset: 0; }
 .glass { background: var(--glass); border-radius: var(--r); backdrop-filter: blur(24px) saturate(1.5); -webkit-backdrop-filter: blur(24px) saturate(1.5);
-  box-shadow: inset 0 0 0 1px var(--edge), inset 0 1px 0 rgba(255, 255, 255, .05), 0 12px 40px rgba(0, 0, 0, .35); }
+  box-shadow: inset 0 0 0 1px var(--edge), inset 0 1px 0 rgba(255, 255, 255, .06), var(--shadow); }
 button { font: inherit; color: inherit; }
 button:focus-visible, [tabindex]:focus-visible { outline: 2px solid #8ab4ff; outline-offset: 2px; }
 h3 { margin: 0 0 10px; font-size: 12px; font-weight: 500; color: var(--ink2); letter-spacing: 0; }
@@ -45,13 +46,13 @@ header { position: fixed; top: 12px; left: 12px; right: 12px; height: 54px; disp
 .brand .bt { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
 .brand b { font-size: 13.5px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
 .brand span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.seg { display: inline-flex; background: rgba(255, 255, 255, .05); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg { display: inline-flex; background: rgba(var(--fg), .05); border-radius: 10px; padding: 3px; gap: 2px; }
 .seg button { background: transparent; border: 0; padding: 5px 12px; border-radius: 7px; cursor: pointer; color: var(--ink2); white-space: nowrap; font-weight: 500; transition: background .15s, color .15s; }
 .seg button:hover { color: var(--ink); }
-.seg button[aria-pressed="true"] { background: rgba(255, 255, 255, .12); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .3); }
+.seg button[aria-pressed="true"] { background: rgba(var(--fg), .12); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .3); }
 header .seg { margin-left: 6px; }
 #status { margin: 0 auto; display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 10px; border-radius: 12px;
-  background: rgba(255, 255, 255, .04); min-width: 0; transition: background .4s, box-shadow .4s; }
+  background: rgba(var(--fg), .04); min-width: 0; transition: background .4s, box-shadow .4s; }
 #status .ic { width: 22px; height: 22px; display: grid; place-items: center; flex: none; transition: color .4s; }
 #status .ic svg { width: 20px; height: 20px; }
 #status .lv { font-weight: 600; font-size: 13.5px; letter-spacing: -.005em; line-height: 1.2; }
@@ -61,15 +62,15 @@ header .seg { margin-left: 6px; }
 .clock { text-align: right; line-height: 1.2; padding-right: 4px; }
 .clock b { font: 500 17px var(--font); letter-spacing: -.01em; display: block; font-variant-numeric: tabular-nums; }
 .clock span { font-size: 11.5px; color: var(--muted); }
-.hbtn { background: rgba(255, 255, 255, .06); border: 0; border-radius: 10px; padding: 8px 13px; cursor: pointer; white-space: nowrap; font-weight: 500; transition: background .15s; }
-.hbtn:hover { background: rgba(255, 255, 255, .11); }
+.hbtn { background: rgba(var(--fg), .06); border: 0; border-radius: 10px; padding: 8px 13px; cursor: pointer; white-space: nowrap; font-weight: 500; transition: background .15s; }
+.hbtn:hover { background: rgba(var(--fg), .11); }
 .hbtn:disabled { opacity: .35; cursor: default; }
-.hbtn.primary { background: var(--ink); color: #09090b; }
-.hbtn.primary:hover { background: #fff; }
+.hbtn.primary { background: var(--primary); color: var(--on-primary); }
+.hbtn.primary:hover { filter: brightness(1.08); }
 .hbtn.ghost { background: transparent; color: var(--ink2); }
 .hbtn.ghost:hover { color: var(--ink); background: var(--hover); }
-.sim { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #f5c77e; white-space: nowrap; padding: 0 4px; }
-.sim::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #f5c77e; box-shadow: 0 0 0 3px rgba(245, 199, 126, .18); }
+.sim { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--sim); white-space: nowrap; padding: 0 4px; }
+.sim::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--sim); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sim) 22%, transparent); }
 
 /* ---------- side panels ---------- */
 #left { position: fixed; top: 78px; left: 12px; width: 264px; bottom: 146px; padding: 16px 14px; overflow-y: auto; z-index: 5; display: flex; flex-direction: column; gap: 0; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.15) transparent; }
@@ -89,18 +90,18 @@ header .seg { margin-left: 6px; }
 .src em { font-style: normal; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .tog { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; cursor: pointer; color: var(--ink2); transition: color .15s; }
 .tog:hover { color: var(--ink); }
-.tog input { order: 2; appearance: none; width: 26px; height: 15px; border-radius: 8px; background: rgba(255, 255, 255, .14); position: relative; margin: 0; cursor: pointer; flex: none; transition: background .2s; }
-.tog input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: #d4d4d8; transition: transform .2s, background .2s; }
-.tog input:checked { background: var(--ink); }
-.tog input:checked::after { transform: translateX(11px); background: #09090b; }
+.tog input { order: 2; appearance: none; width: 26px; height: 15px; border-radius: 8px; background: rgba(var(--fg), .14); position: relative; margin: 0; cursor: pointer; flex: none; transition: background .2s; }
+.tog input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--knob); box-shadow: 0 1px 2px rgba(0, 0, 0, .2); transition: transform .2s, background .2s; }
+.tog input:checked { background: var(--primary); }
+.tog input:checked::after { transform: translateX(11px); background: var(--on-primary); }
 .tog input:focus-visible { outline: 2px solid #8ab4ff; outline-offset: 2px; }
 .grp { font-size: 11.5px; color: var(--muted); margin: 10px 0 2px; }
 .grp:first-of-type { margin-top: 0; }
 .views { display: flex; flex-wrap: wrap; gap: 6px; }
-.views button { background: rgba(255, 255, 255, .05); border: 0; border-radius: 999px; padding: 5px 11px; cursor: pointer; font-size: 12px; color: var(--ink2); transition: background .15s, color .15s; }
-.views button:hover { background: rgba(255, 255, 255, .1); color: var(--ink); }
-#wmode { display: flex; margin: 6px 0 4px; }
-#wmode button { flex: 1; padding: 4px 6px; font-size: 12px; }
+.views button { background: rgba(var(--fg), .05); border: 0; border-radius: 999px; padding: 5px 11px; cursor: pointer; font-size: 12px; color: var(--ink2); transition: background .15s, color .15s; }
+.views button:hover { background: rgba(var(--fg), .1); color: var(--ink); }
+#wmode, #theme { display: flex; margin: 6px 0 4px; }
+#wmode button, #theme button { flex: 1; padding: 4px 6px; font-size: 12px; }
 .legend .ramp { height: 6px; border-radius: 3px; margin: 4px 0 4px; }
 .legend .rl { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .note { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 8px 0 0; }
@@ -113,7 +114,7 @@ header .seg { margin-left: 6px; }
 .kpi .v { font: 500 26px/1.15 var(--font); letter-spacing: -.03em; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .kpi .v small { font: 400 12px var(--font); letter-spacing: 0; color: var(--ink2); margin-left: 4px; }
 .kpi .s { font-size: 11.5px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bar { height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .08); margin-top: 9px; overflow: hidden; position: relative; }
+.bar { height: 3px; border-radius: 2px; background: rgba(var(--fg), .08); margin-top: 9px; overflow: hidden; position: relative; }
 .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; transition: width .25s, background .25s; }
 #alarmcard { padding: 0; }
 #alarmcard .t { font-weight: 600; font-size: 15px; letter-spacing: -.01em; margin-bottom: 4px; }
@@ -130,7 +131,7 @@ svg text { font-family: var(--font); font-variant-numeric: tabular-nums; }
 #tip b { font-weight: 600; }
 #tip .k { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; }
 .com { display: grid; grid-template-columns: 1fr 110px 54px; gap: 10px; align-items: center; font-size: 12.5px; margin: 6px 0; color: var(--ink2); }
-.com .b { height: 4px; background: rgba(255, 255, 255, .06); border-radius: 2px; overflow: hidden; }
+.com .b { height: 4px; background: rgba(var(--fg), .06); border-radius: 2px; overflow: hidden; }
 .com .b i { display: block; height: 100%; border-radius: 2px; transition: width .3s; }
 .com .n { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
 .empty { color: var(--muted); font-size: 12px; }
@@ -145,18 +146,18 @@ svg text { font-family: var(--font); font-variant-numeric: tabular-nums; }
 .node b { display: block; font-size: 12px; font-weight: 500; color: var(--ink2); }
 .node.hi b { color: var(--ink); }
 .node span { display: block; font-size: 11.5px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.arrow { align-self: center; color: rgba(255, 255, 255, .2); padding: 0; font-size: 12px; }
+.arrow { align-self: center; color: rgba(var(--fg), .2); padding: 0; font-size: 12px; }
 
 /* ---------- timeline ---------- */
 #timeline { position: fixed; left: 12px; right: 12px; bottom: 12px; height: 122px; z-index: 6; padding: 12px 16px 10px 14px; display: grid; grid-template-columns: auto 1fr; gap: 16px; }
 .tcontrols { display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; width: 96px; }
-#play { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--ink); color: #09090b; cursor: pointer; display: grid; place-items: center; transition: transform .15s, background .15s; }
-#play:hover { background: #fff; transform: scale(1.04); }
+#play { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--primary); color: var(--on-primary); cursor: pointer; display: grid; place-items: center; transition: transform .15s, filter .15s; box-shadow: 0 4px 14px rgba(29, 92, 255, var(--play-glow, 0)); }
+#play:hover { filter: brightness(1.08); transform: scale(1.04); }
 #play svg { width: 18px; height: 18px; }
-#speed { display: flex; gap: 0; background: rgba(255, 255, 255, .05); border-radius: 8px; padding: 2px; }
+#speed { display: flex; gap: 0; background: rgba(var(--fg), .05); border-radius: 8px; padding: 2px; }
 #speed button { border: 0; background: transparent; border-radius: 6px; padding: 2px 7px; font-size: 11px; cursor: pointer; color: var(--muted); font-variant-numeric: tabular-nums; }
 #speed button:hover { color: var(--ink); }
-#speed button[aria-pressed="true"] { background: rgba(255, 255, 255, .12); color: var(--ink); }
+#speed button[aria-pressed="true"] { background: rgba(var(--fg), .12); color: var(--ink); }
 #tl { width: 100%; height: 100%; display: block; cursor: pointer; touch-action: none; }
 
 /* ---------- tour + about ---------- */
@@ -168,9 +169,9 @@ svg text { font-family: var(--font); font-variant-numeric: tabular-nums; }
 #tour p { margin: 0; color: var(--ink2); line-height: 1.6; font-size: 13px; }
 #tour .row { display: flex; align-items: center; gap: 6px; margin-top: 16px; }
 #tour .dots { display: flex; gap: 4px; margin-right: auto; }
-#tour .dots i { width: 14px; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .15); transition: background .2s, width .2s; }
+#tour .dots i { width: 14px; height: 3px; border-radius: 2px; background: rgba(var(--fg), .15); transition: background .2s, width .2s; }
 #tour .dots i.on { background: var(--ink); width: 22px; }
-#about { position: fixed; inset: 0; z-index: 20; display: none; place-items: center; background: rgba(0, 0, 0, .5); backdrop-filter: blur(4px); }
+#about { position: fixed; inset: 0; z-index: 20; display: none; place-items: center; background: var(--scrim); backdrop-filter: blur(4px); }
 #about.on { display: grid; }
 #about .box { width: min(620px, calc(100% - 32px)); max-height: calc(100% - 40px); overflow-y: auto; padding: 24px 26px; }
 #about h2 { margin: 0 0 10px; font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
@@ -181,7 +182,7 @@ svg text { font-family: var(--font); font-variant-numeric: tabular-nums; }
 #loading { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: var(--bg); transition: opacity .6s; }
 #loading.done { opacity: 0; pointer-events: none; }
 #loading .in { text-align: center; color: var(--muted); }
-#loading .ring { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .1); border-top-color: var(--ink); margin: 0 auto 14px; animation: spin .9s linear infinite; }
+#loading .ring { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(var(--fg), .1); border-top-color: var(--ink); margin: 0 auto 14px; animation: spin .9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .maplibregl-ctrl-attrib { font-size: 10px; background: rgba(0, 0, 0, .4) !important; color: #999; }
 .maplibregl-ctrl-attrib a { color: #bbb; }
@@ -191,8 +192,27 @@ svg text { font-family: var(--font); font-variant-numeric: tabular-nums; }
 .maplibregl-ctrl-group { background: var(--glass) !important; backdrop-filter: blur(20px); border-radius: 12px !important; box-shadow: inset 0 0 0 1px var(--edge), 0 8px 24px rgba(0,0,0,.3) !important; overflow: hidden; }
 .maplibregl-ctrl-group button { width: 32px; height: 32px; }
 .maplibregl-ctrl-group button + button { border-top: 1px solid var(--line) !important; }
-.maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(1) brightness(.85); }
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: var(--ctrl-filter); }
 .maplibregl-ctrl-scale { background: rgba(0, 0, 0, .35); color: #ddd; border-color: rgba(255,255,255,.6); font-size: 10.5px; }
+
+/* ---------- "Model" theme: a white clay city with electric-blue water ---------- */
+[data-theme="model"] {
+  --bg: #e6ebf2; --glass: rgba(250, 251, 253, .86); --glass2: rgba(255, 255, 255, .94); --fg: 15, 23, 42;
+  --line: rgba(15, 23, 42, .07); --edge: rgba(15, 23, 42, .07); --edge2: rgba(15, 23, 42, .13);
+  --hover: rgba(15, 23, 42, .045); --sel: rgba(29, 92, 255, .08);
+  --ink: #0b1220; --ink2: #4a5568; --muted: #8a96a8; --grid: rgba(15, 23, 42, .06);
+  --accent: #1d5cff; --primary: #1d5cff; --on-primary: #fff; --knob: #fff; --play-glow: .35;
+  --s-truth: #334155; --st-normal: #12a150; --st-watch: #c99a06; --st-warning: #e2701b; --st-flood: #e5383b;
+  --shadow: 0 18px 50px rgba(40, 60, 100, .14), 0 2px 6px rgba(40, 60, 100, .06); --ctrl-filter: none;
+  --scrim: rgba(30, 41, 59, .25); --sim: #b7791f; color-scheme: light;
+}
+[data-theme="model"] .seg button[aria-pressed="true"] { background: #fff; box-shadow: 0 1px 3px rgba(15, 23, 42, .14); }
+[data-theme="model"] .src[aria-pressed="true"] b, [data-theme="model"] .node.hi b { color: var(--ink); }
+[data-theme="model"] .node.hi svg { color: var(--accent); }
+[data-theme="model"] .maplibregl-ctrl-attrib { background: rgba(255, 255, 255, .6) !important; color: #64748b; }
+[data-theme="model"] .maplibregl-ctrl-attrib a { color: #475569; }
+[data-theme="model"] .maplibregl-ctrl-scale { background: rgba(255, 255, 255, .6); color: #334155; border-color: #64748b; }
+[data-theme="model"] #status { background: rgba(255, 255, 255, .5); }
 
 @media (max-width: 1280px) { #status .why { max-width: 260px; } }
 @media (max-width: 1100px) {
@@ -240,6 +260,8 @@ svg text { font-family: var(--font); font-variant-numeric: tabular-nums; }
   </section>
   <section>
     <h3>Layers</h3>
+    <div class="grp">Map style</div>
+    <div class="seg" id="theme" role="group" aria-label="Map style"><button type="button" data-v="model">Model</button><button type="button" data-v="satellite">Satellite</button></div>
     <div class="grp">Network</div>
     <label class="tog"><input type="checkbox" data-l="links" checked> Microwave links</label>
     <label class="tog"><input type="checkbox" data-l="towers" checked> Towers</label>
@@ -340,8 +362,11 @@ svg text { font-family: var(--font); font-variant-numeric: tabular-nums; }
 "use strict";
 const DATA = /*DATA*/null;
 const BASE = location.href.replace(/[#?].*$/, "").replace(/[^/]*$/, "");
+let theme = "model"; try { theme = localStorage.getItem("trg-theme") || "model"; } catch (e) {}
+document.documentElement.dataset.theme = theme;
+const M = () => theme === "model";
 const SRC = ["truth", "ai", "classical", "imerg"];
-const SRC_COL = { truth: "#f0efec", ai: "#3987e5", classical: "#d95926", imerg: "#c98500" };
+const SRC_COL = { truth: M() ? "#334155" : "#f0efec", ai: "#3987e5", classical: "#d95926", imerg: "#c98500" };
 const SRC_NOTE = {
   truth: "The simulated true rain, 500 m detail everywhere. The reference every other source is judged against.",
   ai: "What the towers would measure, read by our AI (Part 2). Available 5 minutes after it falls.",
@@ -406,6 +431,7 @@ uniform vec2 uGrid;
 uniform vec3 uSky;
 uniform vec3 uFog;
 uniform vec3 uSun;
+uniform float uTheme;
 out vec4 fragColor;
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float noise(vec2 p) {
@@ -443,7 +469,8 @@ void main() {
   float k = 1.0 - exp(-vDepth * 1.3);
   vec3 body;
   if (uMode < 0.5) {
-    body = mix(vec3(0.44, 0.37, 0.26), vec3(0.20, 0.165, 0.11), k);  // muddy flood water, silt to dark brown
+    body = uTheme > 0.5 ? mix(vec3(0.16, 0.45, 1.0), vec3(0.02, 0.18, 0.86), k)   // model view: electric blue
+                        : mix(vec3(0.44, 0.37, 0.26), vec3(0.20, 0.165, 0.11), k);  // muddy flood water, silt to dark brown
   } else if (uMode < 1.5) {
     float s = clamp(log(1.0 + vDepth * 6.0) / log(1.0 + 2.0 * 6.0), 0.0, 1.0);
     body = mix(vec3(0.72, 0.83, 0.96), vec3(0.06, 0.26, 0.51), s);
@@ -459,6 +486,7 @@ void main() {
   // wet sheen: always some sky in it; seen from afar, a flooded plain reads as a silver sheet
   float far = smoothstep(1200.0, 14000.0, vDist);
   float gloss = uMode < 0.5 ? min(0.9, 0.2 + 0.8 * F + 0.45 * far) : 0.45 * F + 0.25 * far;
+  if (uTheme > 0.5) gloss *= 0.18;
   vec3 col = mix(body * lit, sky, gloss);
   float spec = pow(max(dot(reflect(-uSun, N), V), 0.0), 90.0) * (1.0 - 0.75 * uStorm);
   col += vec3(1.0, 0.96, 0.88) * spec * 0.8;
@@ -506,7 +534,7 @@ class WaterLayer extends deck.Layer {
     if (!model || !p.frameA) return;
     model.setUniforms(uniforms);
     model.setUniforms({ uMix: p.mix, uHmax: p.hmax, uVscale: p.vscale, uExag: EX, uTime: p.time, uRain: p.rain, uStorm: p.storm,
-      uMode: p.mode, uGrid: p.grid, uSky: p.sky, uFog: p.fog, uSun: p.sun });
+      uMode: p.mode, uTheme: p.theme, uGrid: p.grid, uSky: p.sky, uFog: p.fog, uSun: p.sun });
     model.setBindings({ uFrameA: this.texture(p.frameA), uFrameB: this.texture(p.frameB || p.frameA) });
     model.draw(this.context.renderPass);
   }
@@ -620,13 +648,30 @@ const map = new maplibregl.Map({
         tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"] },
       dem: { type: "raster-dem", encoding: "terrarium", tileSize: 256, minzoom: 8, maxzoom: 12,
         attribution: "Terrain: Copernicus GLO-30", tiles: [BASE + "data/terrain/{z}/{x}/{y}.png"] },
+      demhs: { type: "raster-dem", encoding: "terrarium", tileSize: 256, minzoom: 8, maxzoom: 12, tiles: [BASE + "data/terrain/{z}/{x}/{y}.png"] },
       omt: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "© OpenStreetMap contributors · OpenFreeMap" } },
     layers: [
-      { id: "bg", type: "background", paint: { "background-color": "#1a2028" } },
-      { id: "satellite", type: "raster", source: "sat", paint: { "raster-brightness-max": 0.8, "raster-saturation": -0.2, "raster-contrast": 0.06 } },
-      { id: "buildings", type: "fill-extrusion", source: "omt", "source-layer": "building", minzoom: 13.5,
-        paint: { "fill-extrusion-color": "#cfc8bc", "fill-extrusion-height": ["coalesce", ["get", "render_height"], 8],
-          "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0], "fill-extrusion-opacity": 0.88 } } ],
+      { id: "bg", type: "background", paint: { "background-color": M() ? "#e9eef5" : "#1a2028" } },
+      { id: "satellite", type: "raster", source: "sat", layout: { visibility: M() ? "none" : "visible" }, paint: { "raster-brightness-max": 0.8, "raster-saturation": -0.2, "raster-contrast": 0.06 } },
+      { id: "m-hillshade", type: "hillshade", source: "demhs", layout: { visibility: M() ? "visible" : "none" }, paint: { "hillshade-shadow-color": "#8796ad",
+        "hillshade-highlight-color": "#ffffff", "hillshade-accent-color": "#c9d2df", "hillshade-exaggeration": 0.85, "hillshade-illumination-direction": 315 } },
+      { id: "m-land", type: "fill", source: "omt", "source-layer": "landcover", layout: { visibility: M() ? "visible" : "none" }, paint: { "fill-color": "#dde4ee", "fill-opacity": 0.55 } },
+      { id: "m-landuse", type: "fill", source: "omt", "source-layer": "landuse", layout: { visibility: M() ? "visible" : "none" }, paint: { "fill-color": "#f3f6fa", "fill-opacity": 0.6 } },
+      { id: "m-park", type: "fill", source: "omt", "source-layer": "park", layout: { visibility: M() ? "visible" : "none" }, paint: { "fill-color": "#d4dee8", "fill-opacity": 0.7 } },
+      { id: "m-water", type: "fill", source: "omt", "source-layer": "water", layout: { visibility: M() ? "visible" : "none" }, paint: { "fill-color": "#1f5cff", "fill-antialias": true } },
+      { id: "m-shore", type: "line", source: "omt", "source-layer": "water", layout: { visibility: M() ? "visible" : "none" }, paint: { "line-color": "#9fbaff", "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.6, 16, 2.5], "line-blur": 1 } },
+      { id: "m-waterway", type: "line", source: "omt", "source-layer": "waterway", layout: { visibility: M() ? "visible" : "none", "line-cap": "round" },
+        paint: { "line-color": "#2f6bff", "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.6, 16, 3] } },
+      { id: "m-road-case", type: "line", source: "omt", "source-layer": "transportation", filter: ["match", ["get", "class"], ["path", "track", "ferry", "rail", "transit"], false, true],
+        layout: { visibility: M() ? "visible" : "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#c3cddb",
+        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 10, ["match", ["get", "class"], ["motorway", "trunk", "primary"], 1.6, 0.5], 16, ["match", ["get", "class"], ["motorway", "trunk", "primary"], 16, ["secondary", "tertiary"], 11, 6]] } },
+      { id: "m-road", type: "line", source: "omt", "source-layer": "transportation", filter: ["match", ["get", "class"], ["path", "track", "ferry", "rail", "transit"], false, true],
+        layout: { visibility: M() ? "visible" : "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffffff",
+        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 10, ["match", ["get", "class"], ["motorway", "trunk", "primary"], 0.9, 0.25], 16, ["match", ["get", "class"], ["motorway", "trunk", "primary"], 13, ["secondary", "tertiary"], 9, 4.5]] } },
+      { id: "buildings", type: "fill-extrusion", source: "omt", "source-layer": "building", minzoom: 13,
+        paint: { "fill-extrusion-color": M() ? "#f6f8fb" : "#cfc8bc",
+          "fill-extrusion-height": ["interpolate", ["linear"], ["zoom"], 13, 0, 14, ["coalesce", ["get", "render_height"], 8]],
+          "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0], "fill-extrusion-opacity": M() ? 1 : 0.88, "fill-extrusion-vertical-gradient": true } } ],
     sky: { "sky-color": "#5a6672", "horizon-color": "#8f989f", "fog-color": "#727b83", "sky-horizon-blend": 0.6,
       "horizon-fog-blend": 0.7, "fog-ground-blend": 0.8, "atmosphere-blend": 0.6 } },
   center: [3.05, 36.75], zoom: 11.5, pitch: 58, bearing: -20 });
@@ -650,7 +695,20 @@ function setVectors() {
   add("basin", fc(C.shapes.basin), "line", { "line-color": "#9fd0ff", "line-width": 2.2, "line-opacity": 0.85 }, "buildings");
   add("zone", fc(C.shapes.zone), "line", { "line-color": "#f2c94c", "line-width": 2, "line-dasharray": [1.2, 1.2] }, "buildings");
   add("towerbox", fc(C.shapes.towerbox), "line", { "line-color": "#5aa9ff", "line-width": 2.4, "line-dasharray": [3, 2] }, "buildings");
-  applyVis();
+  applyVis(); applyThemeMap();
+}
+const MODEL_LAYERS = ["m-hillshade", "m-land", "m-landuse", "m-park", "m-water", "m-shore", "m-waterway", "m-road-case", "m-road"];
+function applyThemeMap() {
+  const m = M(), vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  const P = (id, k, v) => map.getLayer(id) && map.setPaintProperty(id, k, v);
+  vis("satellite", !m); MODEL_LAYERS.forEach(id => vis(id, m));
+  P("bg", "background-color", m ? "#e9eef5" : "#1a2028");
+  P("buildings", "fill-extrusion-opacity", m ? 1 : 0.88);
+  map.setLight(m ? { anchor: "viewport", color: "#ffffff", intensity: 0.38, position: [1.5, 200, 38] }
+                 : { anchor: "viewport", color: "#ffffff", intensity: 0.5, position: [1.15, 210, 30] });
+  P("basin", "line-color", m ? "#1d5cff" : "#9fd0ff"); P("towerbox", "line-color", m ? "#1d5cff" : "#5aa9ff");
+  P("zone", "line-color", m ? "#e08a00" : "#f2c94c");
+  P("communes", "line-color", m ? "#64748b" : "#f3d9c4"); P("communes", "line-opacity", m ? 0.55 : 0.45);
 }
 function applyVis() {
   const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
@@ -732,21 +790,29 @@ function atmosphere() {
   const w = Math.min(1, Math.log1p(r) / Math.log1p(12));
   storm += (w - storm) * 0.08;
   const mix = (a, b) => a.map((v, i) => v + (b[i] - v) * storm);
-  const sky = mix([92, 104, 116], [50, 56, 63]), hor = mix([150, 158, 165], [98, 104, 110]), fog = mix([118, 126, 133], [80, 86, 92]);
+  const m = M();
+  const sky = m ? mix([214, 225, 240], [168, 180, 198]) : mix([92, 104, 116], [50, 56, 63]);
+  const hor = m ? mix([246, 248, 252], [206, 214, 226]) : mix([150, 158, 165], [98, 104, 110]);
+  const fog = m ? mix([236, 241, 247], [200, 208, 220]) : mix([118, 126, 133], [80, 86, 92]);
   skyRGB = hor.map(v => v / 255); fogRGB = fog.map(v => v / 255);
   const css = a => `rgb(${a.map(Math.round).join(",")})`;
   map.setSky({ "sky-color": css(sky), "horizon-color": css(hor), "fog-color": css(fog), "sky-horizon-blend": 0.6,
-    "horizon-fog-blend": 0.65 + 0.25 * storm, "fog-ground-blend": 0.85 - 0.25 * storm, "atmosphere-blend": 0.6 });
-  if (map.getLayer("satellite")) {
+    "horizon-fog-blend": 0.65 + 0.25 * storm, "fog-ground-blend": m ? 0.45 - 0.15 * storm : 0.85 - 0.25 * storm, "atmosphere-blend": 0.6 });
+  if (!m && map.getLayer("satellite")) {
     map.setPaintProperty("satellite", "raster-brightness-max", 0.84 - 0.3 * storm);
     map.setPaintProperty("satellite", "raster-saturation", -0.15 - 0.4 * storm);
   }
-  if (map.getLayer("buildings")) map.setPaintProperty("buildings", "fill-extrusion-color", css(mix([210, 203, 192], [150, 148, 145])));
+  if (map.getLayer("buildings")) map.setPaintProperty("buildings", "fill-extrusion-color", css(m ? mix([247, 249, 252], [218, 224, 233]) : mix([210, 203, 192], [150, 148, 145])));
 }
 
 /* ---------- deck layers ---------- */
 let T = 0;
 function linkColor(mm) {
+  if (M()) {                                    // model view: navy when dry, blue to orange in rain
+    if (mm <= 0.25) return [40, 64, 120, 70];
+    const s = Math.min(1, Math.log1p(mm) / Math.log1p(25));
+    return [29 + 226 * s, 92 + 8 * s, 255 - 225 * s, 130 + 110 * s];
+  }
   if (mm <= 0.25) return [150, 205, 255, 60];
   const s = Math.min(1, Math.log1p(mm) / Math.log1p(25));
   return [150 + 105 * s, 205 - 70 * s, 255 - 195 * s, 110 + 120 * s];
@@ -757,7 +823,7 @@ function layers() {
     const [A, B, m] = framePair(), s = C.series[src], h = Math.min(s.basin_rain.length - 1, Math.floor(t));
     if (A) out.push(new WaterLayer({ id: "water", mesh: P.mesh, frameA: A, frameB: B, mix: m, hmax: C.h_max, vscale: C.v_scale,
       time: T, rain: Math.min(1, (C.series.truth.basin_rain[h] || 0) / 20), storm, mode: wmode,
-      grid: [C.gridM[0], C.gridM[1]], sky: skyRGB, fog: fogRGB, sun: [-0.45, -0.55, 0.7] }));
+      theme: M() ? 1 : 0, grid: [C.gridM[0], C.gridM[1]], sky: skyRGB, fog: fogRGB, sun: [-0.45, -0.55, 0.7] }));
   }
   const ls = LINK_SRC[src];
   if (show.links && ls) {
@@ -770,19 +836,19 @@ function layers() {
   }
   if (show.towers) {
     if (z > 13.6) out.push(new deck.SimpleMeshLayer({ id: "masts", data: P.towers, mesh: MAST_MESH, getPosition: d => d.p,
-      getOrientation: d => [0, d.rot, 0], getColor: [178, 184, 190], sizeScale: 1.6,
+      getOrientation: d => [0, d.rot, 0], getColor: M() ? [236, 240, 246] : [178, 184, 190], sizeScale: 1.6,
       material: { ambient: 0.45, diffuse: 0.7, shininess: 40, specularColor: [90, 90, 90] } }));
     out.push(new deck.ScatterplotLayer({ id: "beacons", data: P.towers, getPosition: d => [d.p[0], d.p[1], d.p[2] + (z > 13.6 ? MAST * 1.6 + 4 : DISH)],
       getRadius: 2.5, radiusMinPixels: z > 13.6 ? 2 : 1, radiusMaxPixels: 6, billboard: true,
-      getFillColor: [255, 226, 160, z > 12.5 ? 210 : 120], updateTriggers: { getFillColor: z > 12.5 }, parameters: { depthWriteEnabled: false } }));
+      getFillColor: M() ? [29, 92, 255, z > 12.5 ? 230 : 150] : [255, 226, 160, z > 12.5 ? 210 : 120], updateTriggers: { getFillColor: [z > 12.5, theme] }, parameters: { depthWriteEnabled: false } }));
   }
   if (show.rain && drops.n && z > 11.8) out.push(new RainLayer({ id: "rain", data: { length: drops.n,
       attributes: { getSourcePosition: { value: drops.src, size: 3 }, getTargetPosition: { value: drops.dst, size: 3 } } },
-    getColor: [214, 226, 245, 170 * Math.max(0, Math.min(1, (z - 11.8) / 1.8))], getWidth: 1.1, widthUnits: "pixels",
-    parameters: { depthWriteEnabled: false, blend: true, blendColorSrcFactor: "src-alpha", blendColorDstFactor: "one" } }));
+    getColor: M() ? [70, 105, 170, 150 * Math.max(0, Math.min(1, (z - 11.8) / 1.8))] : [214, 226, 245, 170 * Math.max(0, Math.min(1, (z - 11.8) / 1.8))], getWidth: 1.1, widthUnits: "pixels",
+    parameters: { depthWriteEnabled: false, blend: true, blendColorSrcFactor: "src-alpha", blendColorDstFactor: M() ? "one-minus-src-alpha" : "one" } }));
   if (show.communes) out.push(new deck.TextLayer({ id: "labels", data: P.labels, getPosition: d => d.p, getText: d => d.name,
-    getSize: 13, getColor: [246, 240, 232, 235], fontFamily: "Geist, sans-serif", fontWeight: 600, billboard: true,
-    outlineWidth: 4, outlineColor: [8, 10, 14, 220], fontSettings: { sdf: true }, characterSet: "auto", parameters: { depthCompare: "always" } }));
+    getSize: 13, getColor: M() ? [15, 23, 42, 235] : [246, 240, 232, 235], fontFamily: "Geist, sans-serif", fontWeight: 600, billboard: true,
+    outlineWidth: 4, outlineColor: M() ? [255, 255, 255, 235] : [8, 10, 14, 220], updateTriggers: { getColor: theme }, fontSettings: { sdf: true }, characterSet: "auto", parameters: { depthCompare: "always" } }));
   return out;
 }
 
@@ -794,6 +860,7 @@ const ICON = {
   flood: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 15c2.5 0 2.5-1.6 5-1.6s2.5 1.6 5 1.6 2.5-1.6 5-1.6 2.5 1.6 5 1.6M2 19.5c2.5 0 2.5-1.6 5-1.6s2.5 1.6 5 1.6 2.5-1.6 5-1.6 2.5 1.6 5 1.6"/><path d="M12 3v7M9 7.5l3 3 3-3"/></svg>' };
 const ST_COL = { normal: "--st-normal", watch: "--st-watch", warning: "--st-warning", flood: "--st-flood" };
 const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fg = a => `rgba(${cssv("--fg")},${a})`;
 const tOf = s => new Date(Date.parse(C.hours0.replace(" ", "T") + "Z") + s * 1000);
 const hhmm = d => d.toISOString().slice(11, 16);
 const dayLabel = d => d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
@@ -879,20 +946,20 @@ function chart() {
   const x = i => m.l + (W - m.l - m.r) * i / (n - 1), y = v => H - m.b - (H - m.t - m.b) * v / ymax;
   const st = Math.pow(10, Math.floor(Math.log10(ymax / 4))), nice = [1, 2, 5, 10].map(s => s * st).find(s => ymax / s <= 4.5);
   for (let v = 0; v <= ymax; v += nice) {
-    el(svg, "line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: v ? "rgba(255,255,255,.07)" : "rgba(255,255,255,.22)" });
+    el(svg, "line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: v ? fg(.07) : fg(.22) });
     el(svg, "text", { x: m.l - 6, y: y(v) + 3.5, "text-anchor": "end", fill: "#71717a", "font-size": 10 }).textContent = fmt(v);
   }
   const hrs = n * C.q_step_min / 60, tick = hrs > 60 ? 24 : 12;
   for (let hh = 0; hh <= hrs; hh += tick) el(svg, "text", { x: x(hh * 60 / C.q_step_min), y: H - 6, "text-anchor": "middle", fill: "#71717a", "font-size": 10 }).textContent = tOf(hh * 3600).getUTCHours() === 0 ? dayLabel(tOf(hh * 3600)).split(" ").slice(1).join(" ") : hhmm(tOf(hh * 3600));
   if (C.key === "algiers" && obs) {
-    el(svg, "line", { x1: m.l, x2: W - m.r, y1: y(obs), y2: y(obs), stroke: "#f2c94c", "stroke-dasharray": "4 3" });
-    el(svg, "text", { x: W - m.r, y: y(obs) - 4, "text-anchor": "end", fill: "#f2c94c", "font-size": 10 }).textContent = `flood marks ≈${fmt(obs)} m³/s`;
+    el(svg, "line", { x1: m.l, x2: W - m.r, y1: y(obs), y2: y(obs), stroke: M() ? "#d97706" : "#f2c94c", "stroke-dasharray": "4 3" });
+    el(svg, "text", { x: W - m.r, y: y(obs) - 4, "text-anchor": "end", fill: M() ? "#d97706" : "#f2c94c", "font-size": 10 }).textContent = `flood marks ≈${fmt(obs)} m³/s`;
   }
   [...SRC].sort((a, b) => (a === src) - (b === src)).forEach(k => {
     const d = C.series[k].q.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
     el(svg, "path", { d, fill: "none", stroke: SRC_COL[k], "stroke-width": k === src ? 2.2 : 1.2, "stroke-opacity": k === src ? 1 : 0.45, "stroke-linejoin": "round" });
   });
-  const cur = el(svg, "line", { y1: m.t, y2: H - m.b, stroke: "rgba(255,255,255,.55)" });
+  const cur = el(svg, "line", { y1: m.t, y2: H - m.b, stroke: fg(.5) });
   chart.cursor = () => { const xx = x(Math.min(n - 1, t * 60 / C.q_step_min)); cur.setAttribute("x1", xx); cur.setAttribute("x2", xx); };
   chart.cursor();
   const hit = el(svg, "rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent" }), tip = $("tip");
@@ -917,8 +984,8 @@ function timeline() {
   const n = C.nframes - 1, S = C.series[src], x = h => m.l + (W - m.l - m.r) * h / n;
   const rmax = Math.max(4, ...SRC.map(k => Math.max(...C.series[k].basin_rain)));
   const bw = Math.max(1, (W - m.l - m.r) / n - 1.5);
-  el(svg, "rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "rgba(255,255,255,.02)", rx: 8 });
-  const played = el(svg, "rect", { x: m.l, y: m.t, height: H - m.t - m.b, fill: "rgba(255,255,255,.035)", rx: 8 });
+  el(svg, "rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: fg(.025), rx: 8 });
+  const played = el(svg, "rect", { x: m.l, y: m.t, height: H - m.t - m.b, fill: fg(.04), rx: 8 });
   S.basin_rain.forEach((r, h) => {
     if (h >= n || r < 0.05) return;
     const bh = (H - m.t - m.b - 4) * Math.sqrt(r / rmax);
@@ -926,7 +993,7 @@ function timeline() {
   });
   for (let h = 0; h <= n; h += 6) {
     const d = tOf(h * 3600), major = d.getUTCHours() === 0;
-    el(svg, "line", { x1: x(h), x2: x(h), y1: H - m.b, y2: H - m.b + (major ? 6 : 3), stroke: "rgba(255,255,255,.3)" });
+    el(svg, "line", { x1: x(h), x2: x(h), y1: H - m.b, y2: H - m.b + (major ? 6 : 3), stroke: fg(.3) });
     if (major || W > 900) el(svg, "text", { x: x(h), y: H - 5, "text-anchor": "middle", fill: major ? "#a1a1aa" : "#71717a", "font-size": 10, "font-family": "Geist, sans-serif" }).textContent = major ? dayLabel(d) : hhmm(d);
   }
   const mark = (h, col, label, solid, left) => {
@@ -940,8 +1007,8 @@ function timeline() {
   else el(svg, "text", { x: W - m.r - 4, y: m.t - 5, fill: cssv("--st-warning"), "font-size": 10.5, "text-anchor": "end" }).textContent = `${S.label}: no alarm`;
   if (W > 520) el(svg, "text", { x: m.l + 6, y: m.t + 12, fill: "#71717a", "font-size": 10 }).textContent = `rain on the basin, ${S.label.toLowerCase()} (mm/h, √ scale)`;
   const head = el(svg, "g", {});
-  el(head, "line", { y1: m.t, y2: H - m.b, stroke: "#fff", "stroke-width": 2 });
-  el(head, "circle", { cy: H - m.b, r: 4.5, fill: "#fff", stroke: "#09090b", "stroke-width": 2 });
+  el(head, "line", { y1: m.t, y2: H - m.b, stroke: cssv("--ink"), "stroke-width": 2 });
+  el(head, "circle", { cy: H - m.b, r: 4.5, fill: cssv("--ink"), stroke: cssv("--bg"), "stroke-width": 2 });
   timeline.head = () => { const xx = x(t); head.setAttribute("transform", `translate(${xx},0)`); played.setAttribute("width", Math.max(0, xx - m.l)); };
   timeline.head();
   const pick = ev => { const r = svg.getBoundingClientRect(); setTime(Math.max(0, Math.min(n, ((ev.clientX - r.left) * W / r.width - m.l) / (W - m.l - m.r) * n))); };
@@ -970,10 +1037,10 @@ function legend() {
   const lab = [["3 cm", "50 cm", "1 m", "2 m+"], ["3 cm", "50 cm", "1 m", "2 m+"], ["low", "some", "most", "all"]];
   L.innerHTML = `<h3>${wmode === 2 ? "Danger to people" : "Water depth"}</h3><div class="ramp" style="background:${ramps[wmode]}"></div><div class="rl">${lab[wmode].map(v => `<span>${v}</span>`).join("")}</div>` +
     `<div style="margin-top:10px"><div class="rl" style="justify-content:flex-start;gap:10px;color:#a1a1aa;font-family:var(--font);font-size:11.5px">
-    <span><span style="display:inline-block;width:16px;height:2px;background:#9fd0ff;vertical-align:middle;margin-right:5px"></span>basin</span>
-    <span><span style="display:inline-block;width:16px;border-top:2px dashed #f2c94c;vertical-align:middle;margin-right:5px"></span>alarm town</span>
-    ${show.towerbox ? '<span><span style="display:inline-block;width:16px;border-top:2px dashed #5aa9ff;vertical-align:middle;margin-right:5px"></span>tower rain</span>' : ""}
-    <span><span style="display:inline-block;width:16px;height:2px;background:linear-gradient(90deg,#96cdff,#ff8a3c);vertical-align:middle;margin-right:5px"></span>link: dry→rain</span></div></div>` +
+    <span><span style="display:inline-block;width:16px;height:2px;background:${M() ? "#1d5cff" : "#9fd0ff"};vertical-align:middle;margin-right:5px"></span>basin</span>
+    <span><span style="display:inline-block;width:16px;border-top:2px dashed ${M() ? "#e08a00" : "#f2c94c"};vertical-align:middle;margin-right:5px"></span>alarm town</span>
+    ${show.towerbox ? `<span><span style="display:inline-block;width:16px;border-top:2px dashed ${M() ? "#1d5cff" : "#5aa9ff"};vertical-align:middle;margin-right:5px"></span>tower rain</span>` : ""}
+    <span><span style="display:inline-block;width:16px;height:2px;background:${M() ? "linear-gradient(90deg,#28407a,#1d5cff,#ff6a1e)" : "linear-gradient(90deg,#96cdff,#ff8a3c)"};vertical-align:middle;margin-right:5px"></span>link: dry→rain</span></div></div>` +
     (show.rainmap ? `<h3 style="margin-top:12px">Rain map</h3><div class="ramp" style="background:linear-gradient(90deg,rgba(120,190,250,.5),#4696f0,#fadc50,#f5822d,#d72d46)"></div><div class="rl"><span>2</span><span>6</span><span>15</span><span>35</span><span>70 mm/h</span></div>` : "");
 }
 function views() {
@@ -1079,6 +1146,15 @@ $("about").onclick = e => { if (e.target.id === "about") $("about").classList.re
 
 function setMode(v) { wmode = +v; document.querySelectorAll("#wmode button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.v === wmode)); legend(); }
 document.querySelectorAll("#wmode button").forEach(b => b.onclick = () => setMode(b.dataset.v));
+function setTheme(th) {
+  theme = th; document.documentElement.dataset.theme = th;
+  try { localStorage.setItem("trg-theme", th); } catch (e) {}
+  SRC_COL.truth = M() ? "#334155" : "#f0efec";
+  document.querySelectorAll("#theme button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === th));
+  if (map.loaded() || map.isStyleLoaded()) applyThemeMap();
+  if (C) { sourceButtons(); legend(); chart(); timeline(); refresh(); }
+}
+document.querySelectorAll("#theme button").forEach(b => { b.setAttribute("aria-pressed", b.dataset.v === theme); b.onclick = () => setTheme(b.dataset.v); });
 document.querySelectorAll("[data-l]").forEach(cb => cb.onchange = () => { show[cb.dataset.l] = cb.checked; if (cb.dataset.l === "rainmap" && cb.checked) setRainMap(); applyVis(); legend(); });
 document.querySelectorAll("#speed button").forEach(b => b.onclick = () => { speed = +b.dataset.v; document.querySelectorAll("#speed button").forEach(x => x.setAttribute("aria-pressed", x === b)); });
 $("play").onclick = () => setPlaying(!playing);
