@@ -844,7 +844,7 @@ function layers() {
   }
   if (show.rain && drops.n && z > 11.8) out.push(new RainLayer({ id: "rain", data: { length: drops.n,
       attributes: { getSourcePosition: { value: drops.src, size: 3 }, getTargetPosition: { value: drops.dst, size: 3 } } },
-    getColor: M() ? [70, 105, 170, 150 * Math.max(0, Math.min(1, (z - 11.8) / 1.8))] : [214, 226, 245, 170 * Math.max(0, Math.min(1, (z - 11.8) / 1.8))], getWidth: 1.1, widthUnits: "pixels",
+    getColor: M() ? [120, 155, 215, 110 * Math.max(0, Math.min(1, (z - 11.8) / 1.8))] : [214, 226, 245, 170 * Math.max(0, Math.min(1, (z - 11.8) / 1.8))], getWidth: 1.1, widthUnits: "pixels",
     parameters: { depthWriteEnabled: false, blend: true, blendColorSrcFactor: "src-alpha", blendColorDstFactor: M() ? "one-minus-src-alpha" : "one" } }));
   if (show.communes) out.push(new deck.TextLayer({ id: "labels", data: P.labels, getPosition: d => d.p, getText: d => d.name,
     getSize: 13, getColor: M() ? [15, 23, 42, 235] : [246, 240, 232, 235], fontFamily: "Geist, sans-serif", fontWeight: 600, billboard: true,
