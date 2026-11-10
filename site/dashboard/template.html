@@ -640,6 +640,10 @@ function framePair() {
 }
 
 /* ================================================================ map */
+// blue "foot" band at the base of each building, a cheap stand-in for shadows (Model style only)
+const BH = ["coalesce", ["get", "render_height"], 8], BB = ["coalesce", ["get", "render_min_height"], 0];
+const FOOT_TOP = ["interpolate", ["linear"], ["zoom"], 13, 0, 14, ["min", BH, ["+", BB, 2.5]]];
+const SHADOW_IDS = ["building-foot"];
 const map = new maplibregl.Map({
   container: "map", hash: false, maxPitch: 82, maxZoom: 17.5, minZoom: 8.5, antialias: true, attributionControl: { compact: true },
   style: { version: 8,
@@ -671,7 +675,11 @@ const map = new maplibregl.Map({
       { id: "buildings", type: "fill-extrusion", source: "omt", "source-layer": "building", minzoom: 13,
         paint: { "fill-extrusion-color": M() ? ["interpolate", ["linear"], ["coalesce", ["get", "render_height"], 8], 0, "#f6f9fd", 10, "#d4e2fa", 25, "#a4c0f6", 60, "#7098f0"] : "#cfc8bc",
           "fill-extrusion-height": ["interpolate", ["linear"], ["zoom"], 13, 0, 14, ["coalesce", ["get", "render_height"], 8]],
-          "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0], "fill-extrusion-opacity": M() ? 1 : 0.88, "fill-extrusion-vertical-gradient": true } } ],
+          "fill-extrusion-base": M() ? FOOT_TOP : BB, "fill-extrusion-opacity": M() ? 1 : 0.88, "fill-extrusion-vertical-gradient": true } },
+      { id: "building-foot", type: "fill-extrusion", source: "omt", "source-layer": "building", minzoom: 13,
+        layout: { visibility: M() ? "visible" : "none" },
+        paint: { "fill-extrusion-color": "#7d9fec", "fill-extrusion-base": BB, "fill-extrusion-height": FOOT_TOP,
+          "fill-extrusion-vertical-gradient": true } } ],
     sky: { "sky-color": "#5a6672", "horizon-color": "#8f989f", "fog-color": "#727b83", "sky-horizon-blend": 0.6,
       "horizon-fog-blend": 0.7, "fog-ground-blend": 0.8, "atmosphere-blend": 0.6 } },
   center: [3.05, 36.75], zoom: 11.5, pitch: 58, bearing: -20 });
@@ -701,9 +709,9 @@ const MODEL_LAYERS = ["m-hillshade", "m-land", "m-landuse", "m-park", "m-water",
 function applyThemeMap() {
   const m = M(), vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
   const P = (id, k, v) => map.getLayer(id) && map.setPaintProperty(id, k, v);
-  vis("satellite", !m); MODEL_LAYERS.forEach(id => vis(id, m));
+  vis("satellite", !m); MODEL_LAYERS.forEach(id => vis(id, m)); SHADOW_IDS.forEach(id => vis(id, m && show.buildings));
   P("bg", "background-color", m ? "#e9eef5" : "#1a2028");
-  P("buildings", "fill-extrusion-opacity", m ? 1 : 0.88);
+  P("buildings", "fill-extrusion-opacity", m ? 1 : 0.88); P("buildings", "fill-extrusion-base", m ? FOOT_TOP : BB);
   map.setLight(m ? { anchor: "viewport", color: "#ffffff", intensity: 0.38, position: [1.5, 200, 38] }
                  : { anchor: "viewport", color: "#ffffff", intensity: 0.5, position: [1.15, 210, 30] });
   P("basin", "line-color", m ? "#1d5cff" : "#9fd0ff"); P("towerbox", "line-color", m ? "#1d5cff" : "#5aa9ff");
@@ -714,6 +722,7 @@ function applyVis() {
   const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
   vis("basin", show.basin); vis("zone", show.zone); vis("towerbox", show.towerbox); vis("communes", show.communes); vis("communes-fill", show.communes);
   vis("buildings", show.buildings); vis("rainmap", show.rainmap);
+  SHADOW_IDS.forEach(id => vis(id, show.buildings && M()));
 }
 // rain map: a small canvas per hour (one pixel per ~500 m cell), draped on the terrain and smoothly sampled
 const rcv = document.createElement("canvas");
