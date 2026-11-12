@@ -79,6 +79,7 @@ class Result:
     steps: int = 0
     wall_s: float = 0.0
     snaps_flow: np.ndarray | None = None       # (n, 2, ny/c, nx/c) float16 velocity east, north (snap_flow only)
+    state: dict | None = None                  # water and soil at the end; pass back as `state=` to carry on
 
 
 def _dev(p: Params):
@@ -88,7 +89,14 @@ def _dev(p: Params):
 
 
 def simulate(z, n, cn, dx, dy, rain: HourlyRain, t_end_s: float, sink=None, gauges=None,
-             params: Params | None = None, drain_mmh=None, h0=None, progress: bool = False) -> Result:
+             params: Params | None = None, drain_mmh=None, h0=None, progress: bool = False,
+             state: dict | None = None) -> Result:
+    """Run the flood model for `t_end_s` seconds of rain.
+
+    `state` (the `Result.state` of an earlier call on the same grid) carries on from where that call stopped: depth,
+    flows, and the rain and runoff counted so far. This is how the live watch advances a few minutes at a time.
+    Times in the result are counted from the start of this call.
+    """
     p = params or Params()
     dev = _dev(p)
     f32 = dict(device=dev, dtype=torch.float32)
@@ -114,6 +122,9 @@ def simulate(z, n, cn, dx, dy, rain: HourlyRain, t_end_s: float, sink=None, gaug
     s_s = ((Z[-2, :] - Z[-1, :]) / dy).clamp(min=0)
     PC = torch.zeros((ny, nx), **f32)           # rain fallen so far, mm
     QC = torch.zeros((ny, nx), **f32)           # of which run off, mm
+    if state is not None:
+        H, QX, QY, PC, QC = (torch.as_tensor(np.asarray(state[k], np.float32), **f32) for k in ("h", "qx", "qy", "pc", "qc"))
+        stored0 = float(H.double().sum() * dx * dy)
     HMAX = torch.zeros((ny, nx), **f32)
     VMAX = torch.zeros((ny, nx), **f32)
     HRMAX = torch.zeros((ny, nx), **f32)
@@ -272,4 +283,6 @@ def simulate(z, n, cn, dx, dy, rain: HourlyRain, t_end_s: float, sink=None, gaug
                   {k: float(v) for k, v in gvol.items()},
                   HMAX.cpu().numpy(), VMAX.cpu().numpy(), HRMAX.cpu().numpy(), TWET.cpu().numpy(),
                   np.stack(snaps) if snaps else np.zeros((0, 1, 1), np.float16), np.array(t_snaps),
-                  budget, steps, time.time() - wall, np.stack(snaps_flow) if snaps_flow else None)
+                  budget, steps, time.time() - wall, np.stack(snaps_flow) if snaps_flow else None,
+                  {"h": H.cpu().numpy(), "qx": QX.cpu().numpy(), "qy": QY.cpu().numpy(),
+                   "pc": PC.cpu().numpy(), "qc": QC.cpu().numpy()})

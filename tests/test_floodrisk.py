@@ -59,3 +59,20 @@ def test_valley_drainage():
     assert (r, c) == (20, 15)
     m = terrain.basin(zf, d, r, c)
     assert m.sum() > 0.8 * z.size                               # almost everything drains through the outlet
+
+
+def test_carry_on_matches_one_run():
+    # the live watch advances a few minutes at a time: 3 hours in six 30-minute calls = one 3-hour call
+    rng = np.random.default_rng(1)
+    z = np.cumsum(rng.normal(0, 0.3, (40, 50)), 1) + 0.05 * np.arange(40)[:, None]
+    fields = rng.uniform(5, 60, (6, 40, 50))
+    cn, n = rng.uniform(60, 100, z.shape), np.full(z.shape, 0.05)
+    whole = solver.simulate(z, n, cn, 20, 25, solver.HourlyRain(fields, step_s=1800), 3 * 3600, params=P())
+    state, runoff_m3 = None, 0.0
+    for k in range(6):
+        r = solver.simulate(z, n, cn, 20, 25, solver.HourlyRain(fields[k:k + 1], step_s=1800), 1800, params=P(), state=state)
+        state, runoff_m3 = r.state, runoff_m3 + r.budget["runoff_m3"]
+        assert abs(r.budget["error_frac"]) < 1e-3
+    assert runoff_m3 == pytest.approx(whole.budget["runoff_m3"], rel=1e-4)
+    assert state["h"].sum() == pytest.approx(whole.state["h"].sum(), rel=1e-3)
+    assert np.abs(state["h"] - whole.state["h"]).max() < 0.01
