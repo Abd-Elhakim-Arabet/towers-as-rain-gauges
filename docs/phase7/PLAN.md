@@ -1,6 +1,6 @@
 # Phase 7 plan: Live watch (any city, watched as it happens)
 
-Status: PLAN ONLY. Nothing here is built yet.
+Status: plan approved 12 Nov 2026; build in progress (section 8).
 
 Phases 0 to 6 replay two past storms. Phase 7 adds a second tab to the control room that does not replay anything:
 you type a city, the system sets itself up there, and it keeps watching the rain and the flood model, raising an alarm
@@ -58,8 +58,7 @@ How it works:
 2. That rain is sharpened to about 500 m and 1 minute with the Phase 4 method (`targ.simrain`).
 3. It is pushed through the simulated links with the ITU formula, wet-antenna loss and real dry-day radio noise
    (`targ.simsignal`), exactly as in Phase 4.
-4. The AI model and the classical method read the rain back from those signals, and the rest of the chain runs on
-   that. So the simulation tests the chain live. It does not measure accuracy, and the page says so.
+4. The AI model reads the rain back from those signals, and the rest of the chain runs on that. So the simulation tests the chain live. It does not measure accuracy, and the page says so.
 
 ## 3. Towers for any city
 
@@ -98,8 +97,8 @@ Known limits, shown on the page:
 - The flood model is not calibrated for a new city and has no storm drains or river defences.
 - A flood that comes from far upstream, outside the watched box, is missed (the Ghardaia lesson). Setup warns when
   the rivers entering the box drain a large outside area.
-- The AI still reads heavy rain about 10% low. Recommended: run the flood model on both readings (AI and classical)
-  and alarm when either one shows flooding, naming which. This costs a second flood state on the GPU.
+- The AI reads heavy rain about 10% low. The live chain applies a heavy-rain correction fitted on training data
+  (section 9). The classical method is not used live: it needs 30 minutes of future signal.
 
 ## 6. Email
 
@@ -146,8 +145,11 @@ Huawei switches stay as they are: storage and compute go through `targ.backends`
 8. API + Live watch page + tab in the control room.
 9. Tests, README section, explainer Part 7.
 
-## 9. Decisions needed before building
+## 9. Decisions (taken 12 Nov 2026)
 
-1. Alarm on both rain readings (AI and classical), as recommended in section 5, or on the AI only?
-2. Email: which SMTP account will send (the team fills `.env`; passwords are never typed by the assistant)?
-3. Is the 30 x 30 km area limit acceptable?
+1. **Rain for the alarm: the AI only.** The classical method looks 30 minutes ahead, so it cannot run live. The AI's
+   low reading of heavy rain is corrected instead: an intensity-dependent correction fitted on the training data only
+   (never on the test months), applied in the live chain and reported separately from the Phase 2 results.
+2. **Email:** the recipient is set in `.env` (ALERT_TO), never in the repository. The sending account's SMTP settings
+   are filled in by the team in `.env`; until then emails go to the outbox folder.
+3. **Area:** about 30 x 30 km around the city centre.
