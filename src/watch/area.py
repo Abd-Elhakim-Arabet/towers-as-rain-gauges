@@ -68,10 +68,37 @@ def prepare(area: Area) -> dict:
     # does a large stream enter the box from outside? then part of the flood comes from where we cannot see
     zf = terrain.fill(g.z, sea)
     acc = terrain.accumulate(zf, terrain.d8(zf, g.dx, g.dy, sea)) * cell / 1e6
-    edge = np.zeros(z.shape, bool)
-    edge[[0, -1], :] = edge[:, [0, -1]] = True
     box_km2 = z.size * cell / 1e6
     return {"g": g, "sea": sea, "z": z, "cell": cell, "built_ha": built_ha, "town": town, "alarm_ha": alarm_ha,
             "cn": runoff.curve_numbers(g.landcover, g.hsg), "n": runoff.manning(g.landcover),
-            "acc_km2": acc, "box_km2": box_km2, "biggest_stream_km2": float(acc[~sea].max()),
-            "edge_note": bool((g.z[edge & ~sea] > g.z[~sea].mean()).mean() > 0.3)}
+            "box_km2": box_km2, "biggest_stream_km2": float(acc[~sea].max())}
+
+
+def thresholds(area: Area, S: dict, drain=None, hours=(1, 3)) -> dict:
+    """Flash-flood rain thresholds: the even rain over T hours that just floods the town (the area's alarm size),
+    found with made-up storms as in Phase 5. Takes a minute or two per city; cached. {hours: mm or None}."""
+    from floodrisk import rain as frain
+    from floodrisk import solver
+    f = area.dir / "thresholds.json"
+    if f.exists():
+        return {int(k): v for k, v in json.loads(f.read_text()).items()}
+    g, out = S["g"], {}
+    town_ha = np.where(S["town"], S["built_ha"], 0.0)
+    for T in hours:
+        depths, wet = [15, 25, 40, 60, 90, 130, 180], []
+        for D in depths:
+            fields = frain.design_storm(D, T, g.z.shape, hours_after=1)
+            r = solver.simulate(S["z"], S["n"], S["cn"], g.dx, g.dy, solver.HourlyRain(fields), fields.shape[0] * 3600.0,
+                                sink=S["sea"], params=solver.Params(snap_s=1e12, record_s=1e12), drain_mmh=drain)
+            wet.append(float(town_ha[r.hmax >= hazard.WET_M].sum()))
+            if wet[-1] >= S["alarm_ha"]:
+                break
+        i = len(wet) - 1
+        if wet[i] < S["alarm_ha"]:
+            out[T] = None                                   # even 180 mm does not flood it in the model
+        elif i == 0:
+            out[T] = float(depths[0])
+        else:
+            out[T] = round(float(np.interp(S["alarm_ha"], wet[i - 1:i + 1], depths[i - 1:i + 1])), 1)
+    f.write_text(json.dumps(out))
+    return out
