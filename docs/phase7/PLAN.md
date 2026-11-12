@@ -1,6 +1,6 @@
 # Phase 7 plan: Live watch (any city, watched as it happens)
 
-Status: plan approved 12 Nov 2026; build in progress (section 8).
+Status: built 12 Nov 2026 (steps 1-8 and tests); explainer Part 7 still to write.
 
 Phases 0 to 6 replay two past storms. Phase 7 adds a second tab to the control room that does not replay anything:
 you type a city, the system sets itself up there, and it keeps watching the rain and the flood model, raising an alarm
@@ -97,8 +97,8 @@ Known limits, shown on the page:
 - The flood model is not calibrated for a new city and has no storm drains or river defences.
 - A flood that comes from far upstream, outside the watched box, is missed (the Ghardaia lesson). Setup warns when
   the rivers entering the box drain a large outside area.
-- The AI reads heavy rain about 10% low. The live chain applies a heavy-rain correction fitted on training data
-  (section 9). The classical method is not used live: it needs 30 minutes of future signal.
+- The AI reads heavy rain about 10% low; a fixed correction did not remove it (section 9), so the alarm may come
+  late. The classical method is not used live: it needs 30 minutes of future signal.
 
 ## 6. Email
 
@@ -147,9 +147,12 @@ Huawei switches stay as they are: storage and compute go through `targ.backends`
 
 ## 9. Decisions (taken 12 Nov 2026)
 
-1. **Rain for the alarm: the AI only.** The classical method looks 30 minutes ahead, so it cannot run live. The AI's
-   low reading of heavy rain is corrected instead: an intensity-dependent correction fitted on the training data only
-   (never on the test months), applied in the live chain and reported separately from the Phase 2 results.
+1. **Rain for the alarm: the AI only.** The classical method looks 30 minutes ahead, so it cannot run live. A
+   correction of the AI's low heavy-rain reading was fitted on the training months only and scored on the untouched
+   test month (`scripts/phase7_heavy_rain_correction.py`). It improved rain overall (bias -7% -> -2%) but not the
+   heavy hours that decide the alarm (-10% -> -12%), and a heavy-rain gain overshot the test month; the shortfall
+   changes from month to month. So no correction is applied. The real fix is retraining with more weight on heavy
+   rain.
 2. **Email:** the recipient is set in `.env` (ALERT_TO), never in the repository. The sending account's SMTP settings
    are filled in by the team in `.env`; until then emails go to the outbox folder.
 3. **Area:** about 30 x 30 km around the city centre.

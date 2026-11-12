@@ -63,7 +63,8 @@ class Reader:
             m = TCN(5, 3, **kw).to(self.dev)
             m.load_state_dict(torch.load(ROOT / "runs" / "phase2" / "mixed" / f"{AI_CONFIG}_seed{seed}.pt", map_location=self.dev))
             self.models.append(m.eval())
-        self.corr = json.loads(CORRECTION.read_text()) if CORRECTION.exists() else None
+        c = json.loads(CORRECTION.read_text()) if CORRECTION.exists() else None
+        self.corr = c if c and c.get("use") else None     # tested and not used: see scripts/phase7_heavy_rain_correction.py
 
     def rates(self, tl: np.ndarray, length_km, freq_ghz, pol, last_n: int) -> np.ndarray:
         """Rain (mm/h) on every path for the last `last_n` minutes of the buffer `tl` (n, T). NaN = no reading."""
@@ -73,7 +74,7 @@ class Reader:
         n = tl.shape[1]
         P, R = zip(*(T.predict(m, dyn, stat, phys, t_range=(n - last_n, n), link_batch=256) for m in self.models))
         R = np.where(np.mean(P, 0) > self.thr, np.mean(R, 0), 0.0)
-        if self.corr:                                   # heavy rain is read too low: correction fitted on training data
+        if self.corr:                                   # optional correction fitted on training data only
             R = np.interp(R, self.corr["read_mmh"], self.corr["true_mmh"])
         return np.where(np.isfinite(tl[:, n - last_n:]), R, np.nan).astype(np.float32)
 

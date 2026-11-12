@@ -24,7 +24,8 @@ Built for the Huawei ICT Competition (Innovation Track).
 | 4 | Virtual Algerian network (simulation) | done — see [results/phase4.md](results/phase4.md), explainer Part 4, interactive replay in [site/phase4/index.html](site/phase4/index.html) |
 | 5 | Flood-risk layer: 2D flood model (own package `src/floodrisk/`) on the Phase 4 storms, hazard, alarms (simulation) | done — see [results/phase5/phase5.md](results/phase5/phase5.md), explainer Part 5, plan in [docs/phase5/PLAN.md](docs/phase5/PLAN.md), local page `/flood/` |
 | 6 | Control-room dashboard: towers, rain, 3D flood water and alarm on one screen, with a guided tour (simulation) | done — explainer Part 6, plan in [docs/phase6/PLAN.md](docs/phase6/PLAN.md), local page `/dashboard/` (build: `scripts/phase6/run_dashboard_floods.py` then `scripts/phase6/export_dashboard.py`) |
-| 7 | Report, pitch, video script | – |
+| 7 | Live watch: pick any city in the world, follow its rain and flood model now, alarm on screen and by email (simulated links on real weather, or your own link data) | working — plan and results in [docs/phase7/PLAN.md](docs/phase7/PLAN.md), local page `/watch/`, see "Live watch" below |
+| 8 | Report, pitch, video script | – |
 
 ## Layout
 
@@ -37,6 +38,31 @@ data/raw/     downloaded data (git-ignored) + MANIFEST.json
 docs/         DATA.md, ENVIRONMENT.md, report
 tests/
 ```
+
+## Live watch (Phase 7)
+
+```
+python scripts/serve_site.py            # pages + live watch at http://localhost:8000/watch/
+```
+
+1. Type a city, pick the right match. The system downloads its terrain, land cover and soil (once, ~10 s to a few
+   minutes), finds tower sites (OpenCelliD cache, OpenStreetMap, then estimated sites on built-up land, each marked),
+   builds links per operator, and works out the rain that would flood the town.
+2. Choose where the signals come from:
+   - **Simulation:** live rain from a weather service (Open-Meteo) pushed through the simulated links; the AI reads it
+     back. Shows the chain working anywhere; it does not measure accuracy there.
+   - **My own data:** real link readings in the standard format, from two web addresses or an adapter file
+     (see [adapters/README.md](adapters/README.md); check with `python -m watch.check_adapter`).
+3. Every 5 minutes: AI rain per link → rain map → flood model carried forward → 2-hour look-ahead → alert level
+   (normal, watch, flood warning, flooding). Watches resume when the server restarts.
+4. Alarm emails at flood warning and flooding, and an all-clear. Settings go in `.env` (see `.env.example`):
+   `ALERT_TO`, and `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD` for the sending account. Without a sending
+   account, emails are saved to `data/live/outbox/`.
+5. "Run a drill" sends a made-up storm through the same chain, fast, labelled DRILL everywhere.
+
+Limits (also shown on the page): not calibrated per city, no river defences, floods arriving from outside the watched
+box are missed, and the AI reads heavy rain about 10% low (a fixed correction was tested and rejected:
+`scripts/phase7_heavy_rain_correction.py`). It is a demonstration, not an official warning.
 
 ## Local first, Huawei when available
 
