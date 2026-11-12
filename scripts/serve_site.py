@@ -11,6 +11,10 @@ Pages:
   /storm3d/       3D storm over the towers: satellite imagery, terrain, 3D buildings (needs internet)
   /flood/         Phase 5 flood risk: water depth, danger, basin flow and alarms (needs internet for imagery)
   /dashboard/     Phase 6 control room: towers, rain, flood and alarm on one 3D scene (needs internet for imagery)
+  /watch/         Phase 7 live watch: pick any city, watch its rain and flood model now (needs internet)
+
+The live watch needs the model code (torch, the trained model in runs/). Without it, or with --static, only the
+pages above are served.
 
 Listens on 127.0.0.1 only, so other machines on the lab network cannot open it. --tailscale (or --host <ip>) adds the
 Tailscale address: then every device on the same tailnet can open it, the lab network still cannot.
@@ -78,9 +82,36 @@ def build() -> None:
             os.symlink(dash / "data", OUT / "dashboard" / "data")
         if (dash / "logos").exists():          # small operator badges drawn on the towers
             shutil.copytree(dash / "logos", OUT / "dashboard" / "logos")
+    watch = SITE / "watch" / "index.html"
+    if watch.exists():                         # Phase 7: the live watch page (talks to /api/)
+        (OUT / "watch").mkdir(parents=True)
+        shutil.copy(watch, OUT / "watch" / "index.html")
     pdf = ROOT / "docs" / "explainer" / "explainer.pdf"
     if pdf.exists():
         shutil.copy(pdf, OUT / "explainer.pdf")
+
+
+def serve_live(hosts: list[str], port: int) -> bool:
+    """The pages plus the live watch API and its background watcher. False if the live parts cannot be loaded."""
+    import sys
+    sys.path.insert(0, str(ROOT / "src"))
+    try:
+        import uvicorn
+        from watch.api import make_app
+    except Exception as e:                     # no fastapi/uvicorn or no model code: fall back to the plain pages
+        print(f"live watch not available ({type(e).__name__}: {e}); serving the pages only", flush=True)
+        return False
+    public = next((h for h in hosts if h != "127.0.0.1"), "localhost")
+    app = make_app(OUT, f"http://{public}:{port}")
+    servers = [uvicorn.Server(uvicorn.Config(app, host=h, port=port, log_level="warning",
+                                             lifespan="on" if i == 0 else "off")) for i, h in enumerate(hosts)]
+    for srv in servers[1:]:
+        threading.Thread(target=srv.run, daemon=True).start()
+    for h in hosts:
+        print(f"serving on http://{'localhost' if h == '127.0.0.1' else h}:{port}  (live watch: /watch/)", flush=True)
+    print("(Ctrl+C to stop)", flush=True)
+    servers[0].run()
+    return True
 
 
 def main() -> None:
@@ -88,12 +119,16 @@ def main() -> None:
     ap.add_argument("--port", type=int, default=8000)
     ap.add_argument("--host", action="append", default=[], help="extra address to listen on (repeatable)")
     ap.add_argument("--tailscale", action="store_true", help="also listen on this machine's Tailscale IPv4")
+    ap.add_argument("--static", action="store_true", help="pages only, without the live watch")
     args = ap.parse_args()
     hosts = ["127.0.0.1"] + args.host
     if args.tailscale:
         hosts.append(subprocess.run(["tailscale", "ip", "-4"], capture_output=True, text=True,
                                     check=True).stdout.split()[0])
     build()
+    hosts = list(dict.fromkeys(hosts))
+    if not args.static and serve_live(hosts, args.port):
+        return
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(OUT))
     servers = [http.server.ThreadingHTTPServer((h, args.port), handler) for h in dict.fromkeys(hosts)]
     for srv in servers[1:]:

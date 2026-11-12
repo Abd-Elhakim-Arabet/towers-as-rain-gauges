@@ -255,7 +255,7 @@ class FeedSource:
         self.last_problem = "; ".join(problems)
         if problems or not len(df):
             return out
-        m = (pd.to_datetime(df.time, utc=True).astype("int64") // 60_000_000_000).values
+        m = ((pd.to_datetime(df.time, utc=True) - pd.Timestamp(0, tz="UTC")) // pd.Timedelta(minutes=1)).values
         loss = _loss(df).values
         rows = df.link_id.astype(str).map(self._row).values
         grid = pd.DataFrame({"r": rows, "m": m, "v": loss}).dropna().groupby(["r", "m"]).v.mean()

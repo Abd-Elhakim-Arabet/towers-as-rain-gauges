@@ -1,0 +1,11 @@
+# Live link-data sources the Live watch tab knows about (Phase 7).
+#
+# When someone picks a city, the system looks here first. If the city falls inside a source's box, that source is
+# used and no simulation is needed. No operator publishes live link data today, so the list is empty: this is where
+# a data agreement with an operator gets registered.
+#
+# sources:
+#   - name: Example Telecom, Algiers
+#     box: [36.65, 2.90, 36.82, 3.25]      # lat0, lon0, lat1, lon1
+#     adapter: example_telecom             # a file adapters/example_telecom.py (see adapters/README.md)
+sources: []

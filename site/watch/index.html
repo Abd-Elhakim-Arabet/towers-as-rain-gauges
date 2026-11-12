@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Live Flood Watch</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d5cff'/%3E%3Cpath d='M16 5l7 11a7 7 0 1 1-14 0z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+<style>
+/* Phase 7 live watch. Same look as the control room's "Model" style: a white clay city, electric-blue water.
+   Status colours are reserved for the alert level and always come with an icon and a word. */
+:root {
+  --bg: #e6ebf2; --glass: rgba(250, 251, 253, .88); --glass2: rgba(255, 255, 255, .96); --fg: 15, 23, 42;
+  --line: rgba(15, 23, 42, .07); --edge: rgba(15, 23, 42, .07); --edge2: rgba(15, 23, 42, .13);
+  --hover: rgba(15, 23, 42, .045); --sel: rgba(29, 92, 255, .08);
+  --ink: #0b1220; --ink2: #4a5568; --muted: #8a96a8;
+  --accent: #1d5cff; --primary: #1d5cff; --on-primary: #fff;
+  --st-normal: #12a150; --st-watch: #c99a06; --st-warning: #e2701b; --st-flooding: #e5383b;
+  --shadow: 0 18px 50px rgba(40, 60, 100, .14), 0 2px 6px rgba(40, 60, 100, .06); --sim: #b7791f;
+  --font: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif; --r: 18px; color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 13px/1.45 var(--font); overflow: hidden; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 1; }
+#map { position: fixed; inset: 0; }
+.glass { background: var(--glass); border-radius: var(--r); backdrop-filter: blur(24px) saturate(1.5); -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow: inset 0 0 0 1px var(--edge), var(--shadow); }
+button, input, select { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid #1d5cff; outline-offset: 2px; }
+h3 { margin: 0 0 10px; font-size: 12px; font-weight: 500; color: var(--ink2); }
+a { color: var(--accent); }
+[hidden] { display: none !important; }
+
+header { position: fixed; top: 12px; left: 12px; right: 12px; height: 54px; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 14px; z-index: 10; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand svg { width: 26px; height: 26px; flex: none; }
+.brand b { font-size: 13.5px; font-weight: 600; white-space: nowrap; display: block; line-height: 1.2; }
+.brand span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 260px; }
+.seg { display: inline-flex; background: rgba(var(--fg), .05); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg a, .seg span { padding: 5px 12px; border-radius: 7px; color: var(--ink2); white-space: nowrap; font-weight: 500; text-decoration: none; }
+.seg a:hover { color: var(--ink); }
+.seg span { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(15, 23, 42, .14); }
+#status { margin: 0 auto; display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 10px; border-radius: 12px; background: rgba(255, 255, 255, .55); min-width: 0; }
+#status .ic { width: 22px; height: 22px; display: grid; place-items: center; flex: none; }
+#status .ic svg { width: 20px; height: 20px; }
+#status .lv { font-weight: 600; font-size: 13.5px; line-height: 1.2; }
+#status .why { color: var(--ink2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 440px; line-height: 1.3; }
+#status[data-s="flooding"] { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 5px rgba(229, 56, 59, .16); } }
+.clock { text-align: right; line-height: 1.2; padding-right: 4px; }
+.clock b { font: 500 17px var(--font); display: block; }
+.clock span { font-size: 11.5px; color: var(--muted); }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--sim); white-space: nowrap; padding: 0 4px; }
+.tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); }
+.tag.drill { color: #fff; background: var(--st-warning); padding: 4px 10px; border-radius: 999px; font-weight: 600; }
+.tag.drill::before { background: #fff; box-shadow: none; }
+.btn { background: rgba(var(--fg), .06); border: 0; border-radius: 10px; padding: 8px 13px; cursor: pointer; white-space: nowrap; font-weight: 500; transition: background .15s; }
+.btn:hover { background: rgba(var(--fg), .11); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.primary { background: var(--primary); color: var(--on-primary); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.small { padding: 5px 10px; font-size: 12px; border-radius: 8px; }
+.btn.danger { color: var(--st-flooding); }
+
+aside { position: fixed; top: 78px; bottom: 12px; padding: 16px; overflow-y: auto; z-index: 5; scrollbar-width: thin; }
+#left { left: 12px; width: 286px; }
+#right { right: 12px; width: 364px; }
+aside > section { padding: 14px 0; }
+aside > section:first-child { padding-top: 0; }
+aside > section + section { border-top: 1px solid var(--line); }
+.note { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 8px 0 0; }
+.field { display: flex; gap: 6px; }
+.field input { flex: 1; min-width: 0; }
+input[type="text"], input[type="url"], select { background: #fff; border: 0; box-shadow: inset 0 0 0 1px var(--edge2); border-radius: 10px; padding: 8px 11px; width: 100%; }
+.cands { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
+.cand, .city { display: block; width: 100%; text-align: left; background: transparent; border: 0; border-radius: 10px; padding: 7px 9px; cursor: pointer; }
+.cand:hover, .city:hover { background: var(--hover); }
+.city[aria-current="true"] { background: var(--sel); }
+.cand b, .city b { font-weight: 500; display: block; }
+.cand small, .city small { color: var(--muted); font-size: 11.5px; }
+.city { display: grid; grid-template-columns: 9px 1fr; gap: 9px; align-items: center; }
+.city i { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.tog { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; cursor: pointer; color: var(--ink2); }
+.tog:hover { color: var(--ink); }
+.tog input { order: 2; appearance: none; width: 26px; height: 15px; border-radius: 8px; background: rgba(var(--fg), .14); position: relative; margin: 0; cursor: pointer; flex: none; transition: background .2s; }
+.tog input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .2); transition: transform .2s; }
+.tog input:checked { background: var(--primary); }
+.tog input:checked::after { transform: translateX(11px); }
+.ramp { height: 6px; border-radius: 3px; margin: 8px 0 4px; }
+.rl { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+.grp { font-size: 11.5px; color: var(--muted); margin: 10px 0 2px; }
+.key { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink2); padding: 2px 0; }
+.key i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+#alarm .t { font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+#alarm .t svg { width: 20px; height: 20px; }
+#alarm .d { color: var(--ink2); font-size: 12.5px; line-height: 1.5; margin-top: 4px; }
+.kpis { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; }
+.kpi { padding: 10px 0 12px; min-width: 0; }
+.kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+.kpi .k { font-size: 12px; color: var(--muted); }
+.kpi .v { font: 500 26px/1.15 var(--font); letter-spacing: -.03em; margin-top: 4px; white-space: nowrap; }
+.kpi .v small { font: 400 12px var(--font); letter-spacing: 0; color: var(--ink2); margin-left: 4px; }
+.kpi .s { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.bar { height: 3px; border-radius: 2px; background: rgba(var(--fg), .08); margin-top: 9px; overflow: hidden; position: relative; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; transition: width .3s, background .3s; }
+.chart { width: 100%; height: 96px; display: block; }
+.chart text { font-family: var(--font); font-size: 10px; fill: var(--muted); }
+.ct { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--ink2); margin: 10px 0 2px; }
+.ct span { color: var(--muted); font-size: 11.5px; }
+.ev { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
+.ev:first-child { border-top: 0; }
+.ev time { color: var(--muted); white-space: nowrap; }
+.ev small { grid-column: 2; color: var(--muted); font-size: 11.5px; }
+.steps { list-style: none; margin: 0; padding: 0; }
+.steps li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; padding: 5px 0; align-items: start; color: var(--ink2); }
+.steps li small { display: block; color: var(--muted); font-size: 11.5px; }
+.steps i { width: 14px; height: 14px; border-radius: 50%; margin-top: 2px; box-shadow: inset 0 0 0 1.5px var(--edge2); }
+.steps li[data-s="running"] i { box-shadow: none; border: 2px solid var(--accent); border-right-color: transparent; animation: spin .8s linear infinite; }
+.steps li[data-s="done"] i { background: var(--st-normal); box-shadow: none; }
+.steps li[data-s="failed"] i { background: var(--st-flooding); box-shadow: none; }
+.steps li[data-s="running"], .steps li[data-s="done"] { color: var(--ink); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.msg { font-size: 12px; margin-top: 8px; color: var(--ink2); }
+.msg.bad { color: var(--st-flooding); }
+.msg.good { color: var(--st-normal); }
+
+#hint { position: fixed; left: 50%; top: 46%; transform: translate(-50%, -50%); z-index: 4; padding: 22px 26px; max-width: 420px; text-align: center; }
+#hint b { font-size: 17px; font-weight: 600; display: block; margin-bottom: 6px; }
+#hint p { margin: 0; color: var(--ink2); line-height: 1.55; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: min(640px, calc(100vw - 32px)); width: 100%; color: var(--ink); }
+dialog::backdrop { background: rgba(30, 41, 59, .28); }
+.dlg { padding: 22px; background: var(--glass2); }
+.dlg h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+.dlg p { margin: 0 0 12px; color: var(--ink2); line-height: 1.55; }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opt { text-align: left; background: #fff; border: 0; box-shadow: inset 0 0 0 1px var(--edge2); border-radius: 14px; padding: 13px 14px; cursor: pointer; }
+.opt[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); }
+.opt b { display: block; font-weight: 600; margin-bottom: 3px; }
+.opt span { color: var(--ink2); font-size: 12.5px; line-height: 1.45; display: block; }
+table.fmt { width: 100%; border-collapse: collapse; font-size: 12px; margin: 6px 0 10px; }
+table.fmt td { padding: 4px 6px 4px 0; border-top: 1px solid var(--line); vertical-align: top; }
+table.fmt td:first-child { font-weight: 500; white-space: nowrap; }
+table.fmt caption { text-align: left; color: var(--muted); padding: 6px 0 2px; }
+.dlg label { display: block; font-size: 12px; color: var(--ink2); margin: 8px 0 3px; }
+.dlg .foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+ul.problems { margin: 8px 0 0; padding-left: 18px; color: var(--st-flooding); font-size: 12.5px; }
+
+.maplibregl-ctrl-attrib { background: rgba(255, 255, 255, .6) !important; font-size: 10.5px; }
+.maplibregl-ctrl-top-right { top: 78px; right: 388px; }
+.maplibregl-ctrl-bottom-right { right: 388px; }
+.maplibregl-ctrl-bottom-left { left: 310px; }
+@media (max-width: 1100px) {
+  #right { width: 320px; } .maplibregl-ctrl-top-right, .maplibregl-ctrl-bottom-right { right: 344px; } #status .why { max-width: 220px; }
+}
+@media (max-width: 820px) {
+  body { overflow: auto; } #map { position: relative; height: 56vh; inset: auto; }
+  header { position: relative; top: 0; left: 0; right: 0; margin: 8px; height: auto; flex-wrap: wrap; padding: 10px; }
+  aside { position: relative; top: 0; left: 0; right: 0; bottom: auto; width: auto !important; margin: 8px; }
+  #hint { position: relative; left: 0; top: 0; transform: none; margin: 8px; max-width: none; }
+  .maplibregl-ctrl-top-right, .maplibregl-ctrl-bottom-right { right: 0; top: 0; } .maplibregl-ctrl-bottom-left { left: 0; }
+  .opts { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<header class="glass">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1d5cff"/><path d="M16 6l6.5 10.5a6.5 6.5 0 1 1-13 0z" fill="#fff"/></svg>
+    <div><b>Live flood watch</b><span id="sub">Pick a city to watch</span></div>
+  </div>
+  <nav class="seg" aria-label="Mode"><a href="../dashboard/">Replay</a><span aria-current="page">Live watch</span></nav>
+  <div id="status" data-s="normal" role="status" aria-live="polite" hidden>
+    <div class="ic" id="st-ic"></div>
+    <div style="min-width:0"><div class="lv" id="st-lv"></div><div class="why" id="st-why"></div></div>
+  </div>
+  <span style="margin-left:auto" id="spacer"></span>
+  <span class="tag drill" id="tag-drill" hidden>Drill: made-up storm</span>
+  <span class="tag" id="tag-src" hidden></span>
+  <div class="clock"><b id="clock">--:--</b><span>UTC</span></div>
+</header>
+
+<aside id="left" class="glass" aria-label="Cities and layers">
+  <section>
+    <h3>Watch a city</h3>
+    <form class="field" id="search">
+      <input type="text" id="q" placeholder="City name, e.g. Béjaïa" aria-label="City name" autocomplete="off">
+      <button class="btn primary" type="submit">Find</button>
+    </form>
+    <div class="cands" id="cands"></div>
+    <p class="msg" id="search-msg" hidden></p>
+  </section>
+  <section id="cities-sec" hidden>
+    <h3>Watched now</h3>
+    <div id="cities"></div>
+  </section>
+  <section id="layers-sec" hidden>
+    <h3>Layers</h3>
+    <label class="tog"><input type="checkbox" data-l="links" checked> Microwave links</label>
+    <label class="tog"><input type="checkbox" data-l="towers" checked> Towers</label>
+    <label class="tog"><input type="checkbox" data-l="rain" checked> Rain map</label>
+    <label class="tog"><input type="checkbox" data-l="depth" checked> Flood water</label>
+    <label class="tog"><input type="checkbox" data-l="buildings" checked> 3D buildings</label>
+    <div class="grp">Rain (mm/h)</div>
+    <div class="ramp" style="background:linear-gradient(90deg,#78befa,#4696f0 35%,#fadc50 60%,#f58232 80%,#c8283c)"></div>
+    <div class="rl"><span>1</span><span>5</span><span>15</span><span>40</span><span>100</span></div>
+    <div class="grp">Water depth (m)</div>
+    <div class="ramp" style="background:linear-gradient(90deg,#6eb4fa,#3278f0 45%,#193cbe 75%,#14146e)"></div>
+    <div class="rl"><span>0.1</span><span>0.3</span><span>1</span><span>3</span></div>
+    <div class="grp">Towers</div>
+    <div class="key"><i style="background:#1d5cff"></i><span id="k-real">Real site</span></div>
+    <div class="key"><i style="background:#fff;box-shadow:inset 0 0 0 2px #8a96a8"></i><span id="k-est">Estimated site</span></div>
+  </section>
+  <section id="limits-sec" hidden>
+    <h3>What this can and cannot tell you</h3>
+    <p class="note" id="limits"></p>
+  </section>
+</aside>
+
+<aside id="right" class="glass" aria-label="Alert and figures" hidden>
+  <section id="setup-sec" hidden>
+    <h3>Setting up</h3>
+    <ul class="steps" id="steps"></ul>
+    <p class="msg bad" id="setup-err" hidden></p>
+  </section>
+  <section id="alarm-sec" hidden>
+    <div id="alarm"><div class="t" id="al-t"></div><div class="d" id="al-d"></div></div>
+  </section>
+  <section id="kpi-sec" hidden>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Rain over the town</div><div class="v" id="k-rain">0<small>mm/h</small></div><div class="s" id="k-rain-s"></div></div>
+      <div class="kpi"><div class="k">Of the flash-flood rain</div><div class="v" id="k-ratio">0<small>%</small></div><div class="bar"><i id="k-ratio-b"></i></div></div>
+      <div class="kpi"><div class="k">Built-up land under 30 cm</div><div class="v" id="k-ha">0<small>ha</small></div><div class="s" id="k-ha-s"></div></div>
+      <div class="kpi"><div class="k">Expected within 2 hours</div><div class="v" id="k-ahead">0<small>ha</small></div><div class="s" id="k-links"></div></div>
+    </div>
+  </section>
+  <section id="chart-sec" hidden>
+    <h3 id="chart-h">Last 24 hours</h3>
+    <div class="ct">Rain over the town <span id="c-rain-v">mm/h</span></div>
+    <svg class="chart" id="c-rain" role="img" aria-label="Rain over the town, last 24 hours"></svg>
+    <div class="ct">Built-up land under water <span id="c-ha-v">hectares</span></div>
+    <svg class="chart" id="c-ha" role="img" aria-label="Flooded built-up land, last 24 hours"></svg>
+  </section>
+  <section id="events-sec" hidden>
+    <h3>Alert log</h3>
+    <div id="events"></div>
+  </section>
+  <section id="act-sec" hidden>
+    <h3>Alarm email and drill</h3>
+    <p class="note" id="mail-note" style="margin-top:0"></p>
+    <div class="row">
+      <button class="btn small" id="b-mail" type="button">Send a test email</button>
+      <button class="btn small" id="b-drill" type="button">Run a drill</button>
+      <button class="btn small" id="b-live" type="button" hidden>Back to live</button>
+    </div>
+    <p class="msg" id="act-msg" hidden></p>
+    <p class="note">A drill pushes a made-up storm through the same chain, fast, so the alarm can be shown on a dry day. It never touches the live watch.</p>
+    <div class="row"><button class="btn small danger" id="b-stop" type="button">Stop watching this city</button></div>
+  </section>
+</aside>
+
+<div id="hint" class="glass">
+  <b>Watch any city, live</b>
+  <p>Type a city name on the left. The system sets up its terrain, towers and flood model, then follows the rain and raises the alarm if the town starts to flood.</p>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg glass">
+    <h2 id="d-title"></h2>
+    <p id="d-known"></p>
+    <div class="opts">
+      <button class="opt" type="button" data-m="simulation" aria-pressed="true"><b>Simulation</b><span>Real weather, real terrain, simulated tower links. Works anywhere, now.</span></button>
+      <button class="opt" type="button" data-m="feed" aria-pressed="false"><b>My own data</b><span>Connect real link readings from an operator, in our standard format.</span></button>
+    </div>
+    <div id="d-sim">
+      <p class="note">Live rain comes from a weather service (Open-Meteo). It is pushed through simulated links, and our AI reads it back. This shows the whole chain working on this city; it does not measure how accurate it would be there.</p>
+    </div>
+    <div id="d-feed" hidden>
+      <p class="note">Deliver two tables in this format. If your system stores them differently, write a small adapter: copy <code>adapters/template.py</code> on the server, fill in two functions, and it appears in the list below.</p>
+      <table class="fmt" id="f-links"><caption>Links (once)</caption></table>
+      <table class="fmt" id="f-read"><caption>Readings (every few minutes)</caption></table>
+      <label for="f-adapter">Installed adapter</label>
+      <select id="f-adapter"></select>
+      <div id="f-urls">
+        <label for="f-lu">Address of the links table (http or https)</label>
+        <input type="url" id="f-lu" placeholder="https://example.org/links.csv">
+        <label for="f-ru">Address of the readings table</label>
+        <input type="url" id="f-ru" placeholder="https://example.org/readings.csv?since={since}">
+      </div>
+      <div class="row"><button class="btn small" type="button" id="f-check">Check my data</button></div>
+      <p class="msg" id="f-msg" hidden></p>
+      <ul class="problems" id="f-problems"></ul>
+    </div>
+    <div class="foot">
+      <button class="btn" type="button" id="d-cancel">Cancel</button>
+      <button class="btn primary" type="button" id="d-go">Start watching</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/deck.gl@9.0.35/dist.min.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const API = location.origin + "/api";
+const api = async (path, opt) => {
+  const r = await fetch(API + path, opt);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || `The server answered ${r.status}`);
+  return r.json();
+};
+const post = (path, body) => api(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body || {}) });
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmt = (v, d = 0) => Number(v).toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
+const hhmm = s => new Date(s * 1000).toISOString().slice(11, 16);
+const TITLE = { normal: "Normal", watch: "Watch", warning: "Flood warning", flooding: "Flooding" };
+const ICON = {
+  normal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  watch: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg>',
+  warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>',
+  flooding: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9c2.5-2 4.5-2 7 0s4.5 2 7 0 4-2 6 0M2 15c2.5-2 4.5-2 7 0s4.5 2 7 0 4-2 6 0"/></svg>' };
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+/* ================================================================ map */
+const BLANK = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+const BOX0 = [[0, 0.001], [0.001, 0.001], [0.001, 0], [0, 0]];
+const TERRAIN = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png";
+const BH = ["coalesce", ["get", "render_height"], 8], BB = ["coalesce", ["get", "render_min_height"], 0];
+const FOOT = ["interpolate", ["linear"], ["zoom"], 13, 0, 14, ["min", BH, ["+", BB, 2.5]]];
+const map = new maplibregl.Map({
+  container: "map", maxPitch: 80, maxZoom: 17.5, antialias: true, attributionControl: { compact: true },
+  style: { version: 8,
+    sources: {
+      dem: { type: "raster-dem", encoding: "terrarium", tileSize: 256, maxzoom: 13, tiles: [TERRAIN], attribution: "Terrain: Mapzen / AWS open data" },
+      demhs: { type: "raster-dem", encoding: "terrarium", tileSize: 256, maxzoom: 13, tiles: [TERRAIN] },
+      omt: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "© OpenStreetMap contributors · OpenFreeMap" },
+      rain: { type: "image", url: BLANK, coordinates: BOX0 }, depth: { type: "image", url: BLANK, coordinates: BOX0 },
+      box: { type: "geojson", data: { type: "FeatureCollection", features: [] } } },
+    layers: [
+      { id: "bg", type: "background", paint: { "background-color": "#eef2f7" } },
+      { id: "hs", type: "hillshade", source: "demhs", paint: { "hillshade-shadow-color": "#8fa0b8", "hillshade-highlight-color": "#ffffff", "hillshade-accent-color": "#c9d2df", "hillshade-exaggeration": 0.8 } },
+      { id: "land", type: "fill", source: "omt", "source-layer": "landcover", paint: { "fill-color": "#dde4ee", "fill-opacity": 0.55 } },
+      { id: "park", type: "fill", source: "omt", "source-layer": "park", paint: { "fill-color": "#d4dee8", "fill-opacity": 0.7 } },
+      { id: "water", type: "fill", source: "omt", "source-layer": "water", paint: { "fill-color": "#1f5cff" } },
+      { id: "waterway", type: "line", source: "omt", "source-layer": "waterway", layout: { "line-cap": "round" }, paint: { "line-color": "#2f6bff", "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.6, 16, 3] } },
+      { id: "road-case", type: "line", source: "omt", "source-layer": "transportation", filter: ["match", ["get", "class"], ["path", "track", "ferry", "rail", "transit"], false, true],
+        layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#c3cddb", "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 10, ["match", ["get", "class"], ["motorway", "trunk", "primary"], 1.6, 0.5], 16, ["match", ["get", "class"], ["motorway", "trunk", "primary"], 16, ["secondary", "tertiary"], 11, 6]] } },
+      { id: "road", type: "line", source: "omt", "source-layer": "transportation", filter: ["match", ["get", "class"], ["path", "track", "ferry", "rail", "transit"], false, true],
+        layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 10, ["match", ["get", "class"], ["motorway", "trunk", "primary"], 0.9, 0.25], 16, ["match", ["get", "class"], ["motorway", "trunk", "primary"], 13, ["secondary", "tertiary"], 9, 4.5]] } },
+      { id: "rain", type: "raster", source: "rain", paint: { "raster-opacity": 0.55, "raster-fade-duration": 0, "raster-resampling": "linear" } },
+      { id: "depth", type: "raster", source: "depth", paint: { "raster-opacity": 0.92, "raster-fade-duration": 0, "raster-resampling": "linear" } },
+      { id: "box", type: "line", source: "box", paint: { "line-color": "#1d5cff", "line-width": 1.6, "line-dasharray": [3, 2], "line-opacity": 0.7 } },
+      { id: "buildings", type: "fill-extrusion", source: "omt", "source-layer": "building", minzoom: 13,
+        paint: { "fill-extrusion-color": ["interpolate", ["linear"], BH, 0, "#f6f9fd", 10, "#d4e2fa", 25, "#a4c0f6", 60, "#7098f0"],
+          "fill-extrusion-height": ["interpolate", ["linear"], ["zoom"], 13, 0, 14, BH], "fill-extrusion-base": FOOT, "fill-extrusion-vertical-gradient": true } },
+      { id: "building-foot", type: "fill-extrusion", source: "omt", "source-layer": "building", minzoom: 13,
+        paint: { "fill-extrusion-color": "#7d9fec", "fill-extrusion-base": BB, "fill-extrusion-height": FOOT } },
+      { id: "place", type: "symbol", source: "omt", "source-layer": "place", filter: ["match", ["get", "class"], ["city", "town", "suburb"], true, false],
+        layout: { "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]], "text-size": ["match", ["get", "class"], "city", 15, 12], "text-font": ["Noto Sans Regular"] },
+        paint: { "text-color": "#0f172a", "text-halo-color": "rgba(255,255,255,.9)", "text-halo-width": 1.6 } } ],
+    glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+    sky: { "sky-color": "#cfe0ff", "horizon-color": "#e9f0fb", "fog-color": "#eef3fa", "sky-horizon-blend": 0.6, "horizon-fog-blend": 0.7, "fog-ground-blend": 0.6 } },
+  center: [3.05, 34], zoom: 4.2, pitch: 0 });
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");
+const overlay = new deck.MapboxOverlay({ interleaved: true, layers: [] });
+map.addControl(overlay);
+map.on("load", () => { map.setTerrain({ source: "dem", exaggeration: 1 }); route(); });
+
+/* ================================================================ state */
+let key = null, D = null, links = [], drillView = false, timer = null, hist = [], lastFrame = 0;
+const show = { links: true, towers: true, rain: true, depth: true, buildings: true };
+
+function linkColor(mm) {
+  if (mm == null) return [138, 150, 168, 60];
+  if (mm <= 0.25) return [40, 64, 120, 80];
+  const s = Math.min(1, Math.log1p(mm) / Math.log1p(25));
+  return [29 + 226 * s, 92 + 8 * s, 255 - 225 * s, 140 + 100 * s];
+}
+function drawNetwork() {
+  const n = D && D.network, out = [];
+  if (n && show.links) out.push(new deck.LineLayer({ id: "links", data: n.links.map((l, i) => ({ l, i })),
+    getSourcePosition: d => [d.l[0], d.l[1], Math.max(0, d.l[2]) + 30], getTargetPosition: d => [d.l[3], d.l[4], Math.max(0, d.l[5]) + 30],
+    getColor: d => linkColor(links[d.i]), getWidth: d => 1 + Math.min(2.4, (links[d.i] || 0) * 0.1), widthUnits: "pixels",
+    updateTriggers: { getColor: lastFrame, getWidth: lastFrame }, parameters: { depthWriteEnabled: false } }));
+  if (n && show.towers && n.sites.length) out.push(new deck.ScatterplotLayer({ id: "towers", data: n.sites,
+    getPosition: d => [d[0], d[1], Math.max(0, d[2]) + 30], getRadius: 3, radiusMinPixels: 2, radiusMaxPixels: 5, billboard: true, stroked: true,
+    getFillColor: d => d[3] ? [29, 92, 255, 235] : [255, 255, 255, 235], getLineColor: d => d[3] ? [255, 255, 255, 220] : [138, 150, 168, 255],
+    lineWidthMinPixels: 1.2, parameters: { depthWriteEnabled: false } }));
+  overlay.setProps({ layers: out });
+}
+function applyVis() {
+  const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  vis("rain", show.rain); vis("depth", show.depth); vis("buildings", show.buildings); vis("building-foot", show.buildings);
+  drawNetwork();
+}
+document.querySelectorAll("[data-l]").forEach(cb => cb.onchange = () => { show[cb.dataset.l] = cb.checked; applyVis(); });
+
+/* ================================================================ search and set-up dialog */
+let cand = null, mode = "simulation", sources = null;
+$("search").onsubmit = async e => {
+  e.preventDefault();
+  const q = $("q").value.trim(), msg = $("search-msg");
+  if (!q) return;
+  msg.hidden = false; msg.className = "msg"; msg.textContent = "Searching…"; $("cands").innerHTML = "";
+  try {
+    const list = await api("/search?q=" + encodeURIComponent(q));
+    msg.hidden = list.length > 0;
+    if (!list.length) { msg.textContent = "No city with that name. Try adding the country."; return; }
+    $("cands").innerHTML = list.map((c, i) => `<button class="cand" type="button" data-i="${i}"><b>${esc(c.name.split(",")[0])}</b><small>${esc(c.name.split(",").slice(1).join(",").trim() || c.kind)} · ${c.kind} · ${fmt(2 * c.half_km)} km box</small></button>`).join("");
+    $("cands").querySelectorAll("button").forEach(b => b.onclick = () => openDialog(list[+b.dataset.i]));
+  } catch (err) { msg.className = "msg bad"; msg.textContent = err.message; }
+};
+async function openDialog(c) {
+  cand = c;
+  map.flyTo({ center: [c.lon, c.lat], zoom: 11, pitch: 45, duration: 1800 });
+  $("d-title").textContent = "Watch " + c.name.split(",").slice(0, 2).join(",");
+  $("d-known").textContent = c.known.length
+    ? `A live data source is registered for this place: ${c.known.map(k => k.name).join(", ")}.`
+    : "No operator publishes live link data for this place, so choose where the tower signals come from.";
+  sources = sources || await api("/sources");
+  const row = r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`;
+  $("f-links").innerHTML = "<caption>Links (once)</caption>" + sources.format.links.map(row).join("");
+  $("f-read").innerHTML = "<caption>Readings (every few minutes)</caption>" + sources.format.readings.map(row).join("");
+  $("f-adapter").innerHTML = `<option value="">None: my data is already in this format (give two addresses)</option>` + sources.adapters.map(a => `<option>${esc(a)}</option>`).join("");
+  if (c.known.length && c.known[0].adapter) { $("f-adapter").value = c.known[0].adapter; setMode("feed"); } else setMode("simulation");
+  $("f-urls").hidden = !!$("f-adapter").value; $("f-msg").hidden = true; $("f-problems").innerHTML = "";
+  $("dlg").showModal();
+}
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll(".opt").forEach(b => b.setAttribute("aria-pressed", b.dataset.m === m));
+  $("d-sim").hidden = m !== "simulation"; $("d-feed").hidden = m !== "feed";
+}
+document.querySelectorAll(".opt").forEach(b => b.onclick = () => setMode(b.dataset.m));
+$("f-adapter").onchange = () => $("f-urls").hidden = !!$("f-adapter").value;
+const feedBody = () => ({ adapter: $("f-adapter").value, links_url: $("f-lu").value.trim(), readings_url: $("f-ru").value.trim() });
+$("f-check").onclick = async () => {
+  const msg = $("f-msg"); msg.hidden = false; msg.className = "msg"; msg.textContent = "Reading your data…"; $("f-problems").innerHTML = "";
+  try {
+    const r = await post("/check-feed", feedBody());
+    msg.className = "msg " + (r.ok ? "good" : "bad");
+    msg.textContent = r.ok ? `Looks right: ${fmt(r.links)} links and ${fmt(r.readings)} readings in the last 6 hours.` : "Some things need fixing:";
+    $("f-problems").innerHTML = r.problems.map(p => `<li>${esc(p)}</li>`).join("");
+  } catch (err) { msg.className = "msg bad"; msg.textContent = err.message; }
+};
+$("d-cancel").onclick = () => $("dlg").close();
+$("d-go").onclick = async () => {
+  $("d-go").disabled = true;
+  try {
+    const r = await post("/watches", { name: cand.name.split(",").slice(0, 2).join(",").trim(), lat: cand.lat, lon: cand.lon, half_km: cand.half_km, mode, ...(mode === "feed" ? feedBody() : {}) });
+    $("dlg").close(); $("cands").innerHTML = ""; $("q").value = "";
+    location.hash = r.key;
+  } catch (err) { $("f-msg").hidden = false; $("f-msg").className = "msg bad"; $("f-msg").textContent = err.message; setMode("feed"); }
+  $("d-go").disabled = false;
+};
+
+/* ================================================================ watching */
+async function cities() {
+  const list = await api("/watches").catch(() => []);
+  $("cities-sec").hidden = !list.length;
+  $("cities").innerHTML = list.map(c => `<button class="city" type="button" data-k="${c.key}" aria-current="${c.key === key}"><i style="background:${c.level ? css("--st-" + c.level) : "var(--muted)"}"></i><span><b>${esc(c.name)}</b><small>${c.error ? "Set-up failed" : c.ready ? TITLE[c.level] || "" : "Setting up…"} · ${c.mode === "simulation" ? "simulation" : "own data"}</small></span></button>`).join("");
+  $("cities").querySelectorAll("button").forEach(b => b.onclick = () => location.hash = b.dataset.k);
+}
+function route() {
+  const k = decodeURIComponent(location.hash.slice(1));
+  if (k === key) return;
+  key = /^[a-z0-9_-]+$/.test(k) ? k : null; D = null; links = []; hist = []; drillView = false; framed = false;
+  clearTimeout(timer);
+  for (const id of ["right", "layers-sec", "limits-sec", "status", "tag-src", "tag-drill"]) $(id).hidden = true;
+  $("hint").hidden = !!key; $("sub").textContent = "Pick a city to watch";
+  map.getSource("rain").updateImage({ url: BLANK, coordinates: BOX0 }); map.getSource("depth").updateImage({ url: BLANK, coordinates: BOX0 });
+  map.getSource("box").setData({ type: "FeatureCollection", features: [] });
+  overlay.setProps({ layers: [] });
+  cities();
+  if (key) tick();
+}
+addEventListener("hashchange", route);
+
+let framed = false;
+async function tick() {
+  clearTimeout(timer);
+  if (!key) return;
+  const k = key;
+  let wait = 15000;
+  try {
+    const d = await api("/watches/" + k);
+    if (k !== key) return;
+    D = d;
+    $("right").hidden = false; $("sub").textContent = d.name;
+    const setup = d.setup && !d.setup.done;
+    $("setup-sec").hidden = !setup && !(d.setup && d.setup.error);
+    if (d.setup) {
+      $("steps").innerHTML = d.setup.steps.map(s => `<li data-s="${s.state}"><i></i><span>${esc(s.name)}<small>${esc(s.note)}</small></span></li>`).join("");
+      $("setup-err").hidden = !d.setup.error; $("setup-err").textContent = d.setup.error ? "Set-up stopped: " + d.setup.error : "";
+    }
+    for (const id of ["alarm-sec", "kpi-sec", "chart-sec", "events-sec", "act-sec"]) $(id).hidden = !d.ready;
+    $("layers-sec").hidden = $("limits-sec").hidden = !d.ready;
+    if (!d.ready) { if (!framed) { map.flyTo({ center: [d.lon, d.lat], zoom: 11, pitch: 45 }); framed = true; } wait = 2500; }
+    else {
+      const drilling = d.drill && d.drill.running;
+      if (drilling) wait = 3000;
+      await render(d, k);
+    }
+  } catch (err) {
+    if (/No such watch/.test(err.message)) { location.hash = ""; return; }
+  }
+  if (k === key) timer = setTimeout(tick, wait);
+}
+
+async function render(d, k) {
+  const q = drillView ? "?drill=1" : "";
+  let st = d.status;
+  if (drillView) st = await api(`/watches/${k}/status.json${q}`).catch(() => null);
+  const b = d.box, coords = [[b[1], b[2]], [b[3], b[2]], [b[3], b[0]], [b[1], b[0]]];
+  if (!map.getSource("box")._data.features.length || !framed) {
+    map.getSource("box").setData({ type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [...coords, coords[0]] } }] });
+    if (!framed) { map.fitBounds([[b[1], b[0]], [b[3], b[2]]], { padding: { top: 90, bottom: 30, left: 320, right: 400 }, pitch: 50, bearing: -15, duration: 1600 }); framed = true; }
+  }
+  const sim = d.mode === "simulation";
+  $("tag-src").hidden = false; $("tag-src").textContent = sim ? "Simulated links · real weather" : "Your link data";
+  $("tag-drill").hidden = !drillView;
+  const c = d.network.counts, real = Object.entries(c).filter(([n]) => n !== "estimated").reduce((a, [, v]) => a + v, 0);
+  $("k-real").textContent = sim ? `Real site (${fmt(real)}: ${Object.entries(c).filter(([n]) => n !== "estimated").map(([n, v]) => `${n} ${fmt(v)}`).join(", ") || "none found"})` : "Link ends from your data";
+  $("k-est").textContent = `Estimated site (${fmt(c.estimated || 0)}), placed on built-up land`;
+  $("limits").innerHTML = (sim ? "The towers marked as estimated and all the links are simulated, so this shows the chain working, not how accurate it is here. " : "")
+    + "The flood model is not calibrated for this city and knows no river defences. A flood that arrives from outside the dashed box is not seen. "
+    + "The alert comes from a model, it is not an official warning. Terrain: " + esc(d.ground) + ".";
+  $("mail-note").textContent = !d.mail.to ? "No address is set for alarm emails (ALERT_TO in the .env file on the server)."
+    : d.mail.smtp ? "Alarm emails are sent when the level reaches Flood warning or Flooding, and when it is over."
+    : "An address is set, but no sending account yet (SMTP settings in .env). Until then emails are saved in data/live/outbox/ on the server.";
+  $("b-live").hidden = !drillView; $("b-drill").disabled = !!(d.drill && d.drill.running);
+  $("b-drill").textContent = d.drill && d.drill.running ? "Drill running…" : "Run a drill";
+  if (d.drill && d.drill.error) { $("act-msg").hidden = false; $("act-msg").className = "msg bad"; $("act-msg").textContent = "The drill stopped: " + d.drill.error; }
+  if (!st) return;
+  $("status").hidden = false; $("status").dataset.s = st.level;
+  const col = css("--st-" + st.level);
+  $("st-ic").style.color = col; $("st-ic").innerHTML = ICON[st.level]; $("st-lv").textContent = TITLE[st.level]; $("st-why").textContent = st.why;
+  $("al-t").innerHTML = `<span style="color:${col};display:grid">${ICON[st.level]}</span>${TITLE[st.level]}`;
+  $("al-d").textContent = st.why + `. Last update ${hhmm(st.t)} UTC` + (st.feed_problem ? `. Feed problem: ${st.feed_problem}` : "") + ".";
+  $("k-rain").innerHTML = `${fmt(st.rain_mmh, 1)}<small>mm/h</small>`; $("k-rain-s").textContent = `${fmt(st.rain_3h_mm, 1)} mm in the last 3 h · peak cell ${fmt(st.rain_max_mmh, 1)} mm/h`;
+  $("k-ratio").innerHTML = `${fmt(100 * st.ratio)}<small>%</small>`;
+  $("k-ratio-b").style.width = Math.min(100, 100 * st.ratio) + "%"; $("k-ratio-b").style.background = st.ratio >= 1 ? css("--st-flooding") : st.ratio >= 0.5 ? css("--st-watch") : css("--accent");
+  $("k-ha").innerHTML = `${fmt(st.ha_now, 1)}<small>ha</small>`; $("k-ha-s").textContent = `alarm at ${fmt(st.alarm_ha, 1)} ha`;
+  $("k-ahead").innerHTML = `${fmt(st.ha_ahead, 1)}<small>ha</small>`; $("k-links").textContent = `${fmt(st.links_wet)} of ${fmt(st.links_n)} links see rain`;
+  if (st.updated !== lastFrame) {
+    lastFrame = st.updated;
+    const v = `&v=${st.updated}`, base = `${API}/watches/${k}/`;
+    map.getSource("rain").updateImage({ url: base + "rain.png?drill=" + (drillView ? 1 : 0) + v, coordinates: coords });
+    map.getSource("depth").updateImage({ url: base + "depth.png?drill=" + (drillView ? 1 : 0) + v, coordinates: coords });
+    [links, hist] = await Promise.all([api(`/watches/${k}/links.json${q}`).catch(() => []), api(`/watches/${k}/history.json${q}`).catch(() => [])]);
+    drawNetwork(); charts(st);
+    const ev = await api(`/watches/${k}/events.json${q}`).catch(() => []);
+    $("events").innerHTML = ev.length ? ev.slice().reverse().map(e => `<div class="ev"><time>${new Date(e.t * 1000).toISOString().slice(5, 16).replace("T", " ")}</time><span><b style="color:${css("--st-" + e.to)}">${TITLE[e.to]}</b> (was ${TITLE[e.from]})</span><small>${esc(e.why)}${e.email ? " · email " + esc(e.email) : ""}</small></div>`).join("")
+      : `<p class="note" style="margin:0">No alert since the watch started.</p>`;
+    cities();
+  }
+}
+
+/* ---------- two small charts, one measure each ---------- */
+function charts(st) {
+  const t1 = hist.length ? hist[hist.length - 1].t : Date.now() / 1000;
+  const t0 = drillView && hist.length ? hist[0].t : t1 - 24 * 3600;
+  const h = hist.filter(r => r.t >= t0);
+  $("chart-h").textContent = drillView ? "The drill storm" : "Last 24 hours";
+  draw($("c-rain"), h, "rain_mmh", t0, t1, { bars: true, color: css("--accent"), unit: "mm/h", label: $("c-rain-v") });
+  draw($("c-ha"), h, "ha_now", t0, t1, { color: "#193cbe", unit: "ha", ref: st.alarm_ha, refLabel: "alarm", label: $("c-ha-v") });
+}
+function draw(svg, rows, field, t0, t1, o) {
+  const W = svg.clientWidth || 330, H = 96, L = 30, R = 6, T = 8, B = 16;
+  const top = Math.max(o.ref ? o.ref * 1.25 : 0, ...rows.map(r => r[field]), field === "rain_mmh" ? 2 : 1);
+  const x = t => L + (W - L - R) * (t - t0) / (t1 - t0), y = v => T + (H - T - B) * (1 - v / top);
+  const nice = top >= 10 ? Math.round(top) : Math.round(top * 10) / 10;
+  let s = `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="rgba(15,23,42,.18)"/><line x1="${L}" x2="${W - R}" y1="${y(top)}" y2="${y(top)}" stroke="rgba(15,23,42,.06)"/>`
+    + `<text x="${L - 5}" y="${y(0) + 3}" text-anchor="end">0</text><text x="${L - 5}" y="${y(top) + 3}" text-anchor="end">${nice}</text>`;
+  const hrs = (t1 - t0) / 3600, stepH = hrs > 12 ? 6 : 1;
+  for (let t = Math.ceil(t0 / (stepH * 3600)) * stepH * 3600; t <= t1; t += stepH * 3600) s += `<text x="${x(t)}" y="${H - 3}" text-anchor="middle">${hhmm(t)}</text>`;
+  if (o.ref) s += `<line x1="${L}" x2="${W - R}" y1="${y(o.ref)}" y2="${y(o.ref)}" stroke="${css("--st-flooding")}" stroke-dasharray="4 3"/><text x="${W - R}" y="${y(o.ref) - 4}" text-anchor="end" style="fill:${css("--st-flooding")}">${o.refLabel} ${fmt(o.ref, 1)} ${o.unit}</text>`;
+  if (o.bars) { const bw = Math.max(1, (W - L - R) / Math.max(12, (t1 - t0) / 300) - 1); for (const r of rows) if (r[field] > 0) s += `<rect x="${x(r.t) - bw}" y="${y(r[field])}" width="${bw}" height="${y(0) - y(r[field])}" rx="1" fill="${o.color}"/>`; }
+  else if (rows.length) s += `<path d="${rows.map((r, i) => (i ? "L" : "M") + x(r.t).toFixed(1) + " " + y(r[field]).toFixed(1)).join("")}" fill="none" stroke="${o.color}" stroke-width="2" stroke-linejoin="round"/>`;
+  s += `<line id="${svg.id}-x" y1="${T}" y2="${y(0)}" stroke="rgba(15,23,42,.35)" visibility="hidden"/>`;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = s;
+  const base = o.label.dataset.base || (o.label.dataset.base = o.label.textContent);
+  svg.onmousemove = e => {
+    if (!rows.length) return;
+    const px = (e.clientX - svg.getBoundingClientRect().left) * W / svg.getBoundingClientRect().width, t = t0 + (px - L) / (W - L - R) * (t1 - t0);
+    const r = rows.reduce((a, b) => Math.abs(b.t - t) < Math.abs(a.t - t) ? b : a);
+    const cx = $(svg.id + "-x"); cx.setAttribute("x1", x(r.t)); cx.setAttribute("x2", x(r.t)); cx.setAttribute("visibility", "visible");
+    o.label.textContent = `${hhmm(r.t)} UTC · ${fmt(r[field], 1)} ${o.unit}`;
+  };
+  svg.onmouseleave = () => { $(svg.id + "-x").setAttribute("visibility", "hidden"); o.label.textContent = base; };
+}
+
+/* ---------- actions ---------- */
+const act = (text, cls = "") => { const m = $("act-msg"); m.hidden = false; m.className = "msg " + cls; m.textContent = text; };
+$("b-mail").onclick = async () => { act("Sending…"); try { act("Test email: " + (await post(`/watches/${key}/test-email`)).result + ".", "good"); } catch (e) { act(e.message, "bad"); } };
+$("b-drill").onclick = async () => {
+  try { await post(`/watches/${key}/drill`); drillView = true; lastFrame = 0; hist = []; act("Drill started: a made-up storm is running through the chain. The live watch carries on behind it."); tick(); }
+  catch (e) { act(e.message, "bad"); }
+};
+$("b-live").onclick = () => { drillView = false; lastFrame = 0; $("act-msg").hidden = true; tick(); };
+$("b-stop").onclick = async () => {
+  if ($("b-stop").dataset.sure !== "1") { $("b-stop").dataset.sure = "1"; $("b-stop").textContent = "Click again to stop watching"; setTimeout(() => { $("b-stop").dataset.sure = ""; $("b-stop").textContent = "Stop watching this city"; }, 4000); return; }
+  await api(`/watches/${key}`, { method: "DELETE" }).catch(() => {}); location.hash = "";
+};
+setInterval(() => $("clock").textContent = new Date().toISOString().slice(11, 16), 1000);
+cities(); setInterval(cities, 30000);
+</script>
+</body>
+</html>
