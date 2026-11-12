@@ -76,6 +76,8 @@ def build() -> None:
         shutil.copy(dash / "index.html", OUT / "dashboard" / "index.html")
         if (dash / "data").exists():
             os.symlink(dash / "data", OUT / "dashboard" / "data")
+        if (dash / "logos").exists():          # small operator badges drawn on the towers
+            shutil.copytree(dash / "logos", OUT / "dashboard" / "logos")
     pdf = ROOT / "docs" / "explainer" / "explainer.pdf"
     if pdf.exists():
         shutil.copy(pdf, OUT / "explainer.pdf")
