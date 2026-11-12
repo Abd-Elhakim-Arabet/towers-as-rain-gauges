@@ -63,9 +63,17 @@ def earthdata_token() -> str | None:
     return t or None
 
 
-def _grid(city: City):
-    lat0, lon0, lat1, lon1 = city.box
-    res = city.agg * ARCSEC
+def dem_tiles(box) -> tuple[str, ...]:
+    """Names of the 1-degree Copernicus tiles that cover a (lat0, lon0, lat1, lon1) box."""
+    lat0, lon0, lat1, lon1 = box
+    return tuple(f"{'N' if la >= 0 else 'S'}{abs(la):02d}_00_{'E' if lo >= 0 else 'W'}{abs(lo):03d}_00"
+                 for la in range(int(np.floor(lat0)), int(np.floor(lat1 - 1e-9)) + 1)
+                 for lo in range(int(np.floor(lon0)), int(np.floor(lon1 - 1e-9)) + 1))
+
+
+def _grid(box, agg: int):
+    lat0, lon0, lat1, lon1 = box
+    res = agg * ARCSEC
     ny, nx = int(round((lat1 - lat0) / res)), int(round((lon1 - lon0) / res))
     from rasterio.transform import from_origin
     tr = from_origin(lon0, lat1, res, res)
@@ -77,12 +85,19 @@ def _grid(city: City):
     return tr, (ny, nx), lat, lon, dx, dy
 
 
-def _warp(paths, tr, shape, resampling, dtype, nodata):
+def _warp(paths, tr, shape, resampling, dtype, nodata, skip_missing: bool = False):
+    """skip_missing: a tile that does not exist is left as nodata (open sea has no terrain or land-cover tile)."""
     import rasterio
     from rasterio.warp import reproject
     out = np.full(shape, nodata, dtype)
     for p in paths:
-        with rasterio.open(p) as src:
+        try:
+            src = rasterio.open(p)
+        except rasterio.errors.RasterioIOError:
+            if skip_missing:
+                continue
+            raise
+        with src:
             tmp = np.full(shape, nodata, dtype)
             reproject(rasterio.band(src, 1), tmp, dst_transform=tr, dst_crs="EPSG:4326",
                       dst_nodata=nodata, resampling=resampling)
@@ -102,12 +117,23 @@ def _wc_tiles(box):
 
 def build(city: City, force: bool = False) -> Ground:
     """Download/crop the three layers onto the city grid; cached at data/raw/flood/<city>/ground.npz."""
+    return build_box(city.key, city.box, city.agg, city.dem_tiles, RAW / city.key / "ground.npz", force)
+
+
+def build_box(key: str, box, agg: int = 1, tiles=None, cache: Path | None = None, force: bool = False,
+              soil_default: int = 3) -> Ground:
+    """The same three layers for any (lat0, lon0, lat1, lon1) box in the world.
+
+    If the soil server cannot be reached, every cell gets `soil_default` (3 = group C, slow to soak: the cautious
+    choice for a flood watch) and `dem_source` says so.
+    """
     from rasterio.enums import Resampling
-    cache = RAW / city.key / "ground.npz"
-    tr, shape, lat, lon, dx, dy = _grid(city)
+    cache = cache or RAW / key / "ground.npz"
+    tiles = tiles or dem_tiles(box)
+    tr, shape, lat, lon, dx, dy = _grid(box, agg)
     if cache.exists() and not force:
         g = np.load(cache)
-        return Ground(city.key, lat, lon, g["z"], g["landcover"], g["built"], g["hsg"], dx, dy, str(g["dem_source"]))
+        return Ground(key, lat, lon, g["z"], g["landcover"], g["built"], g["hsg"], dx, dy, str(g["dem_source"]))
     cache.parent.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR")
     os.environ.setdefault("GDAL_HTTP_MAX_RETRY", "5")
@@ -116,16 +142,18 @@ def build(city: City, force: bool = False) -> Ground:
     if fab:
         dem_paths, dem_source = [str(p) for p in fab], "FABDEM (bare earth)"
     else:
-        dem_paths, dem_source = [DEM_URL.format(t=t) for t in city.dem_tiles], "Copernicus GLO-30 (surface)"
-    z = _warp(dem_paths, tr, shape, Resampling.average if city.agg > 1 else Resampling.bilinear, np.float32, np.nan)
+        dem_paths, dem_source = [DEM_URL.format(t=t) for t in tiles], "Copernicus GLO-30 (surface)"
+    z = _warp(dem_paths, tr, shape, Resampling.average if agg > 1 else Resampling.bilinear, np.float32, np.nan,
+              skip_missing=True)
     z = np.where(np.isfinite(z) & (z > -100), z, 0.0).astype(np.float32)
 
     # land cover: read at ~10 m (cell/3/agg), then majority and built fraction per model cell
-    f = 3 * city.agg
+    f = 3 * agg
     from rasterio.transform import from_origin
     tr_f = from_origin(tr.c, tr.f, tr.a / f, tr.a / f)
-    wc = _warp([WC_URL.format(t=t) for t in _wc_tiles(city.box)], tr_f, (shape[0] * f, shape[1] * f),
-               Resampling.nearest, np.uint8, 0)
+    wc = _warp([WC_URL.format(t=t) for t in _wc_tiles(box)], tr_f, (shape[0] * f, shape[1] * f),
+               Resampling.nearest, np.uint8, 0, skip_missing=True)
+    wc[wc == 0] = 80                           # no land-cover tile = open water
     blocks = wc.reshape(shape[0], f, shape[1], f).transpose(0, 2, 1, 3).reshape(shape[0], shape[1], f * f)
     built = (blocks == 50).mean(-1).astype(np.float32)
     classes = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100], np.uint8)
@@ -136,8 +164,14 @@ def build(city: City, force: bool = False) -> Ground:
     tok = earthdata_token()
     if tok:
         os.environ["GDAL_HTTP_HEADERS"] = f"Authorization: Bearer {tok}"
-    hsg = _warp(["/vsicurl/" + HYSOGS_URL], tr, shape, Resampling.nearest, np.uint8, 255)
+    try:
+        hsg = _warp(["/vsicurl/" + HYSOGS_URL], tr, shape, Resampling.nearest, np.uint8, 255)
+    except Exception:                          # server down or no token: fall back, and say so
+        hsg = np.full(shape, 255, np.uint8)
     os.environ.pop("GDAL_HTTP_HEADERS", None)
+    if (hsg == 255).all():
+        hsg[:] = soil_default
+        dem_source += "; soil: default group (soil map unavailable)"
 
     np.savez_compressed(cache, z=z, landcover=landcover, built=built, hsg=hsg, dem_source=dem_source)
-    return Ground(city.key, lat, lon, z, landcover, built, hsg, dx, dy, dem_source)
+    return Ground(key, lat, lon, z, landcover, built, hsg, dx, dy, dem_source)
