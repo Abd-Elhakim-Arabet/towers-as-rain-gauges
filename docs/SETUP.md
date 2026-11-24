@@ -8,7 +8,9 @@ There are three ways to run it. Pick one:
 | [B. Docker](#b-docker-any-os-easiest-full-install) | Docker | ~15 min | everything, including the live watch |
 | [C. Python](#c-python-linux-macos-windows) | Python 3.10–3.12 | ~15 min | everything, and you can rerun the experiments |
 
-Everything runs on a normal laptop. A GPU is **not** needed for the demo; it only speeds up retraining the AI.
+Everything runs on a normal computer; a GPU is **not** needed. Without one, the only slow step is the first set-up of
+a new city in the live watch: it tries many storms to find the rain that would flood the town, which takes about
+half an hour on a CPU (under a minute on a GPU). After that, each 5-minute update takes well under a minute on a CPU.
 
 ---
 
@@ -173,4 +175,4 @@ The MindSpore version of the model lives in a separate environment (`requirement
 | The live watch page says no server is attached | You opened the static copy. Start `python scripts/serve_site.py` and open `http://localhost:8000/watch/`. |
 | Port 8000 is busy | `python scripts/serve_site.py --port 8080` (Docker: `-p 8080:8000`). |
 | Maps stay blank | The machine needs internet for map tiles; check a firewall or proxy. |
-| A new city takes minutes to set up | Normal the first time: it downloads terrain and land cover. Later starts reuse them. |
+| A new city takes long to set up | Normal the first time: it downloads terrain and land cover, then tries many storms to find the flood threshold (about 30 min on a CPU, under a minute on a GPU). Restarts reuse all of it. |

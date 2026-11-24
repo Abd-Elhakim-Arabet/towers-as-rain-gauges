@@ -7,6 +7,9 @@ FROM python:3.12-slim
 ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PORT=8000
 WORKDIR /app
 
+# libexpat: needed by the map-data library (rasterio); not in the slim image
+RUN apt-get update && apt-get install -y --no-install-recommends libexpat1 && rm -rf /var/lib/apt/lists/*
+
 # CPU build of PyTorch (small); the models are tiny and run fine on CPU.
 RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
 COPY requirements-demo.txt pyproject.toml ./
