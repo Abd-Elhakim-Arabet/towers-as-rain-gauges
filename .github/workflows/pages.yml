@@ -1,0 +1,38 @@
+# Publishes the pages (control room, replays, explainer) to GitHub Pages.
+# The heavy dashboard data is not in git: it comes from the demo-data release, the same file users download.
+# The live watch needs a Python server, so on Pages it explains how to run it instead.
+name: Publish the site
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["site/**", "scripts/serve_site.py", "scripts/demo_bundle.py", "docs/explainer/explainer.pdf", ".github/workflows/pages.yml"]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/demo_bundle.py get
+      - run: python scripts/serve_site.py --export _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

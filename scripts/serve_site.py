@@ -3,9 +3,11 @@
     python scripts/serve_site.py            # builds site/_local/ and serves it
     python scripts/serve_site.py --port 8080
     python scripts/serve_site.py --tailscale   # also open it to your own devices on Tailscale
+    python scripts/serve_site.py --host 0.0.0.0   # open to the whole network (servers, Docker)
+    python scripts/serve_site.py --export _site   # write a static copy for any web host (no live watch)
 
 Pages:
-  /               opens the explainer PDF (the project write-up)
+  /               start page with links to everything below
   /explainer.pdf  the ground-up explainer
   /replay/        Phase 4 storm replay (simulated Algerian network)
   /storm3d/       3D storm over the towers: satellite imagery, terrain, 3D buildings (needs internet)
@@ -39,12 +41,52 @@ NAV = """<nav style="position:sticky;top:0;z-index:50;display:flex;gap:1.2rem;fl
 padding:.55rem max(16px,env(safe-area-inset-left,0px));background:#102029;color:#e8eef1;
 font:500 14px/1.4 'IBM Plex Sans',system-ui,sans-serif">
 <strong style="letter-spacing:.04em">TOWERS AS RAIN GAUGES</strong>
-<a href="/explainer.pdf" style="color:#cde2fb">Explainer (PDF)</a>
-<a href="/replay/" style="color:#cde2fb">Storm replay (simulation)</a>
-<a href="/storm3d/" style="color:#cde2fb">3D storm</a>
-<a href="/flood/" style="color:#cde2fb">Flood risk (simulation)</a>
-<a href="/dashboard/" style="color:#cde2fb">Control room (simulation)</a>
+<a href="../" style="color:#cde2fb">Start</a>
+<a href="../dashboard/" style="color:#cde2fb">Control room (simulation)</a>
+<a href="../watch/" style="color:#cde2fb">Live watch</a>
+<a href="../explainer.pdf" style="color:#cde2fb">Explainer (PDF)</a>
 </nav>"""
+
+REPO = "https://github.com/Abd-Elhakim-Arabet/towers-as-rain-gauges"
+START = f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Towers as Rain Gauges</title>
+<style>
+:root {{ --bg:#f4f6f8; --card:#fff; --ink:#102029; --ink2:#4a5a64; --line:#dde3e8; --accent:#1d5cff; }}
+@media (prefers-color-scheme: dark) {{ :root {{ --bg:#0d151a; --card:#16222a; --ink:#e8eef1; --ink2:#a3b3bc; --line:#26353f; --accent:#6f9bff; }} }}
+* {{ box-sizing:border-box }}
+body {{ margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,sans-serif; }}
+main {{ max-width:880px; margin:0 auto; padding:48px 16px 64px; }}
+h1 {{ font-size:30px; margin:0 0 8px; }}
+p.lead {{ color:var(--ink2); margin:0 0 28px; max-width:680px; }}
+.grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; }}
+a.card {{ display:block; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; color:inherit; text-decoration:none; }}
+a.card:hover {{ border-color:var(--accent); }}
+a.card b {{ display:block; font-size:17px; margin-bottom:4px; }}
+a.card span {{ color:var(--ink2); font-size:14px; }}
+.note {{ margin-top:28px; padding:14px 16px; border-left:3px solid var(--accent); background:var(--card); border-radius:8px; color:var(--ink2); font-size:14px; }}
+footer {{ margin-top:28px; font-size:14px; color:var(--ink2); }}
+footer a {{ color:var(--accent); }}
+</style></head><body><main>
+<h1>Towers as Rain Gauges</h1>
+<p class="lead">Flash-flood early warning from the microwave links that already connect mobile-phone towers.
+Rain weakens the signal between two towers; AI turns that into a live rain map, and a flood model shows which streets
+will flood and raises the alarm.</p>
+<div class="grid">
+<a class="card" href="dashboard/"><b>Control room</b><span>Algiers 2001 and Ghardaïa 2008 storms replayed: towers, rain, 3D flood water and the alarm.</span></a>
+<a class="card" href="watch/"><b>Live watch</b><span>Pick any city and watch its rain and flood risk now. Needs the Python server (see the guide).</span></a>
+<a class="card" href="replay/"><b>Storm replay</b><span>The simulated Algerian link network during the two storms.</span></a>
+<a class="card" href="flood/"><b>Flood risk</b><span>Water depth, danger and alarms from our flood model.</span></a>
+<a class="card" href="storm3d/"><b>3D storm</b><span>The storm over the towers, with terrain and buildings.</span></a>
+<a class="card" href="explainer.pdf"><b>Explainer (PDF)</b><span>The whole project in plain language, with all results.</span></a>
+</div>
+<p class="note"><b>Real vs simulated.</b> Accuracy was measured on real link data from Sweden, Italy and the Netherlands.
+The Algerian cities are a simulation: real tower positions and real satellite rain drive virtual links.
+They show how the system would work there; they do not prove accuracy there.</p>
+<footer>Code, data download and setup guide: <a href="{REPO}">{REPO.removeprefix("https://")}</a></footer>
+</main></body></html>
+"""
 
 
 def wrap(fragment: str) -> str:
@@ -59,9 +101,7 @@ def build() -> None:
         shutil.rmtree(OUT)
     (OUT / "replay").mkdir(parents=True)
     (OUT / "storm3d").mkdir(parents=True)
-    (OUT / "index.html").write_text('<!doctype html><meta charset="utf-8">'
-                                    '<meta http-equiv="refresh" content="0; url=/explainer.pdf">'
-                                    '<a href="/explainer.pdf">Explainer (PDF)</a>\n')
+    (OUT / "index.html").write_text(START)
     replay = SITE / "phase4" / "index.html"
     if replay.exists():
         (OUT / "replay" / "index.html").write_text(wrap(replay.read_text()))
@@ -120,8 +160,18 @@ def main() -> None:
     ap.add_argument("--host", action="append", default=[], help="extra address to listen on (repeatable)")
     ap.add_argument("--tailscale", action="store_true", help="also listen on this machine's Tailscale IPv4")
     ap.add_argument("--static", action="store_true", help="pages only, without the live watch")
+    ap.add_argument("--export", metavar="DIR", help="write a static copy of the pages to DIR and stop")
     args = ap.parse_args()
-    hosts = ["127.0.0.1"] + args.host
+    if args.export:
+        build()
+        dest = Path(args.export).resolve()
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.copytree(OUT, dest, symlinks=False)      # follows the dashboard data link, so the copy stands alone
+        (dest / ".nojekyll").write_text("")
+        print(f"static copy written to {dest}")
+        return
+    hosts = ["0.0.0.0"] if "0.0.0.0" in args.host else ["127.0.0.1"] + args.host
     if args.tailscale:
         hosts.append(subprocess.run(["tailscale", "ip", "-4"], capture_output=True, text=True,
                                     check=True).stdout.split()[0])

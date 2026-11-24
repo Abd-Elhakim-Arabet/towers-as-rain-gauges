@@ -196,6 +196,9 @@ ul.problems { margin: 8px 0 0; padding-left: 18px; color: var(--st-flooding); fo
     </form>
     <div class="cands" id="cands"></div>
     <p class="msg" id="search-msg" hidden></p>
+    <p class="msg bad" id="offline" hidden>No live server is attached to this copy of the site, so the live watch cannot run here.
+      Start it on your own computer in a few commands: see the <a href="https://github.com/Abd-Elhakim-Arabet/towers-as-rain-gauges/blob/main/docs/SETUP.md">setup guide</a>.
+      The <a href="../dashboard/">replay</a> works here.</p>
   </section>
   <section id="cities-sec" hidden>
     <h3>Watched now</h3>
@@ -310,7 +313,9 @@ ul.problems { margin: 8px 0 0; padding-left: 18px; color: var(--st-flooding); fo
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
-const API = location.origin + "/api";
+// The page talks to the live watch server. A static copy (e.g. GitHub Pages) may name a server elsewhere
+// in <meta name="watch-api">; with none, the page says the live part needs the server.
+const API = ((document.querySelector('meta[name="watch-api"]') || {}).content || location.origin).replace(/\/$/, "") + "/api";
 const api = async (path, opt) => {
   const r = await fetch(API + path, opt);
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || `The server answered ${r.status}`);
@@ -463,8 +468,11 @@ $("d-go").onclick = async () => {
 };
 
 /* ================================================================ watching */
+let offline = false;
 async function cities() {
-  const list = await api("/watches").catch(() => []);
+  const list = await api("/watches").catch(() => { offline = true; return []; });
+  $("offline").hidden = !offline;
+  if (offline) { $("search").querySelectorAll("input,button").forEach(e => e.disabled = true); return; }
   $("cities-sec").hidden = !list.length;
   $("cities").innerHTML = list.map(c => `<button class="city" type="button" data-k="${c.key}" aria-current="${c.key === key}"><i style="background:${c.level ? css("--st-" + c.level) : "var(--muted)"}"></i><span><b>${esc(c.name)}</b><small>${c.error ? "Set-up failed" : c.ready ? TITLE[c.level] || "" : "Setting up…"} · ${c.mode === "simulation" ? "simulation" : "own data"}</small></span></button>`).join("");
   $("cities").querySelectorAll("button").forEach(b => b.onclick = () => location.hash = b.dataset.k);

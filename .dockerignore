@@ -1,0 +1,15 @@
+.venv
+.venv-ms
+.git
+data
+runs
+logs
+site/_local
+site/dashboard/data
+site/dashboard/index.html
+site/flood/index.html
+**/__pycache__
+.pytest_cache
+.env
+*.tar
+notebooks

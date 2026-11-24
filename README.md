@@ -8,6 +8,13 @@ neighborhoods and roads are most exposed in the next hour.
 
 Built for the Huawei ICT Competition (Innovation Track).
 
+| | |
+|---|---|
+| **Try it** | hosted site: https://abd-elhakim-arabet.github.io/towers-as-rain-gauges/ (control room, replays, explainer) |
+| **Run it yourself** | [docs/SETUP.md](docs/SETUP.md): Docker or Python, any OS, about 15 minutes; includes the live watch |
+| **Demo videos** | [demo-videos release](https://github.com/Abd-Elhakim-Arabet/towers-as-rain-gauges/releases/tag/demo-videos) |
+| **Licence** | code under [MIT](LICENSE); datasets keep their own licences ([docs/DATA.md](docs/DATA.md)) |
+
 > **Honesty note.** Validation uses **real European data** (Sweden, Italy, Netherlands).
 > The **Algeria part is a simulation**: real tower positions and real satellite rainfall
 > drive a *virtual* link network. It shows how the system would work there. It does not prove
@@ -78,6 +85,8 @@ backend with a local default:
 Code outside `src/targ/backends/` never imports torch, MindSpore or Huawei SDKs directly.
 
 ## Setup
+
+For a quick install on any machine, see [docs/SETUP.md](docs/SETUP.md). The full research setup, phase by phase:
 
 ```bash
 uv venv --python 3.12 .venv
