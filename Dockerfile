@@ -9,8 +9,8 @@ WORKDIR /app
 
 # CPU build of PyTorch (small); the models are tiny and run fine on CPU.
 RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
-COPY requirements.txt pyproject.toml ./
-RUN pip install -r requirements.txt
+COPY requirements-demo.txt pyproject.toml ./
+RUN pip install -r requirements-demo.txt
 COPY . .
 RUN pip install --no-deps -e . && chmod +x docker/start.sh \
  && useradd -m -u 1000 app && chown -R app /app

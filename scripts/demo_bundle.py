@@ -59,9 +59,9 @@ def download(dest: Path) -> None:
         for chunk in iter(lambda: r.read(1 << 20), b""):
             fh.write(chunk)
             done += len(chunk)
-            if total:
-                print(f"\r  {done / 1e6:.0f} / {total / 1e6:.0f} MB", end="", flush=True)
-    print()
+            if total and (done // (1 << 20)) % 25 == 0:          # a line every 25 MB, readable in logs too
+                print(f"  {done / 1e6:.0f} / {total / 1e6:.0f} MB", flush=True)
+    print("  done")
 
 
 def unpack(f: Path) -> None:

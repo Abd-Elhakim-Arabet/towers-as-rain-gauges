@@ -89,9 +89,14 @@ Pick the line for your machine:
 Then:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-demo.txt
 pip install -e .
 ```
+
+`requirements-demo.txt` is everything the pages and the live watch need. To rerun the experiments, install
+`requirements.txt` instead (it adds `pysteps` and a few research tools; on Python 3.12 `pysteps` is compiled during
+install, so you need a C compiler: `build-essential` on Linux, Xcode command-line tools on macOS, or
+"Build Tools for Visual Studio" on Windows).
 
 ### 4. Get the demo data
 
@@ -162,7 +167,8 @@ The MindSpore version of the model lives in a separate environment (`requirement
 
 | Problem | Fix |
 |---|---|
-| `pip install` fails on `rasterio`, `geopandas` or `netcdf4` | Use Python 3.12 (they ship ready-made wheels for it), or use Docker. |
+| `pip install` fails on `rasterio` or `netcdf4` | Use Python 3.12 (they ship ready-made wheels for it), or use Docker. |
+| `pip install -r requirements.txt` fails building `pysteps` | Install a C compiler (see step 3), or use `requirements-demo.txt` if you only need the demo. |
 | The dashboard says data is missing | Run `python scripts/demo_bundle.py get`. |
 | The live watch page says no server is attached | You opened the static copy. Start `python scripts/serve_site.py` and open `http://localhost:8000/watch/`. |
 | Port 8000 is busy | `python scripts/serve_site.py --port 8080` (Docker: `-p 8080:8000`). |

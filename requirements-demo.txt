@@ -1,0 +1,24 @@
+# What the pages and the live watch need (no C compiler needed on any OS).
+# For rerunning every experiment use requirements.txt instead.
+# PyTorch is installed separately, see docs/SETUP.md.
+numpy
+scipy
+pandas
+xarray
+netcdf4
+h5py<=3.14
+matplotlib
+scikit-learn
+tqdm
+pyyaml
+requests
+pycomlink
+poligrain
+pyproj
+shapely
+rasterio
+pykrige
+numba
+fastapi
+uvicorn
+pytest
