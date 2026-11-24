@@ -1,129 +1,96 @@
 # Towers as Rain Gauges
 
-Flash-flood early warning from the microwave links that already connect cell towers.
-Rain attenuates the signal between two towers, and operators already log the received
-and transmitted signal levels (RSL/TSL). So every link is an accidental rain gauge.
-AI turns those signals into a live rain map, and a flood-risk layer tells you which
-neighborhoods and roads are most exposed in the next hour.
+**Flash-flood early warning from the microwave links that already connect cell towers.**
 
-Built for the Huawei ICT Competition (Innovation Track).
+Rain weakens the radio signal between two towers, and mobile operators already record that signal every few
+minutes. So every link in a phone network is an accidental rain gauge, and a country covered by towers already has
+thousands of them. This project turns those signals into a live rain map with AI, runs a flood model on that rain,
+and raises an alarm for the streets most likely to flood in the next hours.
+
+It was built for the Huawei ICT Competition (Innovation Track) with flash floods in Algeria in mind, such as
+Bab El Oued (2001) and Ghardaïa (2008), where rain gauges and weather radar are sparse but phone towers are everywhere.
 
 | | |
 |---|---|
-| **Try it** | hosted site: https://abd-elhakim-arabet.github.io/towers-as-rain-gauges/ (control room, replays, explainer) |
-| **Run it yourself** | [docs/SETUP.md](docs/SETUP.md): Docker or Python, any OS, about 15 minutes; includes the live watch |
+| **Try it** | https://abd-elhakim-arabet.github.io/towers-as-rain-gauges/ (control room, storm replays, explainer) |
+| **Run it yourself** | [docs/SETUP.md](docs/SETUP.md): Docker or Python, any OS, about 15 minutes, includes the live watch |
 | **Demo videos** | [demo-videos release](https://github.com/Abd-Elhakim-Arabet/towers-as-rain-gauges/releases/tag/demo-videos) |
-| **Licence** | code under [MIT](LICENSE); datasets keep their own licences ([docs/DATA.md](docs/DATA.md)) |
+| **The whole story** | [explainer PDF](docs/explainer/explainer.pdf): every step and result in plain language |
 
-> **Honesty note.** Validation uses **real European data** (Sweden, Italy, Netherlands).
-> The **Algeria part is a simulation**: real tower positions and real satellite rainfall
-> drive a *virtual* link network. It shows how the system would work there. It does not prove
-> accuracy in Algeria. No Algerian operator data was used.
+## How it works
 
-## Status
+```
+tower-to-tower signal levels  →  AI: is it raining on this link, and how hard?
+                              →  rain map over the town, every 5 minutes
+                              →  flood model: where the water goes in the next 2 hours
+                              →  alert level (normal, watch, flood warning, flooding) on screen and by email
+```
 
-| Phase | What | State |
+- **AI rain reader.** A small neural network reads each link's signal and estimates the rain on it. It runs in
+  PyTorch, with a MindSpore twin for the Huawei stack.
+- **Rain map.** The links' readings are spread into a map of the town.
+- **Flood model.** Our own 2D water-flow model (`src/floodrisk/`) moves that rain over the real terrain and land
+  cover, and finds the neighbourhoods and roads that flood.
+- **Live watch.** Type any city in the world. The system fetches its terrain, finds its towers, builds the links,
+  then follows the rain and the flood risk live and sends an alarm email when it matters.
+
+## What is real and what is simulated
+
+- **Real data, real tests (Europe).** The AI was trained and checked on real link recordings from Sweden, Italy and
+  the Netherlands, against rain gauges and weather radar. On Italian links it had never seen, its hourly rain
+  matched the radar far better than the classical method (correlation 0.64 against 0.22).
+- **Simulation (Algeria).** No Algerian operator data was available. The Algerian part uses real tower positions
+  and real satellite rainfall to drive a *virtual* link network. It shows how the system would work there; it does
+  not prove its accuracy there.
+- **Live watch.** Out of the box it pushes today's real weather through simulated links. Connect an operator's real
+  link data ([adapters/README.md](adapters/README.md)) and the same chain runs on real signals.
+
+It is a demonstration, not an official warning service.
+
+## What you can open
+
+| Page | What it shows |
+|---|---|
+| Control room | Algiers 2001 and Ghardaïa 2008 replayed: towers, rain, 3D flood water and the alarm on one screen, with a guided tour |
+| Live watch | any city, now: rain, flood risk, alert level, and a drill button that sends a made-up storm through the chain |
+| Storm replay, flood risk, 3D storm | earlier, more detailed views of each step |
+
+The hosted copy has everything except the live watch, which needs a running server ([SETUP.md](docs/SETUP.md)).
+
+## Ready for Huawei Cloud
+
+Every Huawei-specific piece sits behind a switch with a local default, so the same code runs on a laptop today and
+on Huawei Cloud later:
+
+| Layer | Local (default) | Huawei Cloud |
 |---|---|---|
-| 0 | Repo, environment, data downloads | done (NL: June–Aug 2014 subset; KNMI hourly radar 2014) |
-| 1 | Classical baseline on OpenMRG | done — see [results/phase1_openmrg.md](results/phase1_openmrg.md) |
-| 2 | AI models (causal TCN, physics head; PyTorch + MindSpore twin), cross-domain tests on Italy and the Netherlands | done — see [results/phase2.md](results/phase2.md) |
-| 3 | Rain maps (IDW) + nowcasting (pysteps) | done — see [results/phase3_maps.json](results/phase3_maps.json), [results/phase3_nowcast.json](results/phase3_nowcast.json) |
-| 4 | Virtual Algerian network (simulation) | done — see [results/phase4.md](results/phase4.md), explainer Part 4, interactive replay in [site/phase4/index.html](site/phase4/index.html) |
-| 5 | Flood-risk layer: 2D flood model (own package `src/floodrisk/`) on the Phase 4 storms, hazard, alarms (simulation) | done — see [results/phase5/phase5.md](results/phase5/phase5.md), explainer Part 5, plan in [docs/phase5/PLAN.md](docs/phase5/PLAN.md), local page `/flood/` |
-| 6 | Control-room dashboard: towers, rain, 3D flood water and alarm on one screen, with a guided tour (simulation) | done — explainer Part 6, plan in [docs/phase6/PLAN.md](docs/phase6/PLAN.md), local page `/dashboard/` (build: `scripts/phase6/run_dashboard_floods.py` then `scripts/phase6/export_dashboard.py`) |
-| 7 | Live watch: pick any city in the world, follow its rain and flood model now, alarm on screen and by email (simulated links on real weather, or your own link data) | working — plan and results in [docs/phase7/PLAN.md](docs/phase7/PLAN.md), local page `/watch/`, see "Live watch" below |
-| 8 | Report, pitch, video script | – |
+| AI framework | PyTorch | MindSpore |
+| Storage | local disk | OBS |
+| Training | local GPU or CPU | ModelArts |
 
-## Layout
+Switch in `configs/backend.yaml` or with the `TARG_FRAMEWORK`, `TARG_STORAGE` and `TARG_COMPUTE` variables.
+
+## Repository map
 
 ```
-configs/      datasets.yaml (data registry), backend.yaml (local ↔ Huawei switch)
-scripts/      download_data.py, download_nl_subset.py, phase entry points
-src/targ/     the Python package
-  backends/   framework (torch|mindspore), storage (local|obs), compute (local|modelarts)
-data/raw/     downloaded data (git-ignored) + MANIFEST.json
-docs/         DATA.md, ENVIRONMENT.md, report
-tests/
+site/           the web pages (control room, live watch, replays)
+src/targ/       AI rain reader, rain maps, simulated networks, Huawei backends
+src/floodrisk/  flood model
+src/watch/      live watch server
+adapters/       how to plug in real operator link data
+scripts/        one script per step; serve_site.py starts everything
+docs/           setup guide, data sources, explainer, plans
+results/        the numbers behind every claim
 ```
 
-## Live watch (Phase 7)
+## More
 
-```
-python scripts/serve_site.py            # pages + live watch at http://localhost:8000/watch/
-```
+- [docs/SETUP.md](docs/SETUP.md): install and run on any machine
+- [docs/REPRODUCE.md](docs/REPRODUCE.md): rebuild every result from the raw data
+- [docs/DATA.md](docs/DATA.md): data sources, versions, licences and sizes
 
-1. Type a city, pick the right match. The system downloads its terrain, land cover and soil (once, ~10 s to a few
-   minutes), finds tower sites (OpenCelliD cache, OpenStreetMap, then estimated sites on built-up land, each marked),
-   builds links per operator, and works out the rain that would flood the town.
-2. Choose where the signals come from:
-   - **Simulation:** live rain from a weather service (Open-Meteo) pushed through the simulated links; the AI reads it
-     back. Shows the chain working anywhere; it does not measure accuracy there.
-   - **My own data:** real link readings in the standard format, from two web addresses or an adapter file
-     (see [adapters/README.md](adapters/README.md); check with `python -m watch.check_adapter`).
-3. Every 5 minutes: AI rain per link → rain map → flood model carried forward → 2-hour look-ahead → alert level
-   (normal, watch, flood warning, flooding). Watches resume when the server restarts.
-4. Alarm emails at flood warning and flooding, and an all-clear. Settings go in `.env` (see `.env.example`):
-   `ALERT_TO`, and `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD` for the sending account. Without a sending
-   account, emails are saved to `data/live/outbox/`.
-5. "Run a drill" sends a made-up storm through the same chain, fast, labelled DRILL everywhere.
+## Team
 
-Limits (also shown on the page): not calibrated per city, no river defences, floods arriving from outside the watched
-box are missed, and the AI reads heavy rain about 10% low (a fixed correction was tested and rejected:
-`scripts/phase7_heavy_rain_correction.py`). It is a demonstration, not an official warning.
+Team RainTowers: Abdelhakim Arabet, Hamza Oukil, Mohamed Elamine Ali Zergaoui; instructor Meziane Iftene.
 
-## Local first, Huawei when available
-
-The team has no Huawei Cloud access yet, so every Huawei-specific piece sits behind a
-backend with a local default:
-
-| Layer | Local (now) | Huawei (later) | Switch |
-|---|---|---|---|
-| Deep-learning framework | PyTorch | MindSpore | `framework:` in `configs/backend.yaml` or `TARG_FRAMEWORK` |
-| Storage | local disk | OBS | `storage:` / `TARG_STORAGE` |
-| Training | local GPU/CPU | ModelArts training job | `compute:` / `TARG_COMPUTE` |
-
-Code outside `src/targ/backends/` never imports torch, MindSpore or Huawei SDKs directly.
-
-## Setup
-
-For a quick install on any machine, see [docs/SETUP.md](docs/SETUP.md). The full research setup, phase by phase:
-
-```bash
-uv venv --python 3.12 .venv
-uv pip install --python .venv/bin/python -r requirements.txt -e .
-uv pip install --python .venv/bin/python torch --index-url https://download.pytorch.org/whl/cu128
-# optional MindSpore (separate venv, CPU build locally):
-uv venv --python 3.12 .venv-ms && uv pip install --python .venv-ms/bin/python -r requirements-mindspore.txt -e .
-
-.venv/bin/python scripts/download_data.py openmrg openrainer netherlands_cml
-.venv/bin/python -m pytest
-.venv/bin/python scripts/phase1_baseline.py   # Phase 1, ~5 min (first run builds a 1-min cache, +6 min)
-.venv/bin/python scripts/phase2_openmrg.py     # Phase 2 Sweden: train + score (~10 min on a GPU)
-.venv/bin/python scripts/phase2_seeds.py       # Phase 2: 5 retrainings, spread of the scores
-.venv/bin/python scripts/phase2_italy.py       # Phase 2: zero-shot test on OpenRainER (Italy)
-.venv/bin/python scripts/phase2_netherlands.py # Phase 2: min/max model, zero-shot test on the Netherlands
-.venv/bin/python scripts/phase2_mindspore.py export && .venv-ms/bin/python scripts/phase2_mindspore.py check
-.venv/bin/python scripts/phase2_diagnose_seeds.py     # why runs disagree on amounts
-.venv/bin/python scripts/phase2_diagnose_longrain.py  # why long rain is under-measured in Italy
-.venv/bin/python scripts/phase2_mixed.py se_mse mix21_mse mix21rel_mse   # varied-training experiments
-.venv/bin/python scripts/phase2_italy_cv.py train 5,6,7,8,9 0,1,2 mse-rel && .venv/bin/python scripts/phase2_italy_cv.py eval mse-rel
-.venv/bin/python scripts/phase2_mixed.py "mix21rel+mfb+mask+gt_mse"   # final recipe (flags: mfb, mask, gt, rf6, west/east)
-.venv/bin/python scripts/phase2_mixed.py "mix21rel+mfb+mask+gt+west_mse" "mix21rel+mfb+mask+gt+east_mse"   # new-links test
-.venv/bin/python scripts/phase2_italy_cv.py train 5,6,7,8,9 0,1,2 mse-rel+mfb+mask+gt && .venv/bin/python scripts/phase2_italy_cv.py eval mse-rel+mfb+mask+gt
-.venv/bin/python scripts/export_explainer_varied.py && .venv/bin/python scripts/export_explainer_varied.py numbers
-.venv/bin/python scripts/phase2_summary.py     # results/phase2.md
-.venv/bin/python scripts/phase3_maps.py       # Phase 3: link rain maps vs gauges / radar
-.venv/bin/python scripts/phase3_nowcast.py    # Phase 3: 0-60 min nowcasts, Netherlands
-.venv/bin/python scripts/phase4_storms.py     # Phase 4: IMERG storms (Algiers 2001, Ghardaia 2008), needs EARTHDATA_TOKEN
-.venv/bin/python scripts/phase4_rain_texture.py  # Phase 4: rain patchiness measured on Italian radar
-.venv/bin/python scripts/phase4_simulate.py   # Phase 4: simulated network -> signals -> AI/classical -> maps, scores
-.venv/bin/python scripts/export_explainer_phase4.py && .venv/bin/python scripts/export_phase4_explorer.py  # figures + replay page
-.venv/bin/python scripts/export_storm3d.py  # 3D storm (satellite, terrain, 3D buildings, towers, links, rain; live tiles) + GeoJSON for GeoLibre
-.venv/bin/python scripts/serve_site.py       # explainer PDF, storm replay, 3D storm on http://localhost:8000
-```
-
-Exact versions are in `requirements.lock.txt`. See `docs/ENVIRONMENT.md` for machine-specific notes.
-
-## Data
-
-See [docs/DATA.md](docs/DATA.md) for sources, versions, licenses and sizes.
+Code under the [MIT licence](LICENSE). Datasets keep their own licences ([docs/DATA.md](docs/DATA.md)).

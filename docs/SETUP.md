@@ -155,7 +155,7 @@ proxy (e.g. nginx with HTTPS) before opening it to the internet.
 ## Rerun the experiments (reproduce the results)
 
 The demo data above is enough to look and to run the live watch. To rebuild every number in the explainer from the
-raw data, follow the commands in the README ("Setup" section) phase by phase. You will need:
+raw data, follow [REPRODUCE.md](REPRODUCE.md) step by step. You will need:
 
 - about 60 GB of disk for the raw datasets (`python scripts/download_data.py` fetches them; see [DATA.md](DATA.md)
   for sources, licences and sizes);
