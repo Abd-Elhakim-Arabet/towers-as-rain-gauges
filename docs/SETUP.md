@@ -8,9 +8,12 @@ There are three ways to run it. Pick one:
 | [B. Docker](#b-docker-any-os-easiest-full-install) | Docker | ~15 min | everything, including the live watch |
 | [C. Python](#c-python-linux-macos-windows) | Python 3.10–3.12 | ~15 min | everything, and you can rerun the experiments |
 
-Everything runs on a normal computer; a GPU is **not** needed. Without one, the only slow step is the first set-up of
-a new city in the live watch: it tries many storms to find the rain that would flood the town, which takes from half an hour
-to an hour on a CPU, depending on the size of the city (under a minute on a GPU). After that, each 5-minute update takes well under a minute on a CPU.
+Everything runs on a normal computer; a GPU is **not** needed for the pages, the replays, or watching a city. Each
+5-minute update of a watched city takes about 5 seconds on a GPU and well under a minute on a CPU (measured: 33–36 s
+for the 2-hour look-ahead on 8 CPU cores). The one slow step without a GPU is the **first set-up of a new city**: it runs
+up to 14 flood simulations to find the rain that would flood the town. That takes a few minutes on a GPU but can take
+**several hours on a CPU** (a CPU-only Docker test on Tizi Ouzou had not finished after 4 hours). To add new cities, use a
+machine with an NVIDIA GPU.
 
 ---
 
@@ -184,4 +187,4 @@ The MindSpore version of the model lives in a separate environment (`requirement
 | The live watch page says no server is attached | You opened the static copy. Start `python scripts/serve_site.py` and open `http://localhost:8000/watch/`. |
 | Port 8000 is busy | `python scripts/serve_site.py --port 8080` (Docker: `-p 8080:8000`). |
 | Maps stay blank | The machine needs internet for map tiles; check a firewall or proxy. |
-| A new city takes long to set up | Normal the first time: it downloads terrain and land cover, then tries many storms to find the flood threshold (30–60 min on a CPU, under a minute on a GPU). Restarts reuse all of it. |
+| A new city takes long to set up | Normal the first time: it downloads terrain and land cover, then tries many storms to find the flood threshold (a few minutes on a GPU, possibly hours on a CPU). Restarts reuse all of it. |
