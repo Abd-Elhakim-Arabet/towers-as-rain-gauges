@@ -73,7 +73,7 @@ aside > section + section { border-top: 1px solid var(--line); }
 .note { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 8px 0 0; }
 .field { display: flex; gap: 6px; }
 .field input { flex: 1; min-width: 0; }
-input[type="text"], input[type="url"], select { background: #fff; border: 0; box-shadow: inset 0 0 0 1px var(--edge2); border-radius: 6px; padding: 8px 11px; width: 100%; }
+input[type="text"], input[type="url"], input[type="password"], select { background: #fff; border: 0; box-shadow: inset 0 0 0 1px var(--edge2); border-radius: 6px; padding: 8px 11px; width: 100%; }
 .cands { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
 .cand, .city { display: block; width: 100%; text-align: left; background: transparent; border: 0; border-radius: 6px; padding: 7px 9px; cursor: pointer; }
 .cand:hover, .city:hover { background: var(--hover); }
@@ -148,6 +148,12 @@ table.fmt td:first-child { font-weight: 500; white-space: nowrap; }
 table.fmt caption { text-align: left; color: var(--muted); padding: 6px 0 2px; }
 .dlg label { display: block; font-size: 12px; color: var(--ink2); margin: 8px 0 3px; }
 .dlg .foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.mailrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mailrow p { margin: 0; color: var(--ink2); font-size: 12.5px; min-width: 0; overflow-wrap: anywhere; }
+.dlg .two { display: grid; grid-template-columns: 1fr 90px; gap: 8px; }
+.dlg details { margin-top: 10px; font-size: 12.5px; color: var(--ink2); }
+.dlg details summary { cursor: pointer; }
+.dlg ol { margin: 6px 0 0; padding-left: 18px; color: var(--ink2); font-size: 12.5px; line-height: 1.55; }
 ul.problems { margin: 8px 0 0; padding-left: 18px; color: var(--st-flooding); font-size: 12.5px; }
 
 .maplibregl-ctrl-attrib { background: rgba(255, 255, 255, .6) !important; font-size: 10.5px; }
@@ -199,6 +205,10 @@ ul.problems { margin: 8px 0 0; padding-left: 18px; color: var(--st-flooding); fo
     <p class="msg bad" id="offline" hidden>No live server is attached to this copy of the site, so the live watch cannot run here.
       Start it on your own computer in a few commands: see the <a href="https://github.com/Abd-Elhakim-Arabet/towers-as-rain-gauges/blob/main/docs/SETUP.md">setup guide</a>.
       The <a href="../dashboard/">replay</a> works here.</p>
+  </section>
+  <section id="mail-sec" hidden>
+    <h3>Alarm email</h3>
+    <div class="mailrow"><p id="mail-sum"></p><button class="btn small" type="button" id="b-mailset">Set up</button></div>
   </section>
   <section id="cities-sec" hidden>
     <h3>Watched now</h3>
@@ -306,6 +316,45 @@ ul.problems { margin: 8px 0 0; padding-left: 18px; color: var(--st-flooding); fo
       <button class="btn primary" type="button" id="d-go">Start watching</button>
     </div>
   </div>
+</dialog>
+
+<dialog id="mdlg">
+  <form class="dlg glass" id="mform">
+    <h2>Where should flood alarms go?</h2>
+    <p>When a watched town reaches <b>Flood warning</b> or <b>Flooding</b>, the watch sends an email, and another when it is over.
+      Drills are marked DRILL.</p>
+    <p class="msg" id="m-ro" hidden>This can only be changed on the computer that runs the server.</p>
+    <label for="m-to">Send alarms to</label>
+    <input type="text" id="m-to" placeholder="you@example.com (several: separate with commas)" autocomplete="email">
+    <label for="m-user">Send them from (a Gmail address works best)</label>
+    <input type="text" id="m-user" placeholder="sender@gmail.com" autocomplete="username">
+    <label for="m-pw">App password of that account</label>
+    <input type="password" id="m-pw" placeholder="16 letters from Google" autocomplete="new-password">
+    <details>
+      <summary>How to get a Gmail app password (2 minutes)</summary>
+      <ol>
+        <li>Turn on 2-Step Verification on the Google account, if it is off.</li>
+        <li>Open <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a>,
+          create one called “flood watch”, and paste the 16 letters here.</li>
+      </ol>
+      <p class="note">It only lets this program send email; your normal password stays private. It is kept on this computer in
+        data/live/mail.json and is never shown again.</p>
+    </details>
+    <details id="m-adv">
+      <summary>Another mail provider</summary>
+      <div class="two">
+        <div><label for="m-host">Mail server</label><input type="text" id="m-host" placeholder="smtp.gmail.com"></div>
+        <div><label for="m-port">Port</label><input type="text" id="m-port" placeholder="587" inputmode="numeric"></div>
+      </div>
+    </details>
+    <p class="note">Without a sending account, alarms are still kept, as email files in data/live/outbox/ on the server.</p>
+    <p class="msg" id="m-msg" hidden></p>
+    <div class="foot">
+      <button class="btn" type="button" id="m-later">Later</button>
+      <button class="btn" type="button" id="m-test">Send a test</button>
+      <button class="btn primary" type="submit" id="m-save">Save</button>
+    </div>
+  </form>
 </dialog>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -541,9 +590,9 @@ async function render(d, k) {
   $("limits").innerHTML = (sim ? "The towers marked as estimated and all the links are simulated, so this shows the chain working, not how accurate it is here. " : "")
     + "The flood model is not calibrated for this city and knows no river defences. A flood that arrives from outside the dashed box is not seen. "
     + "The alert comes from a model, it is not an official warning. Terrain: " + esc(d.ground) + ".";
-  $("mail-note").textContent = !d.mail.to ? "No address is set for alarm emails (ALERT_TO in the .env file on the server)."
-    : d.mail.smtp ? "Alarm emails are sent when the level reaches Flood warning or Flooding, and when it is over."
-    : "An address is set, but no sending account yet (SMTP settings in .env). Until then emails are saved in data/live/outbox/ on the server.";
+  $("mail-note").textContent = !d.mail.to ? "No address is set for alarm emails yet: use “Alarm email” on the left."
+    : d.mail.complete ? `Alarm emails go to ${d.mail.to_shown} when the level reaches Flood warning or Flooding, and when it is over.`
+    : "An address is set, but no sending account yet (“Alarm email” on the left). Until then emails are saved in data/live/outbox/ on the server.";
   $("b-live").hidden = !drillView; $("b-drill").disabled = !!(d.drill && d.drill.running);
   $("b-drill").textContent = d.drill && d.drill.running ? "Drill running…" : "Run a drill";
   if (d.drill && d.drill.error) { $("act-msg").hidden = false; $("act-msg").className = "msg bad"; $("act-msg").textContent = "The drill stopped: " + d.drill.error; }
@@ -618,8 +667,68 @@ $("b-stop").onclick = async () => {
   if ($("b-stop").dataset.sure !== "1") { $("b-stop").dataset.sure = "1"; $("b-stop").textContent = "Click again to stop watching"; setTimeout(() => { $("b-stop").dataset.sure = ""; $("b-stop").textContent = "Stop watching this city"; }, 4000); return; }
   await api(`/watches/${key}`, { method: "DELETE" }).catch(() => {}); location.hash = "";
 };
+/* ---------- alarm email set-up (opens by itself on the first visit while it is not finished) ---------- */
+let mail = null;
+const store = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+function mailSummary() {
+  if (!mail) return;
+  $("mail-sec").hidden = false;
+  $("mail-sum").textContent = !mail.to ? "Not set up: alarms only show on this page."
+    : mail.complete ? `Alarms go to ${mail.to_shown}.`
+    : `Alarms for ${mail.to_shown} are kept on the server until a sending account is added.`;
+  $("b-mailset").textContent = mail.to ? "Change" : "Set up";
+}
+const mmsg = (text, cls = "") => { const m = $("m-msg"); m.hidden = !text; m.className = "msg " + cls; m.textContent = text; };
+function openMail() {
+  $("m-to").value = ""; $("m-user").value = ""; $("m-pw").value = "";
+  $("m-to").placeholder = mail.to_shown ? `now: ${mail.to_shown} (type again to change)` : "you@example.com (several: separate with commas)";
+  $("m-user").placeholder = mail.from_shown ? `now: ${mail.from_shown}` : "sender@gmail.com";
+  $("m-pw").placeholder = mail.password ? "saved (leave empty to keep it)" : "16 letters from Google";
+  $("m-host").value = mail.host && mail.host !== "smtp.gmail.com" ? mail.host : ""; $("m-port").value = mail.port && mail.port !== "587" ? mail.port : "";
+  $("m-adv").open = !!$("m-host").value;
+  $("m-ro").hidden = mail.can_edit;
+  for (const id of ["m-to", "m-user", "m-pw", "m-host", "m-port", "m-save"]) $(id).disabled = !mail.can_edit;
+  $("m-test").disabled = !mail.to;
+  mmsg("");
+  $("mdlg").showModal();
+}
+async function loadMail(first) {
+  mail = await api("/mail").catch(() => null);
+  if (!mail) return;
+  mailSummary();
+  if (first && !mail.complete && mail.can_edit && !store.get("mail-setup-seen")) openMail();
+}
+$("b-mailset").onclick = openMail;
+$("m-later").onclick = () => { store.set("mail-setup-seen", "1"); $("mdlg").close(); };
+$("mdlg").addEventListener("cancel", () => store.set("mail-setup-seen", "1"));
+$("mform").onsubmit = async e => {
+  e.preventDefault();
+  // An empty field keeps what is saved. A Gmail address with no sender given sends from itself.
+  const to = $("m-to").value.trim();
+  if (!to && !mail.to) { mmsg("Give the address that should receive the alarms.", "bad"); return; }
+  let user = $("m-user").value.trim();
+  if (!user && !mail.from_shown && /@(gmail|googlemail)\.com$/i.test(to.split(",")[0].trim())) user = to.split(",")[0].trim();
+  $("m-save").disabled = true; mmsg("Saving…");
+  try {
+    mail = await post("/mail", { to, user, password: $("m-pw").value, host: $("m-host").value.trim(), port: $("m-port").value.trim() });
+    store.set("mail-setup-seen", "1"); mailSummary();
+    $("m-pw").value = ""; $("m-pw").placeholder = mail.password ? "saved (leave empty to keep it)" : "16 letters from Google";
+    $("m-to").value = ""; $("m-to").placeholder = `now: ${mail.to_shown} (type again to change)`;
+    $("m-user").value = ""; $("m-user").placeholder = mail.from_shown ? `now: ${mail.from_shown}` : "sender@gmail.com";
+    $("m-test").disabled = false;
+    mmsg(mail.complete ? "Saved. Send a test to check it arrives." : "Saved. Without a sending account and its password, alarms are kept on the server.", mail.complete ? "good" : "");
+  } catch (err) { mmsg(err.message, "bad"); }
+  $("m-save").disabled = !mail.can_edit;
+};
+$("m-test").onclick = async () => {
+  mmsg("Sending…");
+  try { const r = (await post("/mail/test")).result; mmsg(r === "sent" ? "Sent. Check the inbox (and the spam folder)." : "Test email " + r + ".", r === "sent" ? "good" : "bad"); }
+  catch (err) { mmsg(err.message, "bad"); }
+};
+
 setInterval(() => $("clock").textContent = new Date().toISOString().slice(11, 16), 1000);
 cities(); setInterval(cities, 30000);
+loadMail(true);
 </script>
 </body>
 </html>

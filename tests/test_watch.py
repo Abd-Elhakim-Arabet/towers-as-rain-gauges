@@ -74,6 +74,24 @@ def test_email_goes_to_outbox_without_account(tmp_path, monkeypatch):
     assert "[DRILL] Flooding: Testville" in text and "THIS IS A DRILL" in text and "simulated" in text
 
 
+
+def test_mail_setup_from_the_page(tmp_path, monkeypatch):
+    monkeypatch.setattr(alerts, "SETTINGS", tmp_path / "mail.json")
+    monkeypatch.setattr(alerts, "ROOT", tmp_path)                       # no .env here
+    for k in alerts.KEYS:
+        monkeypatch.delenv(k, raising=False)
+    assert alerts.save_mail("not-an-address")                           # refused, in plain words
+    assert not (tmp_path / "mail.json").exists()
+    assert alerts.save_mail("a@example.org", "me@gmail.com", "abcd efgh ijkl mnop") == []
+    assert (tmp_path / "mail.json").stat().st_mode & 0o077 == 0         # owner-only
+    assert alerts.env("SMTP_HOST") == "smtp.gmail.com" and alerts.env("SMTP_PASSWORD") == "abcdefghijklmnop"
+    ready = alerts.mail_ready()
+    assert ready["complete"] and "abcd" not in str(ready) and ready["to_shown"] == "a…@example.org"
+    assert alerts.save_mail("", "", "") == []                           # empty fields keep what is saved
+    assert alerts.env("ALERT_TO") == "a@example.org" and alerts.env("SMTP_PASSWORD") == "abcdefghijklmnop"
+    assert alerts.save_mail("b@example.org", "other@gmail.com") == []   # a new sender does not inherit the password
+    assert not alerts.env("SMTP_PASSWORD") and not alerts.mail_ready()["complete"]
+
 def test_box_is_capped_and_snapped():
     lat0, lon0, lat1, lon1 = geocode.box(36.75, 5.06, 99)
     assert (lat1 - lat0) * 111.2 == pytest.approx(2 * geocode.MAX_HALF_KM, rel=0.01)

@@ -8,7 +8,10 @@ Levels (the same four as the replay):
 
 "The town floods" = built-up land under at least 30 cm of water reaches the area's alarm size (hectares).
 
-Email settings come from the environment or .env (never from the repository):
+Email settings (never in the repository), first match wins:
+  1. the environment
+  2. data/live/mail.json, written by the page's "Alarm email" set-up (save_mail)
+  3. .env
   ALERT_TO                      who is warned (comma-separated)
   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, ALERT_FROM     the sending account
 Without SMTP settings the email is written to data/live/outbox/ instead, so nothing is lost and it can be shown.
@@ -16,7 +19,9 @@ Without SMTP settings the email is written to data/live/outbox/ instead, so noth
 
 from __future__ import annotations
 
+import json
 import os
+import re
 import smtplib
 import time
 from email.message import EmailMessage
@@ -24,6 +29,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 OUTBOX = ROOT / "data" / "live" / "outbox"
+SETTINGS = ROOT / "data" / "live" / "mail.json"
+KEYS = ("ALERT_TO", "SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD")
+EMAIL = re.compile(r"^[^@\s,;]+@[^@\s,;]+\.[^@\s,;]+$")
 ORDER = ("normal", "watch", "warning", "flooding")
 TITLE = {"normal": "Normal", "watch": "Watch", "warning": "Flood warning", "flooding": "Flooding"}
 CALM_STEPS = 3            # a level only drops after this many calmer readings in a row
@@ -47,9 +55,18 @@ def settle(current: str, reading: str, calm: int) -> tuple[str, int]:
     return (reading, 0) if calm >= CALM_STEPS else (current, calm)
 
 
+def _saved() -> dict:
+    try:
+        return json.loads(SETTINGS.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
 def env(name: str, default: str = "") -> str:
     if os.environ.get(name):
         return os.environ[name]
+    if _saved().get(name):
+        return str(_saved()[name])
     f = ROOT / ".env"
     if f.exists():
         for line in f.read_text().splitlines():
@@ -106,6 +123,8 @@ def send(msg: EmailMessage) -> str:
                     s.login(env("SMTP_USER"), env("SMTP_PASSWORD"))
                 s.send_message(msg)
             return "sent"
+        except smtplib.SMTPAuthenticationError:
+            note = "not sent: the mail server refused the login (for Gmail, use an app password); saved to the outbox"
         except Exception as e:                      # a mail problem must not stop the watch: keep a copy
             note = f"not sent ({type(e).__name__}); saved to the outbox"
     else:
@@ -115,5 +134,56 @@ def send(msg: EmailMessage) -> str:
     return note
 
 
+def _mask(addr: str) -> str:
+    name, _, dom = addr.strip().partition("@")
+    return (name[:2] + "…@" + dom) if dom else ""
+
+
 def mail_ready() -> dict:
-    return {"to": bool(env("ALERT_TO")), "smtp": bool(env("SMTP_HOST"))}
+    """What the page may know: whether each part is set, and the addresses partly hidden. Never the password."""
+    to = [a for a in env("ALERT_TO").split(",") if a.strip()]
+    return {"to": bool(to), "smtp": bool(env("SMTP_HOST")), "password": bool(env("SMTP_PASSWORD")),
+            "to_shown": ", ".join(_mask(a) for a in to), "from_shown": _mask(env("SMTP_USER")),
+            "host": env("SMTP_HOST"), "port": env("SMTP_PORT", "587"),
+            "complete": bool(to) and bool(env("SMTP_HOST")) and bool(env("SMTP_USER")) and bool(env("SMTP_PASSWORD"))}
+
+
+def save_mail(to: str, user: str = "", password: str = "", host: str = "", port: str = "") -> list[str]:
+    """Store the page's email set-up in data/live/mail.json (owner-only). An empty field keeps the current value
+    (from mail.json or .env). Returns problems in plain words; nothing is saved when there are any."""
+    to, user, host = to.strip() or env("ALERT_TO"), user.strip() or env("SMTP_USER"), host.strip() or env("SMTP_HOST")
+    port = port.strip() or env("SMTP_PORT", "587")
+    to_list = [a.strip() for a in to.replace(";", ",").split(",") if a.strip()]
+    problems = []
+    if not to_list:
+        problems.append("Give at least one address to send alarms to.")
+    problems += [f"“{a}” does not look like an email address." for a in to_list if not EMAIL.match(a)]
+    user = user.strip()
+    if user and not EMAIL.match(user):
+        problems.append(f"“{user}” does not look like an email address.")
+    host = host.strip() or ("smtp.gmail.com" if user.lower().endswith(("@gmail.com", "@googlemail.com")) else "")
+    if user and not host:
+        problems.append("Give the mail server of the sending account (for Gmail it is filled in for you).")
+    if not port.isdigit():
+        problems.append("The port is a number, usually 587.")
+    if problems:
+        return problems
+    keep_pw = env("SMTP_PASSWORD") if user == env("SMTP_USER") else ""
+    new = {"ALERT_TO": ", ".join(to_list), "SMTP_HOST": host if user else "", "SMTP_PORT": port, "SMTP_USER": user,
+           "SMTP_PASSWORD": password.replace(" ", "") if password.strip() else keep_pw}
+    SETTINGS.parent.mkdir(parents=True, exist_ok=True)
+    tmp = SETTINGS.with_suffix(".tmp")
+    tmp.unlink(missing_ok=True)
+    with os.fdopen(os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w") as f:   # owner-only from the start
+        json.dump(new, f)
+    tmp.replace(SETTINGS)
+    return []
+
+
+def test_message() -> EmailMessage:
+    msg = EmailMessage()
+    msg["Subject"] = "[TEST] Flood watch alarm email is set up"
+    msg.set_content("This is a test from the Towers as Rain Gauges live watch.\n\n"
+                    "Alarm emails will arrive like this one when a watched town reaches Flood warning or Flooding, "
+                    "and again when it is over. Drills are marked DRILL.\n")
+    return msg

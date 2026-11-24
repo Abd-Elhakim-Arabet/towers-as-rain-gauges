@@ -133,11 +133,20 @@ The maps load imagery and terrain from the internet, so keep the machine online.
 
 ## Live watch settings (optional)
 
-Copy `.env.example` to `.env` and fill in what you need:
+**Alarm email.** The first time you open `/watch/`, it asks where alarms should go and which account sends them
+(a Gmail address with an [app password](https://myaccount.google.com/apppasswords) works best), and has a
+"Send a test" button. Change it later with "Alarm email" on the left. It is saved in `data/live/mail.json` on the
+server (owner-only, kept in the Docker volume). The password is never shown again. Without a sending account,
+alarm emails are saved as files in `data/live/outbox/` instead.
+
+Who can change it: anyone who opens the page while no address is set yet (so it works on a fresh Docker install);
+after that, only someone on the computer that runs the server.
+
+The same settings can also go in a `.env` file (copy `.env.example`; the page's settings win over it, and
+environment variables win over both):
 
 - `ALERT_TO`: the address that receives alarm emails.
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`: the account that sends them. Without these, alarm emails
-  are saved as files in `data/live/outbox/` instead of being sent.
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`: the account that sends them.
 - `EARTHDATA_TOKEN` (free, [NASA Earthdata](https://urs.earthdata.nasa.gov/)): better soil data for new cities.
   Without it, soil is assumed average (marked on the page).
 

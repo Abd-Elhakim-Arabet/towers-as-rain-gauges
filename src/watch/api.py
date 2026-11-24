@@ -10,6 +10,9 @@
     GET    /api/watches/{key}/{file}       history.json, events.json, links.json, rain.png, depth.png  (?drill=1)
     POST   /api/watches/{key}/drill        run a made-up storm through the live chain
     POST   /api/watches/{key}/test-email   send a test email
+    GET    /api/mail                       alarm email set-up: what is set (password never returned)
+    POST   /api/mail                       save it (from this computer, or by anyone while nothing is set yet)
+    POST   /api/mail/test                  send a test email to the saved address
 
 There is no login: the server listens on this computer (and, if asked, the Tailscale address) only. Feed addresses
 given through the page must be http(s); reading local files is only possible from an adapter file on the server.
@@ -23,7 +26,7 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -50,6 +53,14 @@ class NewWatch(BaseModel):
     adapter: str = ""
     links_url: str = ""
     readings_url: str = ""
+
+
+class Mail(BaseModel):
+    to: str
+    user: str = ""
+    password: str = ""
+    host: str = ""
+    port: str = "587"
 
 
 class Feed(BaseModel):
@@ -171,6 +182,36 @@ def make_app(static_dir: Path | None = None, public_url: str = "") -> FastAPI:
                                                                  "url": w.url}, drill=True, simulated=w.source.kind == "simulation")
         msg.replace_header("Subject", f"[TEST] Flood alarm email for {w.area.name}")
         return JSONResponse({"result": alerts.send(msg)})
+
+    def _may_edit(req: Request) -> bool:
+        # The page has no login. Changing where alarms go is allowed from the computer running the server, or by
+        # anyone while no address is set at all (first start, e.g. in Docker); after that only from this computer.
+        host = req.client.host if req.client else ""
+        return host in ("127.0.0.1", "::1", "localhost") or not alerts.env("ALERT_TO")
+
+    @app.get("/api/mail")
+    def api_mail(req: Request):
+        return {**alerts.mail_ready(), "can_edit": _may_edit(req)}
+
+    @app.post("/api/mail")
+    def api_mail_save(m: Mail, req: Request):
+        if not _may_edit(req):
+            raise HTTPException(403, "The alarm email can only be changed on the computer that runs the server.")
+        problems = alerts.save_mail(m.to, m.user, m.password, m.host, m.port)
+        if problems:
+            raise HTTPException(422, " ".join(problems))
+        return {**alerts.mail_ready(), "can_edit": True}
+
+    last_test = [0.0]
+
+    @app.post("/api/mail/test")
+    def api_mail_test():
+        if time.time() - last_test[0] < 20:
+            raise HTTPException(429, "A test email was just sent. Wait a few seconds.")
+        if not alerts.env("ALERT_TO"):
+            raise HTTPException(409, "Save an address first.")
+        last_test[0] = time.time()
+        return {"result": alerts.send(alerts.test_message())}
 
     if static_dir is not None:
         app.mount("/", StaticFiles(directory=static_dir, html=True, follow_symlink=True), name="site")
