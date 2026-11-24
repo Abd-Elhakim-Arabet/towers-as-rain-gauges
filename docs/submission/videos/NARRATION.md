@@ -1,6 +1,6 @@
 # Demo videos: what to say
 
-Two silent screen recordings of the real system, made on 24 Nov 2026. Read each line while the video plays,
+Two silent screen recordings of the real system, made on 24 Nov 2026 (re-recorded with the new site look). Read each line while the video plays,
 starting at the time in the "From" column. The pace is about 2.3 words per second, so every line fits its slot
 with a little room. If you record the voice separately, line it up with these times in any video editor.
 
@@ -44,16 +44,18 @@ Video file: `2_live_watch.mp4`
 | 0:12 | 0:18 | We type the name, and the map service finds the matching places. |
 | 0:20 | 0:35 | Then we choose where the signals come from. Today no operator shares its data with us, so we can run a simulation: real live weather, real terrain, and simulated links between the towers. |
 | 0:35 | 1:00 | An operator that does share its data picks this option. The data must come in this simple format: one table of links, and one table of signal readings every few minutes. If their system stores it differently, a small adapter file of two functions translates it, and the page checks the data before it starts. |
-| 1:03 | 1:21 | The system then sets up the city by itself. It downloads the terrain, land cover and soil, finds the tower sites, builds the links between towers of the same operator, and works out how much rain would flood the town. |
+| 1:03 | 1:21 | Now the system sets up the city by itself. It downloads the terrain, land cover and soil, finds the tower sites, builds the links between towers of the same operator, and works out how much rain would flood the town. |
 | 1:21 | 1:38 | Set-up is done, and Constantine is being watched. Every five minutes the AI reads the rain from the links, makes a rain map, moves the flood model forward, and looks two hours ahead with the weather forecast. |
 | 1:38 | 1:52 | The alert level has four steps: normal, watch, flood warning and flooding. Blue towers are real sites from public maps; white ones are estimated where the town is built up. |
 | 1:52 | 2:02 | The page also says plainly what this can and cannot tell you. It is a demonstration, not an official warning. |
-| 2:07 | 2:24 | Today is dry, so to show the alarm we run a drill on Béjaïa: a made-up storm, twice the rain that floods the town, pushed through exactly the same chain. It never touches the live watch. |
-| 2:25 | 2:33 | The storm starts. The links turn wet, and the rain map fills in. |
-| 2:33 | 2:39 | As the rain builds up, the level rises to watch. |
-| 2:39 | 2:49 | The model now expects the town to flood within two hours: a flood warning. At this moment the alarm email goes out. |
-| 2:49 | 3:15 | And now the water is in the streets: flooding. The alert log on the right keeps the history of every change. |
-| 3:15 | 3:45 | The charts show the storm as it happened: the rain over the town, and the built-up land under water rising past the red alarm line. |
-| 3:45 | 4:13 | As the storm passes, the water drains away. The level only steps down after it has stayed calm for a while, so the alarm does not flicker on and off. |
-| 4:13 | 4:24 | We can also send a test email at any time. With a mail account configured, it goes to the people on the alarm list. |
-| 4:26 | 4:37 | Back to live. This is the whole system: phone towers as rain gauges, a flood model, and an alarm, for any city. |
+| 2:02 | 2:17 | Alarms also go out by email. Here we set who receives them and which account sends them. A Gmail address with an app password is enough, and the password never leaves this computer. |
+| 2:17 | 2:24 | One click sends a test email, to check that it really arrives. |
+| 2:31 | 2:48 | Today is dry, so to show the alarm we run a drill on Béjaïa: a made-up storm, twice the rain that floods the town, pushed through exactly the same chain. It never touches the live watch. |
+| 2:49 | 2:56 | The storm starts. The links turn wet, and the rain map fills in. |
+| 2:57 | 3:13 | Straight away, the look-ahead sees the town flooding within two hours: the level jumps from normal to flood warning, and at this moment the alarm email goes out. |
+| 3:13 | 3:35 | The storm goes on. The look-ahead keeps checking the next two hours, while the water starts to gather in the low streets of the town. |
+| 3:35 | 4:00 | In a drill the forecast is perfect, so the warning comes almost three hours before the town floods; with a real forecast it will be shorter. That warning time is what the system is for. |
+| 4:01 | 4:11 | And now the water is in the streets: flooding. The alert log on the right keeps the history of every change. |
+| 4:11 | 4:23 | The charts show the storm as it happened: the rain over the town, and the built-up land under water rising past the red alarm line. |
+| 4:23 | 4:39 | The drill stops four hours into the storm, with the town still flooded. In a real storm, the level steps down only after staying calm for a while, and an all-clear email follows. |
+| 4:40 | 4:51 | Back to live. This is the whole system: phone towers as rain gauges, a flood model, and an alarm, for any city. |

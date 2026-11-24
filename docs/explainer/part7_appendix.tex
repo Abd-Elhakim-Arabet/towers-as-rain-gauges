@@ -1,0 +1,34 @@
+%==========================================================
+% Glossary and sources for Part 7 (the live watch). Added after the earlier appendices; nothing above is changed.
+%==========================================================
+\section{More words, from Part 7}
+\small
+\begin{description}[leftmargin=3.2cm,style=nextline,itemsep=0.25em]
+\item[Adapter] A small program file that translates an operator's own link records into our standard format, so the
+watch can read them without the operator changing its systems.
+\item[App password] A password a mail service such as Gmail makes for one program. It can only send mail, and it can be
+withdrawn at any time without touching the account's normal password.
+\item[Drill] A made-up storm pushed through the real chain to show the alarm on a dry day. Marked DRILL everywhere.
+\item[Estimated site] A tower position the system places on built-up land, where no public map lists a real tower, to
+reach a normal city density. Always marked as estimated.
+\item[Look-ahead] A copy of the flood model run two hours into the future on the rain the weather service expects. It
+decides the \emph{flood warning}.
+\item[Server] The program that runs the watch on a computer and answers the page in the browser. The live watch needs
+it; the replays do not.
+\end{description}
+\normalsize
+
+\section{Sources for Part 7}
+\small
+\begin{itemize}
+\item Nominatim, OpenStreetMap's place search, \url{https://nominatim.openstreetmap.org}.
+\item Open-Meteo weather service (rain now and the next hours, free, no key), \url{https://open-meteo.com}.
+\item OpenStreetMap mast and antenna positions, read through the Overpass API, \url{https://overpass-api.de}.
+\item OpenCelliD tower database, \url{https://opencellid.org}.
+\item ESA WorldCover 2021 (10\,m land cover); Copernicus GLO-30 terrain; HYSOGs250m soil groups (ORNL DAAC), as in
+Part~5.
+\item Google, \emph{Sign in with app passwords}, Google Account Help.
+\end{itemize}
+The page is \texttt{site/watch/index.html}; the watch itself is \texttt{src/watch/}; the plan and results are in
+\texttt{docs/phase7/PLAN.md}.
+\normalsize
