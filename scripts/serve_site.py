@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import functools
 import http.server
+import json
 import os
 import shutil
 import subprocess
@@ -52,39 +53,46 @@ START = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Towers as Rain Gauges</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-:root {{ --bg:#f4f6f8; --card:#fff; --ink:#102029; --ink2:#4a5a64; --line:#dde3e8; --accent:#1d5cff; }}
-@media (prefers-color-scheme: dark) {{ :root {{ --bg:#0d151a; --card:#16222a; --ink:#e8eef1; --ink2:#a3b3bc; --line:#26353f; --accent:#6f9bff; }} }}
+:root {{ --bg:#fbfcfd; --ink:#0b1220; --ink2:#4a5568; --muted:#8a96a8; --line:#e3e7ed; --accent:#1d5cff; }}
+@media (prefers-color-scheme: dark) {{ :root {{ --bg:#0e1116; --ink:#eef1f5; --ink2:#a7b0bd; --muted:#6f7987; --line:#232831; --accent:#7ea2ff; }} }}
 * {{ box-sizing:border-box }}
-body {{ margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,sans-serif; }}
-main {{ max-width:880px; margin:0 auto; padding:48px 16px 64px; }}
-h1 {{ font-size:30px; margin:0 0 8px; }}
-p.lead {{ color:var(--ink2); margin:0 0 28px; max-width:680px; }}
-.grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; }}
-a.card {{ display:block; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; color:inherit; text-decoration:none; }}
-a.card:hover {{ border-color:var(--accent); }}
-a.card b {{ display:block; font-size:17px; margin-bottom:4px; }}
-a.card span {{ color:var(--ink2); font-size:14px; }}
-.note {{ margin-top:28px; padding:14px 16px; border-left:3px solid var(--accent); background:var(--card); border-radius:8px; color:var(--ink2); font-size:14px; }}
-footer {{ margin-top:28px; font-size:14px; color:var(--ink2); }}
-footer a {{ color:var(--accent); }}
+body {{ margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 "IBM Plex Sans",system-ui,sans-serif; }}
+main {{ max-width:760px; margin:0 auto; padding:64px 16px 72px; }}
+h1 {{ font-size:32px; font-weight:600; letter-spacing:-.01em; margin:0 0 12px; }}
+p.lead {{ color:var(--ink2); margin:0 0 40px; font-size:17px; }}
+h2 {{ font-size:13px; font-weight:500; color:var(--muted); margin:0 0 4px; }}
+ul.pages {{ list-style:none; margin:0 0 40px; padding:0; border-top:1px solid var(--line); }}
+ul.pages li {{ border-bottom:1px solid var(--line); }}
+ul.pages a {{ display:grid; grid-template-columns:180px 1fr; gap:4px 24px; padding:14px 0; color:inherit; text-decoration:none; }}
+ul.pages a:hover b {{ color:var(--accent); }}
+ul.pages b {{ font-weight:500; }}
+ul.pages span {{ color:var(--ink2); }}
+@media (max-width:560px) {{ ul.pages a {{ grid-template-columns:1fr; }} }}
+p.real {{ color:var(--ink2); margin:0 0 40px; }}
+footer {{ font-size:14px; color:var(--muted); }}
+a {{ color:var(--accent); }}
 </style></head><body><main>
 <h1>Towers as Rain Gauges</h1>
 <p class="lead">Flash-flood early warning from the microwave links that already connect mobile-phone towers.
 Rain weakens the signal between two towers; AI turns that into a live rain map, and a flood model shows which streets
 will flood and raises the alarm.</p>
-<div class="grid">
-<a class="card" href="dashboard/"><b>Control room</b><span>Algiers 2001 and Ghardaïa 2008 storms replayed: towers, rain, 3D flood water and the alarm.</span></a>
-<a class="card" href="watch/"><b>Live watch</b><span>Pick any city and watch its rain and flood risk now. Needs the Python server (see the guide).</span></a>
-<a class="card" href="replay/"><b>Storm replay</b><span>The simulated Algerian link network during the two storms.</span></a>
-<a class="card" href="flood/"><b>Flood risk</b><span>Water depth, danger and alarms from our flood model.</span></a>
-<a class="card" href="storm3d/"><b>3D storm</b><span>The storm over the towers, with terrain and buildings.</span></a>
-<a class="card" href="explainer.pdf"><b>Explainer (PDF)</b><span>The whole project in plain language, with all results.</span></a>
-</div>
-<p class="note"><b>Real vs simulated.</b> Accuracy was measured on real link data from Sweden, Italy and the Netherlands.
+<h2>Pages</h2>
+<ul class="pages">
+<li><a href="dashboard/"><b>Control room</b><span>Algiers 2001 and Ghardaïa 2008 replayed: towers, rain, 3D flood water and the alarm, with a guided tour.</span></a></li>
+<li><a href="watch/"><b>Live watch</b><span>Any city, now: rain, flood risk and alert level. Needs the Python server (see the setup guide).</span></a></li>
+<li><a href="replay/"><b>Storm replay</b><span>The simulated Algerian link network during the two storms.</span></a></li>
+<li><a href="flood/"><b>Flood risk</b><span>Water depth, danger and alarms from our flood model.</span></a></li>
+<li><a href="storm3d/"><b>3D storm</b><span>The storm over the towers, with terrain and buildings.</span></a></li>
+<li><a href="explainer.pdf"><b>Explainer (PDF)</b><span>The whole project in plain language, with every result.</span></a></li>
+</ul>
+<h2>Real and simulated</h2>
+<p class="real">Accuracy was measured on real link data from Sweden, Italy and the Netherlands.
 The Algerian cities are a simulation: real tower positions and real satellite rain drive virtual links.
 They show how the system would work there; they do not prove accuracy there.</p>
-<footer>Code, data download and setup guide: <a href="{REPO}">{REPO.removeprefix("https://")}</a></footer>
+<footer>Code, data and setup guide: <a href="{REPO}">{REPO.removeprefix("https://")}</a></footer>
 </main></body></html>
 """
 
@@ -117,7 +125,12 @@ def build() -> None:
     dash = SITE / "dashboard"
     if (dash / "index.html").exists():         # Phase 6: full-screen app; its data folder is linked, not copied
         (OUT / "dashboard").mkdir(parents=True)
-        shutil.copy(dash / "index.html", OUT / "dashboard" / "index.html")
+        page = (dash / "index.html").read_text()
+        cache = dash / "data" / "cities.json"
+        if (dash / "template.html").exists() and cache.exists():   # template edits apply without a re-export
+            data = json.dumps(json.loads(cache.read_text()), separators=(",", ":"))
+            page = (dash / "template.html").read_text().replace("/*DATA*/null", data)
+        (OUT / "dashboard" / "index.html").write_text(page)
         if (dash / "data").exists():
             os.symlink(dash / "data", OUT / "dashboard" / "data")
         if (dash / "logos").exists():          # small operator badges drawn on the towers
