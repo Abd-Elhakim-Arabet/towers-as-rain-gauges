@@ -43,10 +43,14 @@ DRAIN_BUILT_MMH = 10.0      # storm drains: water leaves built-up land at this r
 DRAIN_OTHER_MMH = 2.0       # slow seepage elsewhere. Without these, puddles would never go and the alarm never clear.
 
 
+MAX_THREADS = 8
+
+
 def use_available_cpus() -> int:
-    """Give PyTorch one thread per CPU this process may really use. By default it takes one per CPU of the machine,
-    and in a container limited to fewer (docker run --cpus, Kubernetes, many cloud servers) the extra threads
-    stall each other: a 25-second step took over half an hour. No effect with a GPU."""
+    """Give PyTorch one thread per CPU this process may really use, at most 8. By default it takes one per CPU of
+    the machine, and in a container limited to fewer (docker run --cpus, Kubernetes, many cloud servers), or on a
+    machine already busy, the extra threads stall each other: a 25-second step took over half an hour. The models
+    are small and gain nothing past 8 threads. No effect with a GPU."""
     n = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
     for files in (("/sys/fs/cgroup/cpu.max",),                                 # cgroup v2: "800000 100000" = 8 CPUs
                   ("/sys/fs/cgroup/cpu/cpu.cfs_quota_us", "/sys/fs/cgroup/cpu/cpu.cfs_period_us")):   # cgroup v1
@@ -57,6 +61,7 @@ def use_available_cpus() -> int:
             break
         except (OSError, ValueError):
             continue
+    n = min(n, MAX_THREADS)
     torch.set_num_threads(n)
     return n
 
