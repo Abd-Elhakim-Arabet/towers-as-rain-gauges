@@ -14,7 +14,7 @@ Bab El Oued (2001) and Ghardaïa (2008), where rain gauges and weather radar are
 |---|---|
 | **Try it** | https://abd-elhakim-arabet.github.io/towers-as-rain-gauges/ (control room, storm replays, explainer) |
 | **Run it yourself** | [docs/SETUP.md](docs/SETUP.md): Docker or Python, any OS, about 15 minutes, includes the live watch |
-| **Demo videos** | [demo-videos release](https://github.com/Abd-Elhakim-Arabet/towers-as-rain-gauges/releases/tag/demo-videos) |
+| **Demo videos** | [1. Control room](https://drive.google.com/file/d/1zzyxVfqiL8HyYQ1QinNahxSd-7Gh3xkk/view) (3.5 min) · [2. Live watch](https://drive.google.com/file/d/1AcTm7JRbZCaxnafX0Fv6DpbN1PAbq2Pw/view) (5 min) · [folder](https://drive.google.com/drive/folders/1aentwt-Wob2NCwFE_o6EMXQmLXrTyCtE) on Google Drive |
 | **The whole story** | [explainer PDF](docs/explainer/explainer.pdf): every step and result in plain language |
 
 ## How it works

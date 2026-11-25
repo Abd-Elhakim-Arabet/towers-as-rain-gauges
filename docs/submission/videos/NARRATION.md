@@ -1,10 +1,10 @@
 # Demo videos: what to say
 
-Two silent screen recordings of the real system, made on 24 Nov 2026 (re-recorded with the new site look). Read each line while the video plays,
+Two screen recordings of the real system, made on 24 Nov 2026. Video 1 now has this narration recorded on it; video 2 is still silent. Read each line while the video plays,
 starting at the time in the "From" column. The pace is about 2.3 words per second, so every line fits its slot
 with a little room. If you record the voice separately, line it up with these times in any video editor.
 
-Watch the videos: [demo-videos release](https://github.com/Abd-Elhakim-Arabet/towers-as-rain-gauges/releases/tag/demo-videos)
+Watch the videos: [1. Control room](https://drive.google.com/file/d/1zzyxVfqiL8HyYQ1QinNahxSd-7Gh3xkk/view) (3.5 min) · [2. Live watch](https://drive.google.com/file/d/1AcTm7JRbZCaxnafX0Fv6DpbN1PAbq2Pw/view) (5 min) · [folder](https://drive.google.com/drive/folders/1aentwt-Wob2NCwFE_o6EMXQmLXrTyCtE) on Google Drive
 (the .mp4 files are kept out of git).
 
 Tips: speak calmly, pause on the numbers, and keep "simulation" clear wherever it is said; the honesty about what is
