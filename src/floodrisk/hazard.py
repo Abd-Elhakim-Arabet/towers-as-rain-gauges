@@ -73,7 +73,7 @@ def commune_raster(path: Path, lat: np.ndarray, lon: np.ndarray):
     from rasterio.features import rasterize
     from rasterio.transform import from_origin
     from shapely.geometry import box, shape
-    feats = json.loads(Path(path).read_text())["features"]
+    feats = json.loads(Path(path).read_text(encoding="utf-8"))["features"]
     res = lon[1] - lon[0]
     tr = from_origin(lon[0] - res / 2, lat[0] + res / 2, res, res)
     B = box(lon[0], lat[-1], lon[-1], lat[0])

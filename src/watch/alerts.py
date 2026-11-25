@@ -57,7 +57,7 @@ def settle(current: str, reading: str, calm: int) -> tuple[str, int]:
 
 def _saved() -> dict:
     try:
-        return json.loads(SETTINGS.read_text())
+        return json.loads(SETTINGS.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
 
@@ -69,7 +69,7 @@ def env(name: str, default: str = "") -> str:
         return str(_saved()[name])
     f = ROOT / ".env"
     if f.exists():
-        for line in f.read_text().splitlines():
+        for line in f.read_text(encoding="utf-8").splitlines():
             if line.startswith(name + "="):
                 return line.split("=", 1)[1].strip().strip('"').strip("'")
     return default
@@ -174,7 +174,7 @@ def save_mail(to: str, user: str = "", password: str = "", host: str = "", port:
     SETTINGS.parent.mkdir(parents=True, exist_ok=True)
     tmp = SETTINGS.with_suffix(".tmp")
     tmp.unlink(missing_ok=True)
-    with os.fdopen(os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w") as f:   # owner-only from the start
+    with os.fdopen(os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w", encoding="utf-8") as f:   # owner-only from the start
         json.dump(new, f)
     tmp.replace(SETTINGS)
     return []

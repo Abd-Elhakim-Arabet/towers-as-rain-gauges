@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[3]
 
 @lru_cache
 def config() -> dict:
-    cfg = yaml.safe_load((ROOT / "configs" / "backend.yaml").read_text())
+    cfg = yaml.safe_load((ROOT / "configs" / "backend.yaml").read_text(encoding="utf-8"))
     for layer in ("framework", "storage", "compute"):
         cfg[layer] = os.environ.get(f"TARG_{layer.upper()}", cfg[layer])
     return cfg

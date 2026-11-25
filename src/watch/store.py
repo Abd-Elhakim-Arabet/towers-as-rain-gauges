@@ -16,7 +16,7 @@ DEPTH_STOPS = [(0.03, (120, 190, 255, 0)), (0.1, (110, 180, 250, 150)), (0.3, (5
 
 def write_json(path: Path, obj) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(obj, separators=(",", ":"), default=float))
+    tmp.write_text(json.dumps(obj, separators=(",", ":"), default=float), encoding="utf-8")
     os.replace(tmp, path)
 
 

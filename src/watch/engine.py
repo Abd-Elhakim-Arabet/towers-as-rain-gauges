@@ -13,6 +13,7 @@ The engine keeps the last 4 days of signal per link, because the model compares 
 from __future__ import annotations
 
 import json
+import os
 import time
 from collections import deque
 from pathlib import Path
@@ -42,6 +43,24 @@ DRAIN_BUILT_MMH = 10.0      # storm drains: water leaves built-up land at this r
 DRAIN_OTHER_MMH = 2.0       # slow seepage elsewhere. Without these, puddles would never go and the alarm never clear.
 
 
+def use_available_cpus() -> int:
+    """Give PyTorch one thread per CPU this process may really use. By default it takes one per CPU of the machine,
+    and in a container limited to fewer (docker run --cpus, Kubernetes, many cloud servers) the extra threads
+    stall each other: a 25-second step took over half an hour. No effect with a GPU."""
+    n = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
+    for files in (("/sys/fs/cgroup/cpu.max",),                                 # cgroup v2: "800000 100000" = 8 CPUs
+                  ("/sys/fs/cgroup/cpu/cpu.cfs_quota_us", "/sys/fs/cgroup/cpu/cpu.cfs_period_us")):   # cgroup v1
+        try:
+            quota, period = " ".join(open(f, encoding="utf-8").read() for f in files).split()
+            if quota not in ("max", "-1"):
+                n = min(n, max(1, int(int(quota) / int(period))))
+            break
+        except (OSError, ValueError):
+            continue
+    torch.set_num_threads(n)
+    return n
+
+
 class Reader:
     """The AI that reads rain from link signals (5-model ensemble), loaded once."""
 
@@ -54,8 +73,8 @@ class Reader:
         return cls._one
 
     def __init__(self):
-        kw = json.loads((ROOT / "results" / "phase2_openmrg.json").read_text())["variants"]["physics"]["model_kw"]
-        res = json.loads((ROOT / "results" / f"phase2_mixed_{AI_CONFIG}.json").read_text())
+        kw = json.loads((ROOT / "results" / "phase2_openmrg.json").read_text(encoding="utf-8"))["variants"]["physics"]["model_kw"]
+        res = json.loads((ROOT / "results" / f"phase2_mixed_{AI_CONFIG}.json").read_text(encoding="utf-8"))
         self.thr = res["ensemble"]["threshold"]
         self.dev = T.device()
         self.models = []
@@ -63,7 +82,7 @@ class Reader:
             m = TCN(5, 3, **kw).to(self.dev)
             m.load_state_dict(torch.load(ROOT / "runs" / "phase2" / "mixed" / f"{AI_CONFIG}_seed{seed}.pt", map_location=self.dev))
             self.models.append(m.eval())
-        c = json.loads(CORRECTION.read_text()) if CORRECTION.exists() else None
+        c = json.loads(CORRECTION.read_text(encoding="utf-8")) if CORRECTION.exists() else None
         self.corr = c if c and c.get("use") else None     # tested and not used: see scripts/phase7_heavy_rain_correction.py
 
     def rates(self, tl: np.ndarray, length_km, freq_ghz, pol, last_n: int) -> np.ndarray:
@@ -204,7 +223,7 @@ class Watch:
         if new == "normal":
             self.peak = "normal"
         ev = {"t": self.t_min * 60, "from": old, "to": new, "why": self.status["why"], "email": mail}
-        with open(self.out / "events.jsonl", "a") as f:
+        with open(self.out / "events.jsonl", "a", encoding="utf-8") as f:
             f.write(json.dumps(ev) + "\n")
 
     # ------------------------------------------------------------------ files the page reads
@@ -240,7 +259,7 @@ class Watch:
             self.source.w = z["w"]
         h = self.out / "history.json"
         if h.exists():
-            self.history.extend(json.loads(h.read_text()))
+            self.history.extend(json.loads(h.read_text(encoding="utf-8")))
         s = self.out / "status.json"
         if s.exists():
-            self.status = json.loads(s.read_text())
+            self.status = json.loads(s.read_text(encoding="utf-8"))

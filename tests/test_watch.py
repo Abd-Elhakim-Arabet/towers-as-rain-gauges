@@ -1,5 +1,7 @@
 """Phase 7 (live watch): format checks, alert levels, email outbox, the adapter route, a streaming simulation."""
 
+import os
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -37,8 +39,8 @@ def test_feed_mistakes_are_explained():
 
 
 def test_feed_source_reads_loss(tmp_path):
-    (tmp_path / "l.csv").write_text(links_ok().to_csv(index=False))
-    (tmp_path / "r.csv").write_text(readings_ok().to_csv(index=False))
+    (tmp_path / "l.csv").write_text(links_ok().to_csv(index=False), encoding="utf-8")
+    (tmp_path / "r.csv").write_text(readings_ok().to_csv(index=False), encoding="utf-8")
     src = sources.FeedSource(sources.TableAdapter(str(tmp_path / "l.csv"), str(tmp_path / "r.csv")))
     now = int(pd.Timestamp.now(tz="UTC").timestamp() // 60)
     tl = src.loss(np.arange(now - 9, now + 1))
@@ -70,7 +72,7 @@ def test_email_goes_to_outbox_without_account(tmp_path, monkeypatch):
     monkeypatch.setattr(alerts, "env", lambda k, d="": {"ALERT_TO": "someone@example.org"}.get(k, d))
     msg = alerts.compose("Testville", "flooding", "warning", {"ha_now": 12.0, "alarm_ha": 5.0}, drill=True)
     assert "outbox" in alerts.send(msg)
-    text = next(tmp_path.glob("*.eml")).read_text()
+    text = next(tmp_path.glob("*.eml")).read_text(encoding="utf-8")
     assert "[DRILL] Flooding: Testville" in text and "THIS IS A DRILL" in text and "simulated" in text
 
 
@@ -83,7 +85,8 @@ def test_mail_setup_from_the_page(tmp_path, monkeypatch):
     assert alerts.save_mail("not-an-address")                           # refused, in plain words
     assert not (tmp_path / "mail.json").exists()
     assert alerts.save_mail("a@example.org", "me@gmail.com", "abcd efgh ijkl mnop") == []
-    assert (tmp_path / "mail.json").stat().st_mode & 0o077 == 0         # owner-only
+    if os.name != "nt":                                                 # Windows has no Unix permission bits
+        assert (tmp_path / "mail.json").stat().st_mode & 0o077 == 0     # owner-only
     assert alerts.env("SMTP_HOST") == "smtp.gmail.com" and alerts.env("SMTP_PASSWORD") == "abcdefghijklmnop"
     ready = alerts.mail_ready()
     assert ready["complete"] and "abcd" not in str(ready) and ready["to_shown"] == "a…@example.org"

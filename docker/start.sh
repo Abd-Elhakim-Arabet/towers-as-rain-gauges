@@ -7,9 +7,10 @@ cd /app
 if [ "$(id -u)" = 0 ]; then
   mkdir -p data
   [ "$(stat -c %U data)" = app ] || chown -R app:app data
+  export HOME=/home/app                      # setpriv keeps root's HOME otherwise
   exec setpriv --reuid=app --regid=app --init-groups "$0" "$@"
 fi
 if [ ! -d site/dashboard/data ] || [ ! -f data/interim/p4/donors_8640.npz ] || [ ! -d runs/phase2/mixed ]; then
-  python scripts/demo_bundle.py get
+  python scripts/demo_bundle.py get --keep     # the file stays in the volume, so a new container only unpacks it
 fi
 exec python scripts/serve_site.py --host 0.0.0.0 --port "${PORT:-8000}"

@@ -36,11 +36,11 @@ class Area:
 
     def save(self) -> None:
         self.dir.mkdir(parents=True, exist_ok=True)
-        (self.dir / "area.json").write_text(json.dumps(asdict(self), indent=1))
+        (self.dir / "area.json").write_text(json.dumps(asdict(self), indent=1), encoding="utf-8")
 
     @staticmethod
     def load(key: str) -> "Area":
-        d = json.loads((LIVE / key / "area.json").read_text())
+        d = json.loads((LIVE / key / "area.json").read_text(encoding="utf-8"))
         return Area(**{**d, "box": tuple(d["box"])})
 
 
@@ -81,7 +81,7 @@ def thresholds(area: Area, S: dict, drain=None, hours=(1, 3)) -> dict:
     from floodrisk import solver
     f = area.dir / "thresholds.json"
     if f.exists():
-        return {int(k): v for k, v in json.loads(f.read_text()).items()}
+        return {int(k): v for k, v in json.loads(f.read_text(encoding="utf-8")).items()}
     g, out = S["g"], {}
     town_ha = np.where(S["town"], S["built_ha"], 0.0)
     for T in hours:
@@ -100,5 +100,5 @@ def thresholds(area: Area, S: dict, drain=None, hours=(1, 3)) -> dict:
             out[T] = float(depths[0])
         else:
             out[T] = round(float(np.interp(S["alarm_ha"], wet[i - 1:i + 1], depths[i - 1:i + 1])), 1)
-    f.write_text(json.dumps(out))
+    f.write_text(json.dumps(out), encoding="utf-8")
     return out

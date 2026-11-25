@@ -8,6 +8,7 @@ picked up again when the server restarts.
 from __future__ import annotations
 
 import json
+import shutil
 import threading
 import time
 import traceback
@@ -40,8 +41,11 @@ class Manager:
 
     # ------------------------------------------------------------------ life cycle
     def start(self) -> None:
+        from .engine import use_available_cpus
+        print(f"live watch: {use_available_cpus()} CPU threads", flush=True)
+        seed_cities()
         for f in sorted(area.LIVE.glob("*/watch.json")):
-            cfg = json.loads(f.read_text())
+            cfg = json.loads(f.read_text(encoding="utf-8"))
             if cfg.get("active"):
                 self.jobs[cfg["key"]] = self._job()
                 threading.Thread(target=self._setup, args=(cfg,), daemon=True).start()
@@ -84,7 +88,7 @@ class Manager:
         cfg = {"key": a.key, "name": name, "lat": lat, "lon": lon, "half_km": half_km, "mode": mode, "feed": feed or {},
                "active": True, "created": int(time.time())}
         a.save()
-        (a.dir / "watch.json").write_text(json.dumps(cfg, indent=1))
+        (a.dir / "watch.json").write_text(json.dumps(cfg, indent=1), encoding="utf-8")
         self.jobs[a.key] = self._job()
         threading.Thread(target=self._setup, args=(cfg,), daemon=True).start()
         return a.key
@@ -93,9 +97,9 @@ class Manager:
         self.watches.pop(key, None)
         f = area.LIVE / key / "watch.json"
         if f.exists():
-            cfg = json.loads(f.read_text())
+            cfg = json.loads(f.read_text(encoding="utf-8"))
             cfg["active"] = False
-            f.write_text(json.dumps(cfg, indent=1))
+            f.write_text(json.dumps(cfg, indent=1), encoding="utf-8")
         self.cfg.pop(key, None)
         self.jobs.pop(key, None)
 
@@ -209,7 +213,7 @@ class Manager:
     def summary(self) -> list[dict]:
         out = []
         for key in sorted(set(self.jobs) | set(self.watches)):
-            w, cfg = self.watches.get(key), self.cfg.get(key) or json.loads((area.LIVE / key / "watch.json").read_text())
+            w, cfg = self.watches.get(key), self.cfg.get(key) or json.loads((area.LIVE / key / "watch.json").read_text(encoding="utf-8"))
             out.append({"key": key, "name": cfg["name"], "mode": cfg["mode"], "lat": cfg["lat"], "lon": cfg["lon"],
                         "level": w.status.get("level") if w else None, "ready": w is not None,
                         "error": self.jobs.get(key, {}).get("error", "")})
@@ -217,7 +221,7 @@ class Manager:
 
     def detail(self, key: str) -> dict:
         w = self.watches.get(key)
-        cfg = self.cfg.get(key) or json.loads((area.LIVE / key / "watch.json").read_text())
+        cfg = self.cfg.get(key) or json.loads((area.LIVE / key / "watch.json").read_text(encoding="utf-8"))
         d = {"key": key, "name": cfg["name"], "mode": cfg["mode"], "lat": cfg["lat"], "lon": cfg["lon"],
              "setup": self.jobs.get(key), "ready": w is not None, "mail": alerts.mail_ready(),
              "drill": self.drills.get(key), "last_error": cfg.get("last_error", "")}
@@ -225,6 +229,23 @@ class Manager:
             d.update(status=w.status, network=self.net[key], box=list(w.area.box),
                      ground=w.S["g"].dem_source, biggest_stream_km2=round(w.S["biggest_stream_km2"]))
         return d
+
+
+def seed_cities() -> None:
+    """Copy the cities that ship ready-made (configs/live_cities) into data/live once, so a new install can watch
+    them, and run a drill, without the long first set-up. A city the user removed is not copied again."""
+    seed = area.ROOT / "configs" / "live_cities"
+    done_f = area.LIVE / ".seeded"
+    done = set(done_f.read_text(encoding="utf-8").split()) if done_f.exists() else set()
+    new = [d for d in sorted(seed.glob("*")) if (d / "watch.json").exists() and d.name not in done]
+    if not new:
+        return
+    area.LIVE.mkdir(parents=True, exist_ok=True)
+    for d in new:
+        if not (area.LIVE / d.name).exists():
+            shutil.copytree(d, area.LIVE / d.name)
+        done.add(d.name)
+    done_f.write_text("\n".join(sorted(done)) + "\n", encoding="utf-8")
 
 
 def _as_links(sl):
@@ -239,7 +260,7 @@ def known_sources(lat: float, lon: float) -> list[dict]:
     if not REGISTRY.exists():
         return []
     out = []
-    for s in (yaml.safe_load(REGISTRY.read_text()) or {}).get("sources") or []:
+    for s in (yaml.safe_load(REGISTRY.read_text(encoding="utf-8")) or {}).get("sources") or []:
         lat0, lon0, lat1, lon1 = s["box"]
         if lat0 <= lat <= lat1 and lon0 <= lon <= lon1:
             out.append({k: s[k] for k in ("name", "adapter") if k in s})

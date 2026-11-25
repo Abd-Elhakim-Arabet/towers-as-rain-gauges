@@ -19,18 +19,21 @@ def search(name: str, limit: int = 6) -> list[dict]:
     r = requests.get(API, params={"q": name, "format": "jsonv2", "limit": 12, "accept-language": "en",
                                   "addressdetails": 0}, headers={"User-Agent": UA}, timeout=20)
     r.raise_for_status()
-    out = []
+    out, big = [], []
     for d in r.json():
         if d.get("category") not in ("place", "boundary") or d.get("type") not in PLACES:
             continue
+        if d.get("addresstype") == "country" or int(d.get("place_rank") or 30) <= 4:
+            continue                            # "Tunis" also matches Tunisia: a country is never a place to watch
         lat, lon = float(d["lat"]), float(d["lon"])
         s, n, w, e = map(float, d["boundingbox"])
         half_km = max((n - s) * 111.2, (e - w) * 111.2 * _cos(lat)) / 2
-        if half_km > 150:                       # a country or region, not a city
-            continue
-        out.append({"name": d["display_name"], "lat": lat, "lon": lon, "kind": d.get("addresstype") or d["type"],
-                    "half_km": round(min(max(half_km, MIN_HALF_KM), MAX_HALF_KM), 1)})
-    return out[:limit]
+        c = {"name": d["display_name"], "lat": lat, "lon": lon, "kind": d.get("addresstype") or d["type"],
+             "half_km": round(min(max(half_km, MIN_HALF_KM), MAX_HALF_KM), 1)}
+        # Very large areas (a state, or Tokyo, whose outline reaches islands 1,000 km out) are kept only when nothing
+        # smaller matches; then we watch the 30 km around OpenStreetMap's point for it, which is its centre.
+        (big if half_km > 150 else out).append(c)
+    return (out or big)[:limit]
 
 
 def _cos(lat: float) -> float:

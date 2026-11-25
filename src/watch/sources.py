@@ -188,7 +188,7 @@ def _read_table(where: str, since: pd.Timestamp | None = None) -> pd.DataFrame:
     elif "://" in where:
         raise ValueError("only http(s) addresses or file paths are accepted")
     else:
-        text = Path(where).read_text()
+        text = Path(where).read_text(encoding="utf-8")
     return pd.read_json(io.StringIO(text)) if text.lstrip()[:1] in "[{" else pd.read_csv(io.StringIO(text))
 
 

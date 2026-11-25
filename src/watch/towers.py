@@ -43,7 +43,7 @@ def opencellid(box) -> pd.DataFrame:
 def osm(box, cache: Path | None = None) -> pd.DataFrame:
     """Communication masts and mobile-phone antennas mapped in OpenStreetMap. Empty if every server is busy."""
     if cache and cache.exists():
-        els = json.loads(cache.read_text())
+        els = json.loads(cache.read_text(encoding="utf-8"))
     else:
         b = ",".join(f"{v:.5f}" for v in box)
         q = (f'[out:json][timeout:60];(node["man_made"~"^(mast|tower)$"]["tower:type"="communication"]({b});'
@@ -65,7 +65,7 @@ def osm(box, cache: Path | None = None) -> pd.DataFrame:
             return pd.DataFrame(columns=["lon", "lat", "operator"])
         if cache:
             cache.parent.mkdir(parents=True, exist_ok=True)
-            cache.write_text(json.dumps(els))
+            cache.write_text(json.dumps(els), encoding="utf-8")
     rows = [{"lon": e["lon"], "lat": e["lat"], "operator": (e.get("tags", {}).get("operator") or "").split(";")[0].strip()}
             for e in els if "lat" in e]
     return pd.DataFrame(rows, columns=["lon", "lat", "operator"])

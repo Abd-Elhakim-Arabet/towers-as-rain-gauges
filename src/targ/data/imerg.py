@@ -29,7 +29,7 @@ LON0, LAT0, STEP = -179.95, -89.95, 0.1
 def token() -> str:
     t = os.environ.get("EARTHDATA_TOKEN")
     if not t:
-        for line in (ROOT / ".env").read_text().splitlines():
+        for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
             if line.startswith("EARTHDATA_TOKEN="):
                 t = line.split("=", 1)[1].strip()
     if not t:

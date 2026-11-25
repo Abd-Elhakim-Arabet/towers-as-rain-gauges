@@ -57,7 +57,7 @@ def earthdata_token() -> str | None:
     t = os.environ.get("EARTHDATA_TOKEN")
     env = ROOT / ".env"
     if not t and env.exists():
-        for line in env.read_text().splitlines():
+        for line in env.read_text(encoding="utf-8").splitlines():
             if line.startswith("EARTHDATA_TOKEN="):
                 t = line.split("=", 1)[1].strip()
     return t or None

@@ -104,15 +104,45 @@ def wrap(fragment: str) -> str:
             f"</head><body>{NAV}\n{fragment}\n</body></html>\n")
 
 
+def link_dir(src: Path, dst: Path) -> None:
+    """Point dst at the folder src without copying it. Windows refuses symlinks without admin rights or Developer
+    Mode, so there it falls back to a directory junction (no rights needed), and as a last resort to a copy."""
+    try:
+        os.symlink(src, dst, target_is_directory=True)
+        return
+    except OSError:
+        pass
+    if os.name == "nt":
+        try:
+            import _winapi
+            _winapi.CreateJunction(str(src), str(dst))
+            return
+        except Exception:
+            pass
+    shutil.copytree(src, dst)
+
+
+def unlink_dir(p: Path) -> None:
+    """Remove a link made by link_dir without touching the folder it points to."""
+    if p.is_symlink():
+        p.unlink()
+    elif p.exists():
+        try:
+            os.rmdir(p)                        # removes a junction itself, never its contents (a copy raises here)
+        except OSError:
+            pass
+
+
 def build() -> None:
     if OUT.exists():
+        unlink_dir(OUT / "dashboard" / "data")   # first, so cleaning up can never reach the real dashboard data
         shutil.rmtree(OUT)
     (OUT / "replay").mkdir(parents=True)
     (OUT / "storm3d").mkdir(parents=True)
-    (OUT / "index.html").write_text(START)
+    (OUT / "index.html").write_text(START, encoding="utf-8")
     replay = SITE / "phase4" / "index.html"
     if replay.exists():
-        (OUT / "replay" / "index.html").write_text(wrap(replay.read_text()))
+        (OUT / "replay" / "index.html").write_text(wrap(replay.read_text(encoding="utf-8")), encoding="utf-8")
     s3d = SITE / "storm3d"
     if (s3d / "index.html").exists():          # full-screen app, its own complete page
         shutil.copy(s3d / "index.html", OUT / "storm3d" / "index.html")
@@ -125,14 +155,14 @@ def build() -> None:
     dash = SITE / "dashboard"
     if (dash / "index.html").exists():         # Phase 6: full-screen app; its data folder is linked, not copied
         (OUT / "dashboard").mkdir(parents=True)
-        page = (dash / "index.html").read_text()
+        page = (dash / "index.html").read_text(encoding="utf-8")
         cache = dash / "data" / "cities.json"
         if (dash / "template.html").exists() and cache.exists():   # template edits apply without a re-export
-            data = json.dumps(json.loads(cache.read_text()), separators=(",", ":"))
-            page = (dash / "template.html").read_text().replace("/*DATA*/null", data)
-        (OUT / "dashboard" / "index.html").write_text(page)
+            data = json.dumps(json.loads(cache.read_text(encoding="utf-8")), separators=(",", ":"))
+            page = (dash / "template.html").read_text(encoding="utf-8").replace("/*DATA*/null", data)
+        (OUT / "dashboard" / "index.html").write_text(page, encoding="utf-8")
         if (dash / "data").exists():
-            os.symlink(dash / "data", OUT / "dashboard" / "data")
+            link_dir(dash / "data", OUT / "dashboard" / "data")
         if (dash / "logos").exists():          # small operator badges drawn on the towers
             shutil.copytree(dash / "logos", OUT / "dashboard" / "logos")
     watch = SITE / "watch" / "index.html"
@@ -181,7 +211,7 @@ def main() -> None:
         if dest.exists():
             shutil.rmtree(dest)
         shutil.copytree(OUT, dest, symlinks=False)      # follows the dashboard data link, so the copy stands alone
-        (dest / ".nojekyll").write_text("")
+        (dest / ".nojekyll").write_text("", encoding="utf-8")
         print(f"static copy written to {dest}")
         return
     hosts = ["0.0.0.0"] if "0.0.0.0" in args.host else ["127.0.0.1"] + args.host

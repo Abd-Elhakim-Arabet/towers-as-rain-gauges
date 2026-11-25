@@ -2,6 +2,7 @@
 
     python scripts/demo_bundle.py get            # download and unpack it into this repo (about 300 MB)
     python scripts/demo_bundle.py get --file X   # unpack a copy you already have
+    python scripts/demo_bundle.py get --keep     # keep the downloaded file in data/ (Docker: reused by new containers)
     python scripts/demo_bundle.py make           # (maintainers) pack it from a full working copy
 
 What is inside (paths relative to the repo):
@@ -28,6 +29,7 @@ REPO = "Abd-Elhakim-Arabet/towers-as-rain-gauges"
 TAG = "demo-data-v1"
 NAME = "demo-bundle.tar"
 URL = f"https://github.com/{REPO}/releases/download/{TAG}/{NAME}"
+SHA256 = "bcf39c697010aef8156eed93b952cf48994936520e72bb4176d52fd281749918"   # of the published file; change with TAG
 MODEL = "mix21rel+mfb+mask+gt+west_mse"          # same as watch.engine.AI_CONFIG
 PATHS = ([f"runs/phase2/mixed/{MODEL}_seed{s}.pt" for s in range(5)]
          + ["data/interim/p4/donors_8640.npz", "data/processed/algeria_sites.csv",
@@ -52,16 +54,40 @@ def sha256(f: Path) -> str:
     return h.hexdigest()
 
 
+def _tls():
+    """Certificates for the download. Python from python.org on macOS ships without any until its "Install
+    Certificates" step is run; certifi (installed with the requirements) avoids that trap."""
+    try:
+        import ssl
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        return None
+
+
 def download(dest: Path) -> None:
     print(f"downloading {URL}")
-    with urllib.request.urlopen(URL) as r, open(dest, "wb") as fh:
-        total, done = int(r.headers.get("content-length", 0)), 0
-        for chunk in iter(lambda: r.read(1 << 20), b""):
-            fh.write(chunk)
-            done += len(chunk)
-            if total and (done // (1 << 20)) % 25 == 0:          # a line every 25 MB, readable in logs too
-                print(f"  {done / 1e6:.0f} / {total / 1e6:.0f} MB", flush=True)
-    print("  done")
+    part = dest.with_name(dest.name + ".part")          # renamed only once complete and checked
+    try:
+        with urllib.request.urlopen(URL, context=_tls(), timeout=60) as r, open(part, "wb") as fh:
+            total, done = int(r.headers.get("content-length", 0)), 0
+            for chunk in iter(lambda: r.read(1 << 20), b""):
+                fh.write(chunk)
+                done += len(chunk)
+                if total and (done // (1 << 20)) % 25 == 0:      # a line every 25 MB, readable in logs too
+                    print(f"  {done / 1e6:.0f} / {total / 1e6:.0f} MB", flush=True)
+    except OSError as e:                                  # URLError, timeouts, SSL errors, disk full
+        part.unlink(missing_ok=True)
+        hint = (" On macOS with Python from python.org, run 'Install Certificates.command' in the Python folder"
+                " under Applications, or pip install certifi." if "CERTIFICATE" in str(e).upper() else
+                " Check the internet connection (or a proxy), then run the same command again.")
+        sys.exit(f"download failed: {e}.{hint} You can also download {URL} in a browser and run:"
+                 f" python scripts/demo_bundle.py get --file <the file>")
+    if sha256(part) != SHA256:
+        part.unlink()
+        sys.exit("the downloaded file is damaged (checksum mismatch); run the same command again")
+    part.replace(dest)
+    print("  done, checksum ok")
 
 
 def unpack(f: Path) -> None:
@@ -77,6 +103,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("action", choices=["get", "make"])
     ap.add_argument("--file", type=Path, help="get: use this bundle instead of downloading; make: where to write it")
+    ap.add_argument("--keep", action="store_true", help="get: keep the downloaded file in data/ and reuse it next time")
     a = ap.parse_args()
     if a.action == "make":
         make(a.file or ROOT / NAME)
@@ -85,9 +112,14 @@ def main() -> None:
     if f is None:
         f = ROOT / "data" / NAME
         f.parent.mkdir(parents=True, exist_ok=True)
-        download(f)
+        if f.exists() and sha256(f) == SHA256:
+            print(f"using the copy already in {f}")
+        else:
+            download(f)
+    elif not f.exists():
+        sys.exit(f"no such file: {f}")
     unpack(f)
-    if a.file is None:
+    if a.file is None and not a.keep:
         f.unlink()
 
 

@@ -21,6 +21,7 @@ given through the page must be http(s); reading local files is only possible fro
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from contextlib import asynccontextmanager
@@ -154,7 +155,7 @@ def make_app(static_dir: Path | None = None, public_url: str = "") -> FastAPI:
     def api_events(key: str, drill: int = 0):
         _known(key)
         f = area.LIVE / key / ("drill" if drill else "live") / "events.jsonl"
-        return [json.loads(x) for x in f.read_text().splitlines()][-50:] if f.exists() else []
+        return [json.loads(x) for x in f.read_text(encoding="utf-8").splitlines()][-50:] if f.exists() else []
 
     @app.get("/api/watches/{key}/{name}")
     def api_file(key: str, name: str, drill: int = 0):
@@ -186,8 +187,10 @@ def make_app(static_dir: Path | None = None, public_url: str = "") -> FastAPI:
     def _may_edit(req: Request) -> bool:
         # The page has no login. Changing where alarms go is allowed from the computer running the server, or by
         # anyone while no address is set at all (first start, e.g. in Docker); after that only from this computer.
+        # ALARM_EDIT=any lifts the rule (set in the Docker image, where every browser looks like another machine).
         host = req.client.host if req.client else ""
-        return host in ("127.0.0.1", "::1", "localhost") or not alerts.env("ALERT_TO")
+        return (host in ("127.0.0.1", "::1", "localhost") or not alerts.env("ALERT_TO")
+                or os.environ.get("ALARM_EDIT") == "any")
 
     @app.get("/api/mail")
     def api_mail(req: Request):

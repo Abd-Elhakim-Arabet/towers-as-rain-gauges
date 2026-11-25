@@ -8,11 +8,12 @@ There are three ways to run it. Pick one:
 | [B. Docker](#b-docker-any-os-easiest-full-install) | Docker | ~15 min | everything, including the live watch |
 | [C. Python](#c-python-linux-macos-windows) | Python 3.10–3.12 | ~15 min | everything, and you can rerun the experiments |
 
-Everything runs on a normal computer; a GPU is **not** needed for the pages, the replays, or watching a city. Each
-5-minute update of a watched city takes about 5 seconds on a GPU and well under a minute on a CPU (measured: 33–36 s
-for the 2-hour look-ahead on 8 CPU cores). The one slow step without a GPU is the **first set-up of a new city**: it runs
-up to 14 flood simulations to find the rain that would flood the town. That takes a few minutes on a GPU but can take
-**several hours on a CPU** (a CPU-only Docker test on Tizi Ouzou had not finished after 4 hours). To add new cities, use a
+Everything runs on a normal computer; a GPU is **not** needed for the pages, the replays, or the live watch.
+Three Algerian cities come ready to watch (Béjaïa, Constantine, Tébessa): on a first start without a GPU they are
+live within about 2 minutes, then each 5-minute update takes about 25 seconds on 8 CPU cores (5 s on a GPU). A
+drill (a made-up storm sent through the chain) takes about 11 minutes on 8 CPU cores, under a minute on a GPU.
+The one slow step without a GPU is **adding a new city**: it runs up to 14 flood simulations to find the rain that
+would flood the town, which takes a few minutes on a GPU but **several hours on a CPU**. To add many cities, use a
 machine with an NVIDIA GPU.
 
 ---
@@ -29,7 +30,8 @@ explainer PDF. The live watch needs a running Python server, so on the hosted co
 ## B. Docker (any OS, easiest full install)
 
 1. Install Docker: [Docker Desktop](https://www.docker.com/products/docker-desktop/) on Windows and macOS,
-   or `docker.io` from your package manager on Linux.
+   or `docker.io` from your package manager on Linux. On Windows and macOS, start Docker Desktop and wait until it
+   says it is running before the next steps.
 2. Get the code and build the image (5–10 min the first time, mostly downloading Python packages):
 
    ```bash
@@ -41,14 +43,16 @@ explainer PDF. The live watch needs a running Python server, so on the hosted co
 3. Start it:
 
    ```bash
-   docker run -p 8000:8000 -v rain-towers-data:/app/data rain-towers
+   docker run -p 127.0.0.1:8000:8000 -v rain-towers-data:/app/data rain-towers
    ```
 
    The first start downloads the demo data (about 300 MB). When it prints `serving on http://0.0.0.0:8000`,
    open **http://localhost:8000**.
 
-The volume `rain-towers-data` keeps the cities you watch between restarts. Stop with `Ctrl+C`.
-Works the same on Apple Silicon Macs and on Windows (Docker Desktop with WSL 2).
+The volume `rain-towers-data` keeps the demo data and the cities you watch, so later starts take seconds. Stop with
+`Ctrl+C`. Works the same on Apple Silicon and Intel Macs, on Windows (Docker Desktop with WSL 2) and on Linux.
+`127.0.0.1:` keeps the page on your own computer; leave it out (`-p 8000:8000`) only if other machines on your network
+should open it, because anyone who can open the page can change where alarm emails go.
 
 ---
 
@@ -56,7 +60,14 @@ Works the same on Apple Silicon Macs and on Windows (Docker Desktop with WSL 2).
 
 ### 1. Install the tools
 
-- **Python 3.10, 3.11 or 3.12** ([python.org](https://www.python.org/downloads/); on Windows tick "Add Python to PATH").
+- **Python 3.12** (3.10 and 3.11 work too). **Not 3.13 or newer yet:** some map libraries have no ready-made
+  install for them, and pip fails. Check with `python3.12 --version` (Windows: `py -3.12 --version`). To get it:
+  - Windows: the 3.12 installer from [python.org](https://www.python.org/downloads/windows/); tick "Add Python to PATH".
+  - macOS (Apple Silicon): `brew install python@3.12`, or the 3.12 installer from python.org.
+  - macOS (Intel): use [Docker](#b-docker-any-os-easiest-full-install) instead. PyTorch no longer publishes
+    Intel Mac versions that work with the other libraries.
+  - Linux: `sudo apt install python3.12 python3.12-venv` (Ubuntu 24.04, Debian 13), or, on any distribution,
+    install [uv](https://docs.astral.sh/uv/) and use `uv venv --python 3.12 .venv` in step 2.
 - **git** ([git-scm.com](https://git-scm.com/downloads)).
 
 ### 2. Get the code and make an environment
@@ -66,7 +77,7 @@ Linux and macOS:
 ```bash
 git clone https://github.com/Abd-Elhakim-Arabet/towers-as-rain-gauges.git
 cd towers-as-rain-gauges
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 ```
 
@@ -78,6 +89,9 @@ cd towers-as-rain-gauges
 py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
+
+If PowerShell says "running scripts is disabled on this system", run
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, answer Y, and activate again.
 
 From here on the commands are the same everywhere (`python` means the one inside `.venv`).
 
@@ -181,11 +195,13 @@ The MindSpore version of the model lives in a separate environment (`requirement
 
 | Problem | Fix |
 |---|---|
-| `pip install` fails on `rasterio` or `netcdf4` | Use Python 3.12 (they ship ready-made wheels for it), or use Docker. |
+| `pip install` fails on `rasterio`, `netcdf4` or `h5py` (or asks for a compiler) | Your Python is too new (3.13 or later) or too old. Check `python --version` inside the environment; make a new one with Python 3.12 (step 1), or use Docker. |
+| `CERTIFICATE_VERIFY_FAILED` when getting the demo data (macOS) | Python from python.org needs its certificates: run "Install Certificates.command" in its folder under Applications, then try again. |
+| A download stops halfway | Run the same command again; a broken file is detected and fetched again. |
 | `pip install -r requirements.txt` fails building `pysteps` | Install a C compiler (see step 3), or use `requirements-demo.txt` if you only need the demo. |
 | The dashboard says data is missing | Run `python scripts/demo_bundle.py get`. |
 | The live watch page says no server is attached | You opened the static copy. Start `python scripts/serve_site.py` and open `http://localhost:8000/watch/`. |
 | Docker: `PermissionError: ... /app/data/demo-bundle.tar` | Fixed on 25 Nov 2026. Run `git pull`, then `docker build -t rain-towers .` again; the existing volume is repaired on the next start. |
-| Port 8000 is busy | `python scripts/serve_site.py --port 8080` (Docker: `-p 8080:8000`). |
+| Port 8000 is busy | `python scripts/serve_site.py --port 8080` (Docker: `-p 127.0.0.1:8080:8000`). |
 | Maps stay blank | The machine needs internet for map tiles; check a firewall or proxy. |
 | A new city takes long to set up | Normal the first time: it downloads terrain and land cover, then tries many storms to find the flood threshold (a few minutes on a GPU, possibly hours on a CPU). Restarts reuse all of it. |
