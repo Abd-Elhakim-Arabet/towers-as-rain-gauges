@@ -11,7 +11,7 @@
     POST   /api/watches/{key}/drill        run a made-up storm through the live chain
     POST   /api/watches/{key}/test-email   send a test email
     GET    /api/mail                       alarm email set-up: what is set (password never returned)
-    POST   /api/mail                       save it (from this computer, or by anyone while nothing is set yet)
+    POST   /api/mail                       save it (from this computer, by anyone while nothing is set yet, or always with ALARM_EDIT=any as in Docker)
     POST   /api/mail/test                  send a test email to the saved address
 
 There is no login: the server listens on this computer (and, if asked, the Tailscale address) only. Feed addresses

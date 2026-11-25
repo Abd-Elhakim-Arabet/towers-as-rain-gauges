@@ -1,6 +1,7 @@
 # Phase 7 plan: Live watch (any city, watched as it happens)
 
-Status: built 12 Nov 2026 (steps 1-8 and tests); explainer Part 7 still to write.
+Status: built 12 Nov 2026 (steps 1-8 and tests); explainer Part 7 written 24 Nov 2026. Later changes not in this plan:
+the alarm email is set up from the page (data/live/mail.json), and three cities ship ready-made (configs/live_cities).
 
 Phases 0 to 6 replay two past storms. Phase 7 adds a second tab to the control room that does not replay anything:
 you type a city, the system sets itself up there, and it keeps watching the rain and the flood model, raising an alarm

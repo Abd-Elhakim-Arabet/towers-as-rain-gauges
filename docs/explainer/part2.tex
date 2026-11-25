@@ -23,7 +23,7 @@ every word is explained, and the numbers are real.
 \textbf{weights} (we will call them \emph{dials}), start at random values. \textbf{Training} shows it many examples of
 the signal together with the right answer (here, what the radar measured), measures how wrong its answers are with one
 number (the \emph{penalty}, also called the loss in AI; not the signal loss in dB), and nudges every dial a little in the
-direction that makes the penalty smaller, thousands of times over. As in Phase~1, time is split into three piles:
+direction that makes the penalty smaller, thousands of times over. As with the tuning and test months of Section~\ref{sec:scores}, time is split, here into three piles:
 \textbf{training} (1 June -- 15 July 2015, the dials are set on it), \textbf{validation} (16 -- 31 July, only used to
 choose which version to keep) and \textbf{test} (August, scored once at the end). A network that does well on its
 training examples but badly on new ones has \textbf{overfitted}.
@@ -233,7 +233,7 @@ rain. The AI under-reads the short burst at 17:05 (about 4\,mm/h against the gau
 
 \subsection{How it was trained}
 \begin{itemize}
-\item \textbf{Examples:} the 683 Gothenburg sub-links that passed quality control in Phase~1, over the training
+\item \textbf{Examples:} the 683 Gothenburg sub-links that passed the quality check of Section~\ref{sec:fakes}, over the training
 weeks. The ``right answer'' is the weather radar's rain along each link path, available every 5 minutes.
 \item \textbf{One round:} 64 pieces of signal, each 2{,}560 minutes long (about 43 hours), picked at random links and
 random times. The first 1{,}024 minutes of each piece are only there to fill the network's 17-hour view; they are not
@@ -855,7 +855,7 @@ chips through ModelArts is to extend this short loop to the complete training re
 \end{enumerate}
 
 %==========================================================
-\section{What Phase 2 taught us}
+\section{What Part 2 taught us}
 \label{sec:phase2_end}
 %==========================================================
 
@@ -892,6 +892,6 @@ set.
 amounts (more varied training data should help both). \emph{Done: Section~\ref{sec:varied}.}
 \item Training on more varied data to improve the amounts. \emph{Done for Sweden + Italy (Sections~\ref{sec:cv}--\ref{sec:newlinks}); a test
 leaving a whole country out still needs a third country with 1-minute data.}
-\item Phase~3: combining many links into rain maps every few minutes, and pushing them forward in time for a short-range
+\item Part~3: combining many links into rain maps every few minutes, and pushing them forward in time for a short-range
 forecast.
 \end{enumerate}

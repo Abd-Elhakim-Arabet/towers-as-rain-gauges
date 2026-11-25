@@ -135,10 +135,11 @@ A level rises at once but only falls after three calmer readings in a row (15 mi
 on and off while a storm hesitates.
 
 \textbf{How fast.} On the project computer's graphics card, a whole five-minute cycle for Béjaïa takes about 5 seconds.
-On an ordinary processor (8 cores, no graphics card) the two-hour look-ahead alone takes 33 to 36 seconds, so the watch
-still keeps up comfortably. The slow part without a graphics card is the set-up of a \emph{new} city: finding the rain
+On an ordinary processor (8 cores, no graphics card) the whole cycle, look-ahead included, takes about 25 seconds, so the
+watch still keeps up comfortably. The slow part without a graphics card is the set-up of a \emph{new} city: finding the rain
 that floods the town needs up to 14 flood runs of several hours of storm each. That takes minutes on a graphics card but
-can take hours on a processor alone, especially for a large city.
+can take hours on a processor alone, especially for a large city. For that reason Béjaïa, Constantine and Tébessa come
+already set up with the project: on a new computer they are watched within about two minutes.
 
 %==========================================================
 \section{Showing the alarm on a dry day: the drill}
@@ -147,7 +148,7 @@ can take hours on a processor alone, especially for a large city.
 Real flash floods are rare, so a judge, a mayor or a forecaster will usually see the watch on a calm day. The
 \emph{drill} button runs a made-up storm through exactly the same chain: 2.2 times the three-hour rain that floods the
 town (about 127\,mm in three hours for Béjaïa), falling over the watched box, read through the simulated links by the
-AI, mapped and run through the flood model, four hours of storm in about two minutes. On Béjaïa (drill of
+AI, mapped and run through the flood model, four hours of storm in about two minutes on a graphics card (about 11 on 8 processor cores). On Béjaïa (drill of
 24~November 2026) the look-ahead sees the town flooding from the first step, so the level goes straight from
 \emph{normal} to \emph{flood warning}. The town floods 2\,h~40\,min of storm time later, when 26\,ha of built-up land
 are under 30\,cm of water (the alarm size is 25.5\,ha); by the end of the drill it is 40\,ha. Each change sent its
@@ -170,7 +171,8 @@ links} or \emph{DRILL} when that applies.
 The first time the page is opened it asks where alarms should go and which account sends them; a Gmail address with an
 \emph{app password} (a password Google makes for one program, which can only send mail) is enough. A test button sends
 one email to check it arrives. The settings stay on the server, the password is never shown again, and once an address
-is set, only someone at the server's own computer can change it. Without a sending account the emails are kept as
+is set, only someone at the server's own computer can change it (in the Docker version anyone who can open the page can,
+which is why the setup guide keeps that page on the computer itself). Without a sending account the emails are kept as
 files on the server, so nothing is lost.
 
 %==========================================================

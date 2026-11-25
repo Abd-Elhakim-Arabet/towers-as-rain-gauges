@@ -82,7 +82,7 @@ will flood and raises the alarm.</p>
 <h2>Pages</h2>
 <ul class="pages">
 <li><a href="dashboard/"><b>Control room</b><span>Algiers 2001 and Ghardaïa 2008 replayed: towers, rain, 3D flood water and the alarm, with a guided tour.</span></a></li>
-<li><a href="watch/"><b>Live watch</b><span>Any city, now: rain, flood risk and alert level. Needs the Python server (see the setup guide).</span></a></li>
+<li><a href="watch/"><b>Live watch</b><span>Any city, now: rain, flood risk and alert level. Needs the server from the setup guide (Docker or Python).</span></a></li>
 <li><a href="replay/"><b>Storm replay</b><span>The simulated Algerian link network during the two storms.</span></a></li>
 <li><a href="flood/"><b>Flood risk</b><span>Water depth, danger and alarms from our flood model.</span></a></li>
 <li><a href="storm3d/"><b>3D storm</b><span>The storm over the towers, with terrain and buildings.</span></a></li>

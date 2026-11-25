@@ -7,13 +7,12 @@
 \item[Ablation] Removing one ingredient of a method to see how much it was helping.
 \item[Ascend] Huawei's family of chips designed for AI calculations.
 \item[Augmentation] Showing training examples in slightly altered forms (here: rounded to whole decibels) so the network does not depend on details that change between networks.
-\item[Bias (of a neuron)] A fixed number a neuron adds to its weighted sum. Not the same as the \emph{bias} score of Section~\ref{sec:scores}.
 \item[Causal] Using only the present and the past, never the future. Needed for live warnings.
 \item[CSI] Critical success index: hits divided by (hits + misses + false alarms) for rain above a threshold. 1 is perfect.
 \item[Convolution] A small set of weights that slides along the signal, producing one new number per position.
 \item[Cross-validation] Judging every part of the data in turn with a model trained on all the other parts, so everything gets an honest test.
 \item[Dry level] What a link's total loss would be if it were dry right now. Ours: the 20th percentile of the previous 3 days.
-\item[Downscaling] Adding realistic small-scale detail to a coarse rain field (here: 10\,km and 30 minutes down to 1\,km and 1 minute) without changing its amounts.
+\item[Downscaling] Adding realistic small-scale detail to a coarse rain field (here: 10\,km and 30 minutes down to 500\,m and 1 minute) without changing its amounts.
 \item[Dilation] Spacing the minutes a convolution looks at further apart (1, 2, 4, \ldots), so a few layers can see far back.
 \item[GPU] Graphics card: a chip that performs many multiplications at once, which makes training fast.
 \item[Gauge-adjusted radar] Radar rain maps corrected with many rain gauges; a better reference than radar alone.

@@ -85,7 +85,7 @@ where they are. Antennas of one operator closer than 150\,m are grouped into one
 \item \textbf{Positions are approximate.} They are averages of phone positions, so a site can be off by a few hundred metres,
 and one real tower can appear as two or three sites (71\% of sites have a single antenna, which hints at such splits).
 \item \textbf{Algiers is incomplete.} The free service allows about 360 requests a day; the eastern part of the Algiers box
-is still being downloaded (a check runs every few hours). Ghardaïa is complete.
+was not finished when we stopped the download, so it has almost no towers. Ghardaïa is complete.
 \end{itemize}
 
 \subsection{Which towers are linked}
@@ -108,7 +108,7 @@ Netherlands): long hops get lower frequencies, as in real networks.
 \caption{Tower sites (grey dots) and the simulated links, coloured by frequency, over the simulated storm total. Algiers:
 \PfourAlgSites{} sites, \PfourAlgLinks{} links, typical length \PfourAlgLenMed\,km (half between \PfourAlgLenLo{} and
 \PfourAlgLenHi\,km). Ghardaïa: \PfourGhaSites{} sites, \PfourGhaLinks{} links, typical length \PfourGhaLenMed\,km. The empty
-east of the Algiers box is the part of the tower download still to come.}
+east of the Algiers box is the part the tower download did not reach.}
 \label{fig:p4_network}
 \end{figure}
 
@@ -126,7 +126,7 @@ A 5-km link inside one 10-km satellite square sees only part of it, and rain cha
 squares are turned into 500-m squares, every minute, in three moves:
 \begin{enumerate}
 \item \textbf{Motion.} From each pair of satellite images we measure how the rain moved (optical flow, as in
-Section~\ref{sec:nowcast}). The typical speed was \PfourAlgSpeed\,km/h in Algiers and \PfourGhaSpeed\,km/h in Ghardaïa.
+Section~\ref{sec:nowcast}). In Algiers the storm hardly moved (typical motion close to zero: it sat over the city); in Ghardaïa it moved at about \PfourGhaSpeed\,km/h.
 \item \textbf{Smooth in time.} Between two images, the rain is slid along that motion and blended, so it moves minute by
 minute instead of jumping every 30 minutes.
 \item \textbf{Detail inside each square.} The field is multiplied by a random pattern that is patchy at scales below
@@ -310,8 +310,8 @@ Algerian data was used to tune anything.
 
 \begin{oneline}
 On real Algerian tower positions, with real storms and real link noise, the whole chain runs and gives city rain maps
-that follow the simulated truth closely (hourly correlation \PfourAlgAIMapR{} in Algiers), even with a few dozen links; the AI
-still measures \PfourAlgAIMapBias{} too little in a two-day storm. Real accuracy in Algeria remains to be shown with an
+that follow the simulated truth closely (hourly correlation \PfourAlgAIMapR{} in Algiers), even with a few dozen links; the AI's
+map is still off by \PfourAlgAIMapBias{} (too little) over a two-day storm. Real accuracy in Algeria remains to be shown with an
 operator's data.
 \end{oneline}
 
@@ -345,5 +345,5 @@ Maps & IDW, 8 links within 10\,km & unchanged from Part~3\\
 \end{tabular}
 \end{center}
 
-\textbf{Next:} Phase~5 turns these rain maps into flood risk: where the water goes (terrain, wadis), how much ground is
+\textbf{Next:} Part~5 turns these rain maps into flood risk: where the water goes (terrain, wadis), how much ground is
 sealed by concrete, and who lives there.

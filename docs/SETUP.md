@@ -156,8 +156,9 @@ The maps load imagery and terrain from the internet, so keep the machine online.
 server (owner-only, kept in the Docker volume). The password is never shown again. Without a sending account,
 alarm emails are saved as files in `data/live/outbox/` instead.
 
-Who can change it: anyone who opens the page while no address is set yet (so it works on a fresh Docker install);
-after that, only someone on the computer that runs the server.
+Who can change it: with Python, anyone who opens the page while no address is set yet, and after that only someone
+on the computer that runs the server. With Docker, anyone who can open the page (inside Docker every browser looks like
+another machine), which is why the `docker run` command above publishes the page on `127.0.0.1` only.
 
 The same settings can also go in a `.env` file (copy `.env.example`; the page's settings win over it, and
 environment variables win over both):

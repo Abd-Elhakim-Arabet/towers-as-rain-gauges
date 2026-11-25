@@ -163,6 +163,8 @@ def main():
     L = []
 
     def cmd(name, val):
+        if isinstance(val, str) and val.isdigit() and len(val) > 3:   # 4092 -> 4{,}092, as in the other parts
+            val = f"{int(val):,}".replace(",", "{,}")
         L.append(f"\\newcommand{{\\{name}}}{{{val}}}")
 
     def pct(x, sign=False):
