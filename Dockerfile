@@ -15,9 +15,10 @@ RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
 COPY requirements-demo.txt pyproject.toml ./
 RUN pip install -r requirements-demo.txt
 COPY . .
+# /app/data is not in the image (.dockerignore), so create it owned by the app user: a new named volume
+# mounted there copies this ownership. start.sh also repairs volumes made by older images, then drops root.
 RUN pip install --no-deps -e . && chmod +x docker/start.sh \
- && useradd -m -u 1000 app && chown -R app /app
-USER app
+ && useradd -m -u 1000 app && mkdir -p /app/data && chown -R app:app /app
 
 EXPOSE 8000
 CMD ["docker/start.sh"]

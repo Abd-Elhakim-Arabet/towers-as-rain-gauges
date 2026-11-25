@@ -185,6 +185,7 @@ The MindSpore version of the model lives in a separate environment (`requirement
 | `pip install -r requirements.txt` fails building `pysteps` | Install a C compiler (see step 3), or use `requirements-demo.txt` if you only need the demo. |
 | The dashboard says data is missing | Run `python scripts/demo_bundle.py get`. |
 | The live watch page says no server is attached | You opened the static copy. Start `python scripts/serve_site.py` and open `http://localhost:8000/watch/`. |
+| Docker: `PermissionError: ... /app/data/demo-bundle.tar` | Fixed on 25 Nov 2026. Run `git pull`, then `docker build -t rain-towers .` again; the existing volume is repaired on the next start. |
 | Port 8000 is busy | `python scripts/serve_site.py --port 8080` (Docker: `-p 8080:8000`). |
 | Maps stay blank | The machine needs internet for map tiles; check a firewall or proxy. |
 | A new city takes long to set up | Normal the first time: it downloads terrain and land cover, then tries many storms to find the flood threshold (a few minutes on a GPU, possibly hours on a CPU). Restarts reuse all of it. |
